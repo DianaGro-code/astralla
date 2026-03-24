@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cosmos text-text-p font-sans;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.04) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2A2A50 transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: #2A2A50; border-radius: 3px; }
+}
+
+@layer components {
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
+           bg-gold text-void font-sans font-medium tracking-wide
+           hover:bg-gold-l active:scale-95 transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
+           border border-border text-text-s font-sans
+           hover:border-gold hover:text-gold active:scale-95
+           transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-card border border-border rounded-xl p-6;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 rounded-lg bg-nebula border border-border
+           text-text-p placeholder-text-m font-sans
+           focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30
+           transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-sans font-medium text-text-s mb-1.5 tracking-wide uppercase;
+  }
+
+  .glyph {
+    @apply inline-block text-lg leading-none;
+  }
+}
+
+@keyframes globeZoom {
+  from { transform: scale(0.3); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Stars background for landing */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 8%,  rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 30%, rgba(212,175,55,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 85% 5%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 45%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 60%, rgba(212,175,55,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 50%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 75%,  rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 85%, rgba(212,175,55,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 92%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 20% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 78%, rgba(212,175,55,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 40%, rgba(255,255,255,0.4) 0%, transparent 100%);
+}
