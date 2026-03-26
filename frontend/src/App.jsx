@@ -5,6 +5,7 @@ import Auth      from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Reading   from './pages/Reading.jsx';
 import Navbar    from './components/Navbar.jsx';
+import StarField from './components/StarField.jsx';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <StarField />
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

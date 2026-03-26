@@ -4,32 +4,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        void:    '#050510',
-        cosmos:  '#0A0A1F',
-        nebula:  '#0F0F2D',
-        card:    '#141430',
-        'card-h':'#1A1A3E',
-        border:  '#2A2A50',
-        'text-p':'#E8E4FF',
-        'text-s':'#9590B8',
-        'text-m':'#5E5880',
-        gold:    '#D4AF37',
-        'gold-l':'#F0D060',
-        violet:  '#7C3AED',
-        teal:    '#14B8A6',
+        void:    '#060A12',   // deepest background
+        cosmos:  '#0C1118',   // body / nav background
+        nebula:  '#0E1828',   // input background
+        card:    '#101A2A',   // card background
+        'card-h':'#141F32',   // card hover
+        border:  '#1E2A3C',   // subtle borders
+        'text-p':'#EDE9DF',   // primary text (warm cream)
+        'text-s':'#8A827A',   // secondary text
+        'text-m':'#605850',   // muted / metadata text
+        gold:    '#D4AF37',   // gold accent
+        'gold-l':'#E0C050',   // gold hover
+        violet:  '#C0507A',   // venus / love
+        teal:    '#5A8FC8',   // moon / inner
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
-        sans:  ['"Inter"', 'system-ui', 'sans-serif'],
+        serif: ['"Fraunces"', 'Georgia', 'serif'],
+        sans:  ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
         'fade-in':    'fadeIn 0.6s ease forwards',
         'slide-up':   'slideUp 0.5s ease forwards',
+        'bar-fill':   'barFill 0.8s cubic-bezier(0.16,1,0.3,1) forwards',
       },
       keyframes: {
         fadeIn:  { from: { opacity: 0 }, to: { opacity: 1 } },
         slideUp: { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+        barFill: { from: { width: '0%' }, to: {} },
       },
     },
   },

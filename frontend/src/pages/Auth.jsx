@@ -37,10 +37,10 @@ export default function Auth() {
         <div className="text-center mb-8">
           <div className="text-gold text-3xl mb-3">✦</div>
           <h1 className="font-serif text-3xl text-text-p mb-1">
-            {mode === 'login' ? 'Welcome back' : 'Begin your journey'}
+            {mode === 'login' ? 'Welcome back' : 'Your chart is waiting'}
           </h1>
           <p className="text-text-m font-sans text-sm">
-            {mode === 'login' ? 'Sign in to your star map' : 'Create your account'}
+            {mode === 'login' ? 'The stars have been waiting.' : 'Takes 2 minutes. No credit card.'}
           </p>
         </div>
 
@@ -76,18 +76,18 @@ export default function Auth() {
                 {mode === 'login' ? 'Signing in…' : 'Creating account…'}
               </span>
             ) : (
-              mode === 'login' ? 'Sign in' : 'Create account'
+              mode === 'login' ? 'Sign in →' : 'Start reading my chart →'
             )}
           </button>
         </form>
 
         <p className="text-center text-text-m text-sm font-sans mt-4">
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+          {mode === 'login' ? "New here? " : 'Already have a chart? '}
           <button
             onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError(''); }}
             className="text-gold hover:text-gold-l transition-colors"
           >
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
+            {mode === 'login' ? 'Create an account' : 'Sign in'}
           </button>
         </p>
       </div>

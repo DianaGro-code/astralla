@@ -16,6 +16,12 @@ async function request(path, options = {}) {
   });
 
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !path.startsWith('/auth')) {
+    localStorage.removeItem('astro_token');
+    localStorage.removeItem('astro_user');
+    window.location.href = '/auth';
+    throw new Error('Session expired. Please sign in again.');
+  }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
@@ -34,9 +40,19 @@ export const api = {
   readings: {
     generate:   (body) => request('/readings', { method: 'POST', body: JSON.stringify(body) }),
     forChart:   (chartId) => request(`/readings/chart/${chartId}`),
+    all:        () => request('/readings/all'),
     get:        (id)   => request(`/readings/${id}`),
   },
   geocode: {
     search: (q) => request(`/geocode/search?q=${encodeURIComponent(q)}`),
+  },
+  topCities: {
+    find: (body) => request('/top-cities', { method: 'POST', body: JSON.stringify(body) }),
+  },
+  transits: {
+    generate: (body) => request('/transits', { method: 'POST', body: JSON.stringify(body) }),
+  },
+  solarReturns: {
+    generate: (body) => request('/solar-returns', { method: 'POST', body: JSON.stringify(body) }),
   },
 };

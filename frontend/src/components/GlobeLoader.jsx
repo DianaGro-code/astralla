@@ -30,19 +30,19 @@ export default function GlobeLoader({ cityName, lat = 0, lng = 0 }) {
       const r = rotation + rotOffset;
 
       // Atmosphere glow
-      const atmo = ctx.createRadialGradient(CX, CY, R * 0.9, CX, CY, R + 16);
-      atmo.addColorStop(0, 'rgba(80, 60, 200, 0.18)');
+      const atmo = ctx.createRadialGradient(CX, CY, R * 0.85, CX, CY, R + 24);
+      atmo.addColorStop(0, 'rgba(100, 80, 255, 0.45)');
       atmo.addColorStop(1, 'rgba(80, 60, 200, 0)');
       ctx.beginPath();
-      ctx.arc(CX, CY, R + 16, 0, Math.PI * 2);
+      ctx.arc(CX, CY, R + 24, 0, Math.PI * 2);
       ctx.fillStyle = atmo;
       ctx.fill();
 
       // Sphere fill
       const grad = ctx.createRadialGradient(CX - R * 0.28, CY - R * 0.28, R * 0.04, CX, CY, R);
-      grad.addColorStop(0, '#1c1c72');
-      grad.addColorStop(0.55, '#0b0b32');
-      grad.addColorStop(1, '#040418');
+      grad.addColorStop(0, '#3030a8');
+      grad.addColorStop(0.55, '#1a1a6e');
+      grad.addColorStop(1, '#0c0c48');
       ctx.beginPath();
       ctx.arc(CX, CY, R, 0, Math.PI * 2);
       ctx.fillStyle = grad;
@@ -61,8 +61,8 @@ export default function GlobeLoader({ cityName, lat = 0, lng = 0 }) {
         const rx = R * Math.cos(latRad);
         ctx.beginPath();
         ctx.ellipse(CX, y, rx, rx * 0.13, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(80, 80, 190, 0.4)';
-        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = 'rgba(120, 120, 255, 0.7)';
+        ctx.lineWidth = 0.8;
         ctx.stroke();
       }
 
@@ -74,9 +74,9 @@ export default function GlobeLoader({ cityName, lat = 0, lng = 0 }) {
         ctx.beginPath();
         ctx.ellipse(CX, CY, rx, R, 0, 0, Math.PI * 2);
         ctx.strokeStyle = cosA > 0
-          ? 'rgba(90, 90, 210, 0.5)'
-          : 'rgba(45, 45, 110, 0.25)';
-        ctx.lineWidth = 0.7;
+          ? 'rgba(130, 130, 255, 0.75)'
+          : 'rgba(70, 70, 180, 0.4)';
+        ctx.lineWidth = 0.8;
         ctx.stroke();
       }
 
@@ -112,7 +112,7 @@ export default function GlobeLoader({ cityName, lat = 0, lng = 0 }) {
       // Sphere border
       ctx.beginPath();
       ctx.arc(CX, CY, R, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(80, 80, 200, 0.55)';
+      ctx.strokeStyle = 'rgba(120, 120, 255, 0.9)';
       ctx.lineWidth = 1.2;
       ctx.stroke();
     }
@@ -128,13 +128,13 @@ export default function GlobeLoader({ cityName, lat = 0, lng = 0 }) {
   }, [lat, lng]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-void/85 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-void/60 backdrop-blur-sm">
       <div style={{ animation: 'globeZoom 1.4s cubic-bezier(0.16,1,0.3,1) forwards' }}>
         <canvas ref={canvasRef} width={SIZE} height={SIZE} style={{ display: 'block' }} />
       </div>
       <div className="mt-5 text-center animate-fade-in">
-        <p className="font-serif text-xl text-gold tracking-wide">{cityName?.split(',')[0]}</p>
-        <p className="font-sans text-sm text-text-s mt-1.5 animate-pulse">Reading the stars…</p>
+        <p className="font-serif text-2xl text-gold tracking-wide drop-shadow-[0_0_12px_rgba(212,175,55,0.6)]">{cityName?.split(',')[0]}</p>
+        <p className="font-sans text-sm text-white/70 mt-1.5 animate-pulse tracking-wide">Reading the stars…</p>
       </div>
     </div>
   );

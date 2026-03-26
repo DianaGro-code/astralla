@@ -4,12 +4,12 @@ import { fileURLToPath } from 'url';
 import { mkdirSync } from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../../../data/astro.db');
 
 let db;
 
 export function getDb() {
   if (!db) {
+    const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../../../data/astro.db');
     mkdirSync(path.dirname(DB_PATH), { recursive: true });
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
@@ -57,6 +57,38 @@ export function initDb() {
 
   // Add themes column if it doesn't exist (migration)
   try { db.exec('ALTER TABLE readings ADD COLUMN themes TEXT'); } catch {}
+
+  // Transit readings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS transit_readings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chart_id INTEGER NOT NULL REFERENCES birth_charts(id) ON DELETE CASCADE,
+      city_name TEXT NOT NULL,
+      city_lat REAL NOT NULL,
+      city_lng REAL NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      transit_data TEXT NOT NULL,
+      reading TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Solar return readings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS solar_returns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chart_id INTEGER NOT NULL REFERENCES birth_charts(id) ON DELETE CASCADE,
+      city_name TEXT NOT NULL,
+      city_lat REAL NOT NULL,
+      city_lng REAL NOT NULL,
+      return_year INTEGER NOT NULL,
+      return_date TEXT NOT NULL,
+      sr_data TEXT NOT NULL,
+      reading TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
   console.log('Database ready');
 }

@@ -3,9 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import GlobeLoader from '../components/GlobeLoader.jsx';
+import WorldMap from '../components/WorldMap.jsx';
 
 const PLANET_GLYPHS = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
   jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
+
+const INTENTS = [
+  { key: 'love',     glyph: '♀', label: 'Love',           desc: 'Romance, attraction, partnership' },
+  { key: 'career',   glyph: '☉', label: 'Career',         desc: 'Power, reputation, success' },
+  { key: 'escape',   glyph: '☽', label: 'Home',            desc: 'Rest, belonging, a place to return to' },
+  { key: 'creative', glyph: '✦', label: 'Creative',       desc: 'Inspiration, expression, art' },
+  { key: 'change',   glyph: '♇', label: 'Transformation', desc: 'Deep shift, rebirth, evolution' },
+];
+
+const INTENT_LABELS = {
+  love: 'love & relationships', career: 'career & ambition',
+  escape: 'home & belonging', creative: 'creativity & inspiration', change: 'transformation',
+};
+
+function Spinner({ size = 'md' }) {
+  const s = size === 'sm' ? 'w-3 h-3 border' : 'w-6 h-6 border-2';
+  return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
+}
 
 // ── New Chart Form ────────────────────────────────────────────────────────────
 function NewChartForm({ onCreated, onCancel }) {
@@ -31,18 +50,19 @@ function NewChartForm({ onCreated, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="card space-y-4 animate-slide-up border-gold/30">
       <h3 className="font-serif text-xl text-text-p">New Birth Chart</h3>
+      <p className="text-text-m text-xs font-sans -mt-2">Exact birth time unlocks your Midheaven and Ascendant lines — the most personal part of your reading. Leave blank if you don't know it.</p>
       <div>
         <label className="label">Chart Label</label>
-        <input className="input" placeholder="e.g. My Chart, Friend's Chart…" value={form.label} onChange={set('label')} required />
+        <input className="input" placeholder="e.g. My Chart, Sarah's Chart…" value={form.label} onChange={set('label')} required />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="label">Birth Date</label>
           <input className="input" type="date" value={form.birthDate} onChange={set('birthDate')} required />
         </div>
         <div>
-          <label className="label">Birth Time</label>
-          <input className="input" type="time" value={form.birthTime} onChange={set('birthTime')} required />
+          <label className="label">Birth Time <span className="text-text-m font-normal normal-case tracking-normal">(optional)</span></label>
+          <input className="input" type="time" value={form.birthTime} onChange={set('birthTime')} />
         </div>
       </div>
       <div>
@@ -52,13 +72,155 @@ function NewChartForm({ onCreated, onCancel }) {
       {error && <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>}
       <div className="flex gap-3 pt-1">
         <button type="submit" className="btn-gold flex-1" disabled={loading}>
-          {loading ? <span className="flex items-center gap-2 justify-center"><Spinner size="sm" />Geocoding…</span> : 'Save Chart'}
+          {loading ? <span className="flex items-center gap-2 justify-center"><Spinner size="sm" />Saving…</span> : 'Save chart →'}
         </button>
         <button type="button" onClick={onCancel} className="btn-ghost">Cancel</button>
       </div>
     </form>
   );
 }
+
+const REGIONS = [
+  { key: 'worldwide',      label: '🌐 Worldwide'          },
+  { key: 'europe',         label: '🇪🇺 Europe'             },
+  { key: 'americas',       label: '🌎 Americas'            },
+  { key: 'asia',           label: '🌏 Asia'                },
+  { key: 'africa-mideast', label: '🌍 Africa & Middle East' },
+  { key: 'oceania',        label: '🌊 Oceania'             },
+];
+
+// ── Discover: Top 3 Cities ────────────────────────────────────────────────────
+function DiscoverForm({ chart, onCitySelect, generatingCity }) {
+  const [intent, setIntent] = useState(null);
+  const [region, setRegion] = useState('worldwide');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState('');
+  const [nudge, setNudge] = useState(false);
+
+  async function handleDiscover() {
+    if (!intent) {
+      setNudge(true);
+      setTimeout(() => setNudge(false), 2000);
+      return;
+    }
+    setError('');
+    setLoading(true);
+    setResults(null);
+    try {
+      const data = await api.topCities.find({ chartId: chart.id, intent, region });
+      setResults(data.cities);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* Intent */}
+      <div>
+        <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">What are you looking for?</p>
+        <div className="flex flex-wrap gap-1.5">
+          {INTENTS.map(it => (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => { setIntent(i => i === it.key ? null : it.key); setResults(null); }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                intent === it.key
+                  ? 'border-gold bg-gold/15 text-gold'
+                  : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+              }`}
+            >
+              <span>{it.glyph}</span>
+              <span>{it.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Region */}
+      <div>
+        <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">Where in the world?</p>
+        <div className="flex flex-wrap gap-1.5">
+          {REGIONS.map(r => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => { setRegion(r.key); setResults(null); }}
+              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                region === r.key
+                  ? 'border-teal bg-teal/15 text-teal'
+                  : 'border-border text-text-s hover:border-teal/40 hover:text-text-p'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={handleDiscover}
+        disabled={loading}
+        className="btn-gold w-full py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <span className="flex items-center gap-2 justify-center">
+            <Spinner size="sm" />
+            Scanning cities{region !== 'worldwide' ? ` in ${REGIONS.find(r=>r.key===region)?.label.split(' ').slice(1).join(' ')}` : ''}…
+          </span>
+        ) : intent ? (
+          `✦ Find my best ${region !== 'worldwide' ? REGIONS.find(r=>r.key===region)?.label.split(' ').slice(1).join(' ') + ' ' : ''}cities for ${INTENT_LABELS[intent]}`
+        ) : (
+          '✦ Find my best cities'
+        )}
+      </button>
+
+      {nudge && <p className="text-gold text-xs font-sans text-center animate-fade-in">↑ Pick what you're looking for first</p>}
+      {error && <p className="text-red-400 text-xs">{error}</p>}
+
+      {results && (
+        <div className="space-y-3 animate-fade-in">
+          <p className="text-text-m text-xs font-sans uppercase tracking-wider">
+            Your top cities for {INTENT_LABELS[intent]}
+          </p>
+          {results.map((city, i) => (
+            <div key={i} className="rounded-xl border border-border bg-nebula px-4 py-4 hover:border-gold/30 transition-all">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <h4 className="font-serif text-base text-text-p">{city.cityName}</h4>
+                <span className="text-gold text-xs font-sans shrink-0 mt-0.5">#{i + 1}</span>
+              </div>
+              <p className="font-serif text-sm text-text-p leading-relaxed mb-2">"{city.hook}"</p>
+              <p className="font-sans text-xs text-text-s leading-relaxed mb-2">{city.why}</p>
+              <div className="mb-3 relative pl-3 border-l-2 border-amber-400/60">
+                <p className="font-sans text-[10px] text-text-m uppercase tracking-wider mb-0.5">What it costs you</p>
+                <p className="font-sans text-xs text-text-s leading-relaxed">{city.cost}</p>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-serif text-xs text-gold italic flex-1">{city.verdict}</p>
+                <button
+                  onClick={() => onCitySelect(city.cityName, intent)}
+                  disabled={!!generatingCity}
+                  className="text-xs font-sans text-text-m hover:text-gold transition-colors px-2 py-1 rounded border border-border hover:border-gold/40 shrink-0 disabled:opacity-50"
+                >
+                  {generatingCity === city.cityName
+                    ? <span className="flex items-center gap-1.5"><Spinner size="sm" />Loading…</span>
+                    : 'Full reading →'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// placeholder for count display
+const WORLD_CITIES_COUNT = 75;
 
 // ── Location Query Form ────────────────────────────────────────────────────────
 function LocationForm({ chart, onReading }) {
@@ -71,7 +233,6 @@ function LocationForm({ chart, onReading }) {
   const debounceRef = useRef(null);
   const wrapperRef = useRef(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setResults([]);
@@ -108,7 +269,10 @@ function LocationForm({ chart, onReading }) {
     setError('');
     setLoading(true);
     try {
-      const reading = await api.readings.generate({ chartId: chart.id, cityQuery: selected.displayName });
+      const reading = await api.readings.generate({
+        chartId: chart.id,
+        cityQuery: selected.displayName,
+      });
       onReading(reading);
     } catch (err) {
       setError(err.message);
@@ -126,7 +290,11 @@ function LocationForm({ chart, onReading }) {
           lng={selected?.lng}
         />
       )}
-      <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        <p className="text-text-m text-xs font-sans leading-relaxed">
+          We'll read your birth chart against this city — covering love, career, inner life, vitality, and growth.
+        </p>
+        {/* City search */}
         <div className="relative" ref={wrapperRef}>
           <input
             className="input w-full py-2 pr-8"
@@ -141,7 +309,7 @@ function LocationForm({ chart, onReading }) {
             </span>
           )}
           {results.length > 0 && (
-            <div className="absolute z-20 left-0 right-0 mt-1 bg-[#141430] border border-border rounded-lg shadow-xl overflow-hidden">
+            <div className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
               {results.map((city, i) => (
                 <button
                   type="button"
@@ -155,12 +323,15 @@ function LocationForm({ chart, onReading }) {
             </div>
           )}
         </div>
+
         <button
           type="submit"
           className="btn-gold w-full py-2"
-          disabled={loading || !selected}
+          disabled={loading}
         >
-          ✦ Generate Reading
+          {selected
+            ? `✦ Read ${selected.displayName.split(',')[0]}`
+            : '✦ Search for a city'}
         </button>
         {error && <p className="text-red-400 text-xs">{error}</p>}
       </form>
@@ -168,11 +339,27 @@ function LocationForm({ chart, onReading }) {
   );
 }
 
+// ── Star Row ──────────────────────────────────────────────────────────────────
+function StarRow({ ratings }) {
+  const entries = Object.entries(ratings).filter(([,v]) => v != null);
+  if (!entries.length) return null;
+  const avg = entries.reduce((s,[,v]) => s + v, 0) / entries.length;
+  return (
+    <div className="flex items-center gap-1 mt-1">
+      {[1,2,3,4,5].map(n => (
+        <span key={n} className={`text-xs ${n <= Math.round(avg) ? 'text-gold' : 'text-border'}`}>★</span>
+      ))}
+      <span className="text-text-m text-xs font-sans ml-1">{avg.toFixed(1)}</span>
+    </div>
+  );
+}
+
 // ── Chart Card ────────────────────────────────────────────────────────────────
-function ChartCard({ chart, onDelete, onReading }) {
-  const [expanded, setExpanded] = useState(false);
+function ChartCard({ chart, onDelete, isExpanded, onExpand }) {
+  const [mode, setMode] = useState('city'); // 'city' | 'discover'
   const [readings, setReadings] = useState(null);
   const [loadingReadings, setLoadingReadings] = useState(false);
+  const [generatingCity, setGeneratingCity] = useState(null);
   const navigate = useNavigate();
 
   async function loadReadings() {
@@ -185,63 +372,147 @@ function ChartCard({ chart, onDelete, onReading }) {
     setLoadingReadings(false);
   }
 
+  useEffect(() => {
+    if (isExpanded) loadReadings();
+  }, [isExpanded]);
+
   function handleExpand() {
-    setExpanded(e => !e);
-    if (!expanded) loadReadings();
+    onExpand();
+  }
+
+  async function handleCitySelect(cityName, intent) {
+    // If reading already exists locally, navigate straight there
+    if (readings) {
+      const existing = readings.find(r =>
+        r.city_name.split(',')[0].trim().toLowerCase() === cityName.split(',')[0].trim().toLowerCase()
+      );
+      if (existing) {
+        navigate(`/reading/${existing.id}`);
+        return;
+      }
+    }
+    // Otherwise generate (backend also deduplicates)
+    setGeneratingCity(cityName);
+    try {
+      const reading = await api.readings.generate({
+        chartId: chart.id,
+        cityQuery: cityName,
+        intent: intent || undefined,
+      });
+      navigate(`/reading/${reading.id}`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingCity(null);
+    }
   }
 
   return (
-    <div className="card hover:border-gold/30 transition-all duration-300">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-gold text-lg">✦</span>
-            <h3 className="font-serif text-lg text-text-p truncate">{chart.label}</h3>
+    <div className={`card transition-all duration-300 relative overflow-hidden ${isExpanded ? 'border-gold/30' : 'hover:border-gold/20'}`}>
+      {/* Clickable header */}
+      <button
+        onClick={handleExpand}
+        className="w-full text-left group"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-base transition-colors ${isExpanded ? 'text-gold' : 'text-gold/60 group-hover:text-gold'}`}>✦</span>
+              <h3 className="font-serif text-lg text-text-p truncate">{chart.label}</h3>
+            </div>
+            <p className="text-text-m text-xs font-sans">
+              {chart.birth_date} · {chart.birth_time} · {chart.birth_place}
+            </p>
           </div>
-          <p className="text-text-s text-sm font-sans">
-            {chart.birth_date} · {chart.birth_time} · {chart.birth_place}
-          </p>
+          <span className={`text-text-m text-sm transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>
+            ⌄
+          </span>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={handleExpand}
-            className="text-xs font-sans text-text-m hover:text-gold transition-colors px-2 py-1 rounded border border-border hover:border-gold/40"
-          >
-            {expanded ? 'Close' : 'Explore'}
-          </button>
-          <button
-            onClick={() => onDelete(chart.id)}
-            className="text-xs font-sans text-text-m hover:text-red-400 transition-colors px-2 py-1 rounded border border-border hover:border-red-400/40"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
+      </button>
 
-      {expanded && (
-        <div className="mt-4 pt-4 border-t border-border animate-fade-in">
-          <p className="text-text-m text-xs font-sans mb-2 uppercase tracking-wider">Query a location</p>
-          <LocationForm chart={chart} onReading={(r) => { onReading(r); navigate(`/reading/${r.id}`); }} />
+      {isExpanded && (
+        <div className="mt-5 pt-5 border-t border-border/60 animate-fade-in">
+          {/* Mode tabs — pill style */}
+          <div className="flex gap-1 mb-4 p-0.5 bg-nebula rounded-lg border border-border/60">
+            <button
+              onClick={() => setMode('city')}
+              className={`flex-1 py-1.5 rounded-md text-xs font-sans transition-all duration-200 ${
+                mode === 'city' ? 'bg-card shadow-sm text-text-p border border-border/60' : 'text-text-m hover:text-text-p'
+              }`}
+            >
+              Enter a city
+            </button>
+            <button
+              onClick={() => setMode('discover')}
+              className={`flex-1 py-1.5 rounded-md text-xs font-sans transition-all duration-200 ${
+                mode === 'discover' ? 'bg-card shadow-sm text-text-p border border-border/60' : 'text-text-m hover:text-text-p'
+              }`}
+            >
+              Find cities for me ✦
+            </button>
+          </div>
 
-          <div className="mt-5">
-            <p className="text-text-m text-xs font-sans mb-3 uppercase tracking-wider">Past readings</p>
-            {loadingReadings && <div className="flex justify-center py-3"><Spinner /></div>}
-            {readings && readings.length === 0 && (
-              <p className="text-text-m text-sm font-sans italic">No readings yet. Enter a city above.</p>
-            )}
-            {readings && readings.map(r => (
-              <button
-                key={r.id}
-                onClick={() => navigate(`/reading/${r.id}`)}
-                className="w-full text-left px-3 py-2 rounded-lg border border-border hover:border-gold/30 hover:bg-card-h transition-all mb-2 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-sm text-text-p group-hover:text-gold transition-colors">{r.city_name}</span>
-                  <span className="text-text-m text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
-                </div>
-                <span className="text-text-m text-xs font-sans">{r.influences.length} lines · {r.parans.length} parans</span>
-              </button>
-            ))}
+          {mode === 'city' && (
+            <LocationForm chart={chart} onReading={(r) => navigate(`/reading/${r.id}`)} />
+          )}
+
+          {mode === 'discover' && (
+            <DiscoverForm chart={chart} onCitySelect={handleCitySelect} generatingCity={generatingCity} />
+          )}
+
+          {/* Past readings — deduplicated by city, most recent per city */}
+          {readings && readings.length > 0 && (
+            <div className="mt-6">
+              <p className="text-text-m text-[10px] font-sans mb-2 uppercase tracking-widest">Explored</p>
+              <div>
+                {Object.values(
+                  readings.reduce((acc, r) => {
+                    const key = r.city_name.split(',')[0].trim().toLowerCase();
+                    if (!acc[key] || r.created_at > acc[key].created_at) acc[key] = r;
+                    return acc;
+                  }, {})
+                )
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                  .map(r => {
+                    const overall = r.themes?.overallRating;
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => navigate(`/reading/${r.id}`)}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-nebula transition-all group"
+                      >
+                        <span className="text-gold/30 text-[9px] group-hover:text-gold/60 transition-colors shrink-0">✦</span>
+                        <span className="font-sans text-xs text-text-s group-hover:text-text-p transition-colors flex-1 text-left truncate">
+                          {r.city_name.split(',')[0]}
+                        </span>
+                        {overall != null && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-px">
+                              {[1,2,3,4,5].map(n => (
+                                <span key={n} className="text-[8px]" style={{ color: '#D4AF37', opacity: n <= overall ? 0.75 : 0.15 }}>★</span>
+                              ))}
+                            </div>
+                            <span className="text-[10px] text-text-m/60 tabular-nums">{overall}/5</span>
+                          </div>
+                        )}
+                        <span className="text-text-m/50 text-[10px] shrink-0 tabular-nums">
+                          {new Date(r.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+          {loadingReadings && <div className="flex justify-center py-3 mt-4"><Spinner /></div>}
+
+          <div className="mt-5 pt-4 border-t border-border/30 flex justify-end">
+            <button
+              onClick={() => onDelete(chart.id)}
+              className="text-[10px] font-sans text-text-m/50 hover:text-red-400 transition-colors uppercase tracking-wider"
+            >
+              Delete chart
+            </button>
           </div>
         </div>
       )}
@@ -249,21 +520,29 @@ function ChartCard({ chart, onDelete, onReading }) {
   );
 }
 
-function Spinner({ size = 'md' }) {
-  const s = size === 'sm' ? 'w-3 h-3 border' : 'w-6 h-6 border-2';
-  return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
-}
-
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [view, setView] = useState('list'); // 'list' | 'map'
+  const [allReadings, setAllReadings] = useState([]);
+  const [mapLoading, setMapLoading] = useState(false);
+  const [mapChartId, setMapChartId] = useState('all');
+  const [expandedChartId, setExpandedChartId] = useState(null);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (view === 'map' && allReadings.length === 0) {
+      setMapLoading(true);
+      api.readings.all().then(setAllReadings).catch(console.error).finally(() => setMapLoading(false));
+    }
+  }, [view]);
 
   function handleCreated(chart) {
     setCharts(cs => [chart, ...cs]);
@@ -280,53 +559,158 @@ export default function Dashboard() {
     <div className="min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-end justify-between mb-8">
+        <div className="flex items-end justify-between mb-6">
           <div>
             <h1 className="font-serif text-3xl text-text-p">
-              {user?.name?.split(' ')[0]}'s Star Map
+              {user?.name?.split(' ')[0]}'s charts
             </h1>
-            <p className="text-text-m text-sm font-sans mt-1">Your birth charts & readings</p>
+            <p className="text-text-m text-sm font-sans mt-1">Your birth charts & city readings</p>
           </div>
-          {!showForm && (
+          {!showForm && view === 'list' && (
             <button onClick={() => setShowForm(true)} className="btn-gold py-2 px-4 text-sm">
-              + New Chart
+              + New chart
             </button>
           )}
         </div>
 
-        {/* New chart form */}
-        {showForm && (
-          <div className="mb-6">
-            <NewChartForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
-          </div>
-        )}
-
-        {/* Charts list */}
-        {loading && <div className="flex justify-center py-12"><Spinner /></div>}
-
-        {!loading && charts.length === 0 && !showForm && (
-          <div className="card text-center py-12">
-            <div className="text-gold text-4xl mb-4">✦</div>
-            <h2 className="font-serif text-xl text-text-p mb-2">No charts yet</h2>
-            <p className="text-text-m font-sans text-sm mb-6">
-              Add your birth data to begin exploring the world through your astrocartography.
-            </p>
-            <button onClick={() => setShowForm(true)} className="btn-gold">
-              Create your first chart
+        {/* View toggle */}
+        {!loading && (charts.length > 0 || allReadings.length > 0) && (
+          <div className="flex rounded-lg border border-border overflow-hidden mb-6 w-fit">
+            <button
+              onClick={() => setView('list')}
+              className={`px-4 py-1.5 text-xs font-sans transition-colors ${
+                view === 'list' ? 'bg-gold/15 text-gold' : 'text-text-m hover:text-text-p'
+              }`}
+            >
+              ☰ Charts
+            </button>
+            <button
+              onClick={() => setView('map')}
+              className={`px-4 py-1.5 text-xs font-sans border-l border-border transition-colors ${
+                view === 'map' ? 'bg-gold/15 text-gold' : 'text-text-m hover:text-text-p'
+              }`}
+            >
+              🗺 Map
             </button>
           </div>
         )}
 
-        <div className="space-y-4">
-          {charts.map(chart => (
-            <ChartCard
-              key={chart.id}
-              chart={chart}
-              onDelete={handleDelete}
-              onReading={() => {}}
-            />
-          ))}
-        </div>
+        {/* MAP VIEW */}
+        {view === 'map' && (
+          <div className="animate-fade-in">
+            {/* Chart filter — only shown when user has multiple charts */}
+            {charts.length > 1 && (
+              <div className="mb-3">
+                <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">Showing cities for</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setMapChartId('all')}
+                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                      mapChartId === 'all'
+                        ? 'border-gold bg-gold/15 text-gold'
+                        : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                    }`}
+                  >
+                    All charts
+                  </button>
+                  {charts.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setMapChartId(c.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                        mapChartId === c.id
+                          ? 'border-gold bg-gold/15 text-gold'
+                          : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                      }`}
+                    >
+                      <span>✦</span>
+                      <span>{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Count line */}
+            {(() => {
+              const filtered = mapChartId === 'all'
+                ? allReadings
+                : allReadings.filter(r => r.chart_id === mapChartId);
+              const chartName = mapChartId !== 'all'
+                ? charts.find(c => c.id === mapChartId)?.label
+                : null;
+              return (
+                <>
+                  <div className="mb-3">
+                    <p className="text-text-m text-xs font-sans">
+                      {filtered.length} {filtered.length === 1 ? 'city' : 'cities'} explored
+                      {chartName ? ` for ${chartName}` : ''}
+                      {' '}· click a pin to open
+                    </p>
+                  </div>
+                  {mapLoading ? (
+                    <div className="flex justify-center py-16"><Spinner /></div>
+                  ) : (
+                    <div style={{ height: 440 }}>
+                      <WorldMap
+                        readings={filtered}
+                        onReadingClick={(id) => navigate(`/reading/${id}`)}
+                      />
+                    </div>
+                  )}
+                  {filtered.length === 0 && !mapLoading && (
+                    <p className="text-center text-text-m text-sm font-serif italic mt-4">
+                      {allReadings.length === 0
+                        ? 'Explore some cities to see them on the map.'
+                        : `No cities read for ${chartName || 'this chart'} yet.`}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* LIST VIEW */}
+        {view === 'list' && (
+          <>
+            {/* New chart form */}
+            {showForm && (
+              <div className="mb-6">
+                <NewChartForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
+              </div>
+            )}
+
+            {loading && <div className="flex justify-center py-12"><Spinner /></div>}
+
+            {!loading && charts.length === 0 && !showForm && (
+              <div className="card text-center py-14 border-dashed">
+                <div className="text-gold text-3xl mb-5">✦</div>
+                <h2 className="font-serif text-2xl text-text-p mb-3">
+                  Your chart is a map.<br />You haven't unfolded it yet.
+                </h2>
+                <p className="text-text-m font-sans text-sm mb-8 max-w-xs mx-auto leading-relaxed">
+                  Add your birth data and start exploring which cities are written into your chart.
+                </p>
+                <button onClick={() => setShowForm(true)} className="btn-gold">
+                  Add my birth chart →
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {(expandedChartId ? charts.filter(c => c.id === expandedChartId) : charts).map(chart => (
+                <ChartCard
+                  key={chart.id}
+                  chart={chart}
+                  onDelete={handleDelete}
+                  isExpanded={expandedChartId === chart.id}
+                  onExpand={() => setExpandedChartId(id => id === chart.id ? null : chart.id)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

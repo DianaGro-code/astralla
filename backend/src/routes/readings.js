@@ -10,7 +10,7 @@ router.use(requireAuth);
 
 // Generate a new reading for a chart + city
 router.post('/', async (req, res) => {
-  const { chartId, cityQuery } = req.body;
+  const { chartId, cityQuery, intent } = req.body;
   if (!chartId || !cityQuery) {
     return res.status(400).json({ error: 'chartId and cityQuery are required' });
   }
@@ -25,6 +25,19 @@ router.post('/', async (req, res) => {
     // Geocode the target city
     const city = await geocode(cityQuery);
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
+
+    // Return existing reading if one already exists for this chart + city
+    const existing = db.prepare(
+      'SELECT * FROM readings WHERE chart_id = ? AND city_name = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(chartId, city.displayName);
+    if (existing) {
+      return res.status(200).json({
+        ...existing,
+        influences: JSON.parse(existing.influences),
+        parans: JSON.parse(existing.parans),
+        themes: existing.themes ? JSON.parse(existing.themes) : null,
+      });
+    }
 
     // Calculate planetary influences + parans
     const { influences, parans } = calculateInfluences(chart, city);
@@ -44,7 +57,7 @@ router.post('/', async (req, res) => {
     }
 
     // Generate AI reading (returns themes object)
-    const themes = await generateReading(chart, city, influences, parans);
+    const themes = await generateReading(chart, city, influences, parans, intent);
 
     // Persist
     const result = db.prepare(
@@ -72,6 +85,23 @@ router.post('/', async (req, res) => {
     console.error('Reading generation error:', err);
     res.status(500).json({ error: err.message || 'Failed to generate reading' });
   }
+});
+
+// Get all readings for the current user (for map view)
+router.get('/all', (req, res) => {
+  const db = getDb();
+  const readings = db.prepare(`
+    SELECT r.id, r.city_name, r.city_lat, r.city_lng, r.themes, r.created_at, r.chart_id
+    FROM readings r
+    JOIN birth_charts c ON c.id = r.chart_id
+    WHERE c.user_id = ?
+    ORDER BY r.created_at DESC
+  `).all(req.user.id);
+
+  res.json(readings.map(r => ({
+    ...r,
+    themes: r.themes ? JSON.parse(r.themes) : null,
+  })));
 });
 
 // Get all readings for a chart
