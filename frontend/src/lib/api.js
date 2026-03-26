@@ -45,6 +45,7 @@ export const api = {
   },
   geocode: {
     search: (q) => request(`/geocode/search?q=${encodeURIComponent(q)}`),
+    fromIp: ()  => request('/geocode/ip'),
   },
   topCities: {
     find: (body) => request('/top-cities', { method: 'POST', body: JSON.stringify(body) }),

@@ -134,20 +134,40 @@ function WeeklyCard({ reading, city, weekStart, weekEnd, isComparison = false })
 }
 
 export default function WeeklyReading({ charts }) {
-  const [homeCity, setHomeCity]         = useState(null);
+  const [homeCity, setHomeCity]           = useState(null);
   const [selectedChart, setSelectedChart] = useState(null);
-  const [reading, setReading]           = useState(null);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [savingCity, setSavingCity]     = useState(false);
+  const [reading, setReading]             = useState(null);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState('');
+  const [savingCity, setSavingCity]       = useState(false);
+  const [detecting, setDetecting]         = useState(false);
+  const [autoDetected, setAutoDetected]   = useState(false);
 
-  const [whatIfCity, setWhatIfCity]       = useState(null);
-  const [whatIfReading, setWhatIfReading] = useState(null);
-  const [whatIfLoading, setWhatIfLoading] = useState(false);
+  const [whatIfCity, setWhatIfCity]         = useState(null);
+  const [whatIfReading, setWhatIfReading]   = useState(null);
+  const [whatIfLoading, setWhatIfLoading]   = useState(false);
 
+  // Load saved city from profile; if none, silently try IP detection
   useEffect(() => {
     api.profile.get().then(p => {
-      if (p.home_city) setHomeCity({ displayName: p.home_city, lat: p.home_lat, lng: p.home_lng });
+      if (p.home_city) {
+        setHomeCity({ displayName: p.home_city, lat: p.home_lat, lng: p.home_lng });
+      } else {
+        setDetecting(true);
+        api.geocode.fromIp()
+          .then(city => {
+            if (city) {
+              setAutoDetected(true);
+              setSavingCity(true);
+              api.profile.setHomeCity({ cityName: city.displayName, cityLat: city.lat, cityLng: city.lng })
+                .then(() => setHomeCity(city))
+                .catch(() => {})
+                .finally(() => setSavingCity(false));
+            }
+          })
+          .catch(() => {})
+          .finally(() => setDetecting(false));
+      }
     }).catch(() => {});
   }, []);
 
@@ -170,6 +190,7 @@ export default function WeeklyReading({ charts }) {
 
   async function saveHomeCity(city) {
     setSavingCity(true);
+    setAutoDetected(false);
     setReading(null);
     setWhatIfReading(null);
     try {
@@ -208,7 +229,12 @@ export default function WeeklyReading({ charts }) {
         <div className="flex-1">
           <label className="label flex items-center gap-2">
             Where are you this week?
-            {savingCity && <Spinner size="sm" />}
+            {(savingCity || detecting) && <Spinner size="sm" />}
+            {autoDetected && !savingCity && !detecting && (
+              <span className="text-[10px] font-sans text-gold/60 border border-gold/20 px-1.5 py-0.5 rounded-full">
+                auto-detected
+              </span>
+            )}
           </label>
           <CitySearch
             placeholder={homeCity ? `${homeCity.displayName.split(',')[0]} — change city…` : 'Enter your city…'}
@@ -217,15 +243,22 @@ export default function WeeklyReading({ charts }) {
         </div>
       </div>
 
-      {/* Empty state */}
-      {!homeCity && !loading && (
+      {/* Detecting from IP — shown only before city resolves */}
+      {detecting && !homeCity && (
+        <div className="flex items-center gap-3 py-8 justify-center text-text-m font-sans text-sm">
+          <Spinner /> Detecting your location…
+        </div>
+      )}
+
+      {/* Empty state — only if detection failed/skipped and no city entered */}
+      {!homeCity && !loading && !detecting && (
         <div className="card text-center py-12 space-y-1 border-dashed border-white/10">
           <p className="text-text-p font-sans font-medium">Enter your city to get started</p>
           <p className="text-text-m font-sans text-xs">Your reading refreshes every Monday.</p>
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading reading */}
       {loading && (
         <div className="flex items-center gap-3 py-8 justify-center text-text-m font-sans text-sm">
           <Spinner /> Reading the sky over {homeCity?.displayName?.split(',')[0]}…
