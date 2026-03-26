@@ -13,7 +13,7 @@ function Spinner({ size = 'md' }) {
   return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
 }
 
-function CitySearch({ onSelect, placeholder = 'Search for a city…', autoFocus = false }) {
+function CitySearch({ onSelect, placeholder = 'Search for a city…', autoFocus = false, dropUp = false }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -58,7 +58,7 @@ function CitySearch({ onSelect, placeholder = 'Search for a city…', autoFocus 
         )}
       </div>
       {open && (
-        <ul className="absolute z-50 mt-1 w-full bg-surface border border-white/10 rounded-xl shadow-xl overflow-hidden">
+        <ul className={`absolute z-50 w-full bg-surface border border-white/10 rounded-xl shadow-xl overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'mt-1'}`}>
           {results.map((city, i) => (
             <li key={i}>
               <button
@@ -324,7 +324,7 @@ export default function WeeklyReading({ charts }) {
               </p>
             </div>
 
-            <CitySearch placeholder="Search Tokyo, Lisbon, New York…" onSelect={handleWhatIf} />
+            <CitySearch placeholder="Search Tokyo, Lisbon, New York…" onSelect={handleWhatIf} dropUp />
 
             {whatIfLoading && (
               <div className="flex items-center gap-3 py-3 text-text-m font-sans text-sm">
