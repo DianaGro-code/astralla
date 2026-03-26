@@ -223,7 +223,7 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
       )}
 
       {/* ── Map canvas ── */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-nebula" style={{ height: 380 }}>
+      <div className="relative rounded-xl overflow-hidden border border-border bg-nebula">
 
         {/* Zoom controls */}
         <div className="absolute bottom-3 left-3 z-10 flex gap-1">
@@ -262,7 +262,9 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
 
         <ComposableMap
           projection="geoNaturalEarth1"
-          style={{ width: '100%', height: '100%' }}
+          width={800}
+          height={450}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
         >
           <ZoomableGroup
             zoom={position.zoom}
