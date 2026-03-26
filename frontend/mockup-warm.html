@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup – Warm Dark</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #16110C;
+    font-family: 'Georgia', serif;
+    color: #EDE6D8;
+    overflow-x: hidden;
+  }
+
+  /* Warm sky gradient — brownish-black at top, warm charcoal below */
+  .sky-gradient {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 15%, #2A1F12 0%, transparent 50%),
+      radial-gradient(ellipse at 75% 25%, #201810 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 80%, #1A150F 0%, transparent 60%),
+      linear-gradient(180deg, #100C08 0%, #16110C 35%, #191410 100%);
+    z-index: 0; pointer-events: none;
+  }
+
+  /* Warm horizon glow — very subtle amber at the bottom */
+  .horizon-glow {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 35vh;
+    background: radial-gradient(ellipse at 50% 100%, rgba(160,90,20,0.10) 0%, transparent 70%);
+    z-index: 0; pointer-events: none;
+  }
+
+  #stars-canvas {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 56px;
+    background: rgba(16, 12, 8, 0.80);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,220,150,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-mark { color: #C8963C; font-size: 18px; }
+  .logo-name { font-family: 'Georgia', serif; font-size: 17px; color: #EDE6D8; font-weight: 400; }
+  .logo-tag { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: rgba(237,230,216,0.35); letter-spacing: 0.03em; margin-left: 4px; }
+  .nav-link { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: rgba(237,230,216,0.4); }
+
+  /* Hero */
+  main {
+    position: relative; z-index: 10;
+    padding: 140px 24px 80px;
+    max-width: 720px; margin: 0 auto;
+    text-align: center;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid rgba(200,150,60,0.22);
+    background: rgba(200,150,60,0.07);
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #C8963C; margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(44px, 8vw, 68px);
+    font-weight: 300; line-height: 1.1;
+    color: #EDE6D8; margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+  h1 em { color: #C8963C; font-style: italic; }
+  .sub {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 16px; color: rgba(237,230,216,0.50); line-height: 1.6;
+    max-width: 480px; margin: 0 auto 36px; font-weight: 300;
+  }
+  .cta {
+    display: block; width: fit-content; margin: 0 auto 12px;
+    background: linear-gradient(135deg, #C8963C 0%, #A87828 100%);
+    color: #16110C;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 15px; font-weight: 600;
+    padding: 14px 36px; border-radius: 8px;
+    text-decoration: none; letter-spacing: 0.01em;
+    box-shadow: 0 4px 32px rgba(200,150,60,0.20);
+  }
+  .free-tag {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 11px; color: rgba(237,230,216,0.25); margin-top: 10px;
+  }
+
+  /* Reading card */
+  .preview-card {
+    margin: 60px auto 0;
+    max-width: 480px;
+    background: rgba(30, 22, 14, 0.90);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid rgba(200,150,60,0.10);
+    box-shadow:
+      0 8px 48px rgba(0,0,0,0.45),
+      0 1px 0 rgba(200,150,60,0.06) inset;
+    padding: 28px 28px 24px;
+    text-align: left;
+  }
+  .card-eyebrow {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #C8963C; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-city { font-size: 38px; font-weight: 300; color: #EDE6D8; line-height: 1; margin-bottom: 4px; }
+  .card-country { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: rgba(237,230,216,0.35); margin-bottom: 12px; }
+  .card-verdict { font-size: 18px; font-weight: 300; color: #C8963C; margin-bottom: 8px; }
+  .stars-row { display: flex; gap: 3px; margin-bottom: 16px; }
+  .star-on  { color: #C8963C; font-size: 16px; }
+  .star-off { color: rgba(200,150,60,0.15); font-size: 16px; }
+
+  .quote-bar {
+    border-left: 2px solid rgba(200,150,60,0.45);
+    padding-left: 14px;
+    font-size: 15px; font-weight: 300; color: #EDE6D8; line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .cost-card {
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .cost-card::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+    background: rgba(200,150,60,0.55);
+  }
+  .cost-label {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: rgba(237,230,216,0.30); margin-bottom: 4px; padding-left: 8px;
+  }
+  .cost-text { font-size: 13px; color: rgba(237,230,216,0.65); line-height: 1.5; padding-left: 8px; }
+
+  .score-bars { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-icon { font-size: 12px; width: 16px; text-align: center; }
+  .bar-label { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: rgba(237,230,216,0.35); width: 52px; }
+  .bar-track { flex: 1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; }
+  .bar-fill  { height: 100%; border-radius: 2px; }
+  .bar-num { font-family: 'Helvetica Neue', sans-serif; font-size: 10px; color: rgba(237,230,216,0.25); width: 12px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="sky-gradient"></div>
+<div class="horizon-glow"></div>
+<canvas id="stars-canvas"></canvas>
+
+<nav>
+  <div class="logo">
+    <span class="logo-mark">✦</span>
+    <span class="logo-name">Astralla</span>
+    <span class="logo-tag">your life, in the right place</span>
+  </div>
+  <span class="nav-link">Sign in</span>
+</nav>
+
+<main>
+  <div class="badge">✦ Astralla</div>
+  <h1>Some places will<br><em>change you.</em></h1>
+  <p class="sub">Find out which ones. Your birth chart has specific opinions about where you should live, love, and build a career.</p>
+  <a class="cta" href="#">Read my chart →</a>
+  <p class="free-tag">Free to use · Takes 2 minutes</p>
+
+  <div class="preview-card">
+    <div class="card-eyebrow">✦ Astralla Reading · March 2026</div>
+    <div class="card-city">Lisbon</div>
+    <div class="card-country">Portugal</div>
+    <div class="card-verdict">Strongly activated for you.</div>
+    <div class="stars-row">
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-off">★</span>
+    </div>
+
+    <div class="quote-bar">
+      A city that puts your ambitions in the sun and asks very little in return — for now.
+    </div>
+
+    <div class="cost-card">
+      <div class="cost-label">What it costs you</div>
+      <div class="cost-text">Your relationships back home may feel the distance more than you expect.</div>
+    </div>
+
+    <div class="score-bars">
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C0507A">♀</span>
+        <span class="bar-label">Love</span>
+        <div class="bar-track"><div class="bar-fill" style="width:60%;background:#C0507A"></div></div>
+        <span class="bar-num">3</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C8963C">☉</span>
+        <span class="bar-label">Career</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#C8963C"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#5A8FC8">☽</span>
+        <span class="bar-label">Inner</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#5A8FC8"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C04010">♂</span>
+        <span class="bar-label">Vitality</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#C04010"></div></div>
+        <span class="bar-num">5</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // Warm-tinted stars — slightly amber/cream, not pure white
+  const stars = [];
+  for (let i = 0; i < 220; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.72,
+      r: Math.random() * 0.9 + 0.2,
+      a: Math.random() * 0.45 + 0.12,
+      warm: Math.random() > 0.6, // some stars have a warm tint
+    });
+  }
+  // A handful of brighter ones
+  for (let i = 0; i < 14; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.55,
+      r: Math.random() * 1.4 + 0.7,
+      a: Math.random() * 0.3 + 0.5,
+      warm: Math.random() > 0.4,
+    });
+  }
+
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    // warm stars lean amber, cool stars lean cream-white
+    const color = s.warm
+      ? `rgba(240, 210, 160, ${s.a})`
+      : `rgba(230, 222, 208, ${s.a})`;
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+</script>
+</body>
+</html>

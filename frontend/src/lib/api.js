@@ -55,4 +55,11 @@ export const api = {
   solarReturns: {
     generate: (body) => request('/solar-returns', { method: 'POST', body: JSON.stringify(body) }),
   },
+  profile: {
+    get:         ()     => request('/auth/me'),
+    setHomeCity: (body) => request('/auth/home-city', { method: 'PUT', body: JSON.stringify(body) }),
+  },
+  weekly: {
+    generate: (body) => request('/weekly', { method: 'POST', body: JSON.stringify(body) }),
+  },
 };

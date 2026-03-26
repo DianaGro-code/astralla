@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup – Light Sky</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #C8DFEE 0%, #DFF0F9 30%, #EEF7FC 55%, #F7FAFB 100%);
+    font-family: 'Georgia', serif;
+    color: #1C2B3A;
+    overflow-x: hidden;
+  }
+
+  /* Clouds */
+  .cloud-layer {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.7);
+    border-radius: 50px;
+    filter: blur(18px);
+  }
+  .c1 { width: 300px; height: 70px; top: 5%; left: -5%; }
+  .c2 { width: 200px; height: 50px; top: 8%; left: 20%; }
+  .c3 { width: 380px; height: 80px; top: 3%; right: -10%; }
+  .c4 { width: 160px; height: 40px; top: 12%; right: 30%; }
+  .c5 { width: 250px; height: 55px; top: 18%; left: 40%; }
+  .c6 { width: 200px; height: 45px; top: 22%; left: 5%; opacity: 0.5; }
+  .c7 { width: 300px; height: 60px; top: 28%; right: 5%; opacity: 0.4; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 56px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-mark { color: #3A7EC0; font-size: 18px; }
+  .logo-name { font-family: 'Georgia', serif; font-size: 17px; color: #1C2B3A; font-weight: 400; }
+  .logo-tag { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: #7A96A8; letter-spacing: 0.03em; margin-left: 4px; }
+  .nav-link { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #4A6B80; }
+
+  /* Hero */
+  main {
+    position: relative; z-index: 10;
+    padding: 140px 24px 80px;
+    max-width: 720px; margin: 0 auto;
+    text-align: center;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid rgba(58,126,192,0.25);
+    background: rgba(255,255,255,0.6);
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #3A7EC0; margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(44px, 8vw, 68px);
+    font-weight: 300; line-height: 1.1;
+    color: #1C2B3A; margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+  h1 em { color: #3A7EC0; font-style: italic; }
+  .sub {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 16px; color: #4A6B80; line-height: 1.6;
+    max-width: 480px; margin: 0 auto 36px; font-weight: 300;
+  }
+  .cta {
+    display: inline-block;
+    background: #3A7EC0; color: #fff;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 15px; font-weight: 400;
+    padding: 14px 36px; border-radius: 8px;
+    text-decoration: none; letter-spacing: 0.01em;
+    box-shadow: 0 4px 24px rgba(58,126,192,0.25);
+    margin-bottom: 12px; display: block; width: fit-content; margin: 0 auto 12px;
+  }
+  .free-tag {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 11px; color: #7A96A8; margin-top: 10px;
+  }
+
+  /* Reading card preview */
+  .preview-card {
+    margin: 60px auto 0;
+    max-width: 480px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 8px 48px rgba(30,60,90,0.08), 0 1px 3px rgba(30,60,90,0.06);
+    padding: 28px 28px 24px;
+    text-align: left;
+  }
+  .card-eyebrow {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #3A7EC0; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-city { font-size: 38px; font-weight: 300; color: #1C2B3A; line-height: 1; margin-bottom: 4px; }
+  .card-country { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #7A96A8; margin-bottom: 12px; }
+  .card-verdict { font-size: 18px; font-weight: 300; color: #3A7EC0; margin-bottom: 8px; }
+  .stars-row { display: flex; gap: 3px; margin-bottom: 16px; }
+  .star-on  { color: #3A7EC0; font-size: 16px; }
+  .star-off { color: #C5D8E8; font-size: 16px; }
+  .divider { height: 1px; background: rgba(0,0,0,0.06); margin: 16px 0; }
+  .quote-bar {
+    border-left: 2px solid rgba(58,126,192,0.5);
+    padding-left: 14px;
+    font-size: 15px; font-weight: 300; color: #1C2B3A; line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .cost-card {
+    border-radius: 10px;
+    background: rgba(58,126,192,0.04);
+    border: 1px solid rgba(58,126,192,0.12);
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .cost-card::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+    background: rgba(200,160,60,0.6);
+  }
+  .cost-label {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #7A96A8; margin-bottom: 4px; padding-left: 8px;
+  }
+  .cost-text {
+    font-size: 13px; color: #3A5060; line-height: 1.5; padding-left: 8px;
+  }
+  .score-bars { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-icon { font-size: 12px; width: 16px; text-align: center; }
+  .bar-label { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: #7A96A8; width: 52px; }
+  .bar-track { flex: 1; height: 3px; background: #D8E8F0; border-radius: 2px; }
+  .bar-fill  { height: 100%; border-radius: 2px; background: #3A7EC0; }
+  .bar-num { font-family: 'Helvetica Neue', sans-serif; font-size: 10px; color: #9AB0C0; width: 12px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="cloud-layer">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="cloud c4"></div>
+  <div class="cloud c5"></div>
+  <div class="cloud c6"></div>
+  <div class="cloud c7"></div>
+</div>
+
+<nav>
+  <div class="logo">
+    <span class="logo-mark">✦</span>
+    <span class="logo-name">Astralla</span>
+    <span class="logo-tag">your life, in the right place</span>
+  </div>
+  <span class="nav-link">Sign in</span>
+</nav>
+
+<main>
+  <div class="badge">✦ Astralla</div>
+  <h1>Some places will<br><em>change you.</em></h1>
+  <p class="sub">Find out which ones. Your birth chart has specific opinions about where you should live, love, and build a career.</p>
+  <a class="cta" href="#">Read my chart →</a>
+  <p class="free-tag">Free to use · Takes 2 minutes</p>
+
+  <!-- Reading card preview -->
+  <div class="preview-card">
+    <div class="card-eyebrow">✦ Astralla Reading · March 2026</div>
+    <div class="card-city">Lisbon</div>
+    <div class="card-country">Portugal</div>
+    <div class="card-verdict">Strongly activated for you.</div>
+    <div class="stars-row">
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-off">★</span>
+    </div>
+
+    <div class="quote-bar">
+      A city that puts your ambitions in the sun and asks very little in return — for now.
+    </div>
+
+    <div class="cost-card">
+      <div class="cost-label">What it costs you</div>
+      <div class="cost-text">Your relationships back home may feel the distance more than you expect.</div>
+    </div>
+
+    <div class="score-bars">
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C0507A">♀</span>
+        <span class="bar-label">Love</span>
+        <div class="bar-track"><div class="bar-fill" style="width:60%;background:#C0507A"></div></div>
+        <span class="bar-num">3</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#8A6000">☉</span>
+        <span class="bar-label">Career</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#8A6000"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#3060A0">☽</span>
+        <span class="bar-label">Inner</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#3060A0"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C04010">♂</span>
+        <span class="bar-label">Vitality</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#C04010"></div></div>
+        <span class="bar-num">5</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

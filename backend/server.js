@@ -13,6 +13,7 @@ import geocodingRoutes from './src/routes/geocoding.js';
 import topCitiesRoutes from './src/routes/topCities.js';
 import transitsRoutes from './src/routes/transits.js';
 import solarReturnsRoutes from './src/routes/solarReturns.js';
+import weeklyRoutes from './src/routes/weekly.js';
 
 dotenv.config({ override: true });
 
@@ -33,6 +34,7 @@ app.use('/api/geocode', geocodingRoutes);
 app.use('/api/top-cities', topCitiesRoutes);
 app.use('/api/transits', transitsRoutes);
 app.use('/api/solar-returns', solarReturnsRoutes);
+app.use('/api/weekly', weeklyRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

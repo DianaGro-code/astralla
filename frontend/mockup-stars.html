@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup – Night Sky</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0D1526;
+    font-family: 'Georgia', serif;
+    color: #E8E4D8;
+    overflow-x: hidden;
+  }
+
+  /* Star field canvas */
+  #stars-canvas {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle gradient — deep at top, slightly lighter at bottom */
+  .sky-gradient {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 30% 20%, #1A2748 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 60%, #151F38 0%, transparent 45%),
+                linear-gradient(180deg, #0A1120 0%, #0D1526 40%, #101828 100%);
+    z-index: 0; pointer-events: none;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 56px;
+    background: rgba(10, 17, 32, 0.75);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-mark { color: #D4AF37; font-size: 18px; }
+  .logo-name { font-family: 'Georgia', serif; font-size: 17px; color: #E8E4D8; font-weight: 400; }
+  .logo-tag { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: rgba(232,228,216,0.4); letter-spacing: 0.03em; margin-left: 4px; }
+  .nav-link { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: rgba(232,228,216,0.5); }
+
+  /* Hero */
+  main {
+    position: relative; z-index: 10;
+    padding: 140px 24px 80px;
+    max-width: 720px; margin: 0 auto;
+    text-align: center;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid rgba(212,175,55,0.25);
+    background: rgba(212,175,55,0.06);
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #D4AF37; margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(44px, 8vw, 68px);
+    font-weight: 300; line-height: 1.1;
+    color: #EDE9DF; margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+  h1 em { color: #D4AF37; font-style: italic; }
+  .sub {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 16px; color: rgba(232,228,216,0.55); line-height: 1.6;
+    max-width: 480px; margin: 0 auto 36px; font-weight: 300;
+  }
+  .cta {
+    display: inline-block;
+    background: #D4AF37; color: #0D1526;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 15px; font-weight: 500;
+    padding: 14px 36px; border-radius: 8px;
+    text-decoration: none; letter-spacing: 0.01em;
+    box-shadow: 0 4px 32px rgba(212,175,55,0.22);
+    width: fit-content; margin: 0 auto 12px; display: block;
+  }
+  .free-tag {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 11px; color: rgba(232,228,216,0.3); margin-top: 10px;
+  }
+
+  /* Reading card */
+  .preview-card {
+    margin: 60px auto 0;
+    max-width: 480px;
+    background: rgba(22, 34, 58, 0.85);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.04) inset;
+    padding: 28px 28px 24px;
+    text-align: left;
+  }
+  .card-eyebrow {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #D4AF37; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-city { font-size: 38px; font-weight: 300; color: #EDE9DF; line-height: 1; margin-bottom: 4px; }
+  .card-country { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: rgba(232,228,216,0.4); margin-bottom: 12px; }
+  .card-verdict { font-size: 18px; font-weight: 300; color: #D4AF37; margin-bottom: 8px; }
+  .stars-row { display: flex; gap: 3px; margin-bottom: 16px; }
+  .star-on  { color: #D4AF37; font-size: 16px; }
+  .star-off { color: rgba(212,175,55,0.18); font-size: 16px; }
+  .quote-bar {
+    border-left: 2px solid rgba(212,175,55,0.5);
+    padding-left: 14px;
+    font-size: 15px; font-weight: 300; color: #EDE9DF; line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .cost-card {
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .cost-card::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+    background: rgba(200,160,60,0.65);
+  }
+  .cost-label {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: rgba(232,228,216,0.35); margin-bottom: 4px; padding-left: 8px;
+  }
+  .cost-text { font-size: 13px; color: rgba(232,228,216,0.7); line-height: 1.5; padding-left: 8px; }
+  .score-bars { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-icon { font-size: 12px; width: 16px; text-align: center; }
+  .bar-label { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: rgba(232,228,216,0.4); width: 52px; }
+  .bar-track { flex: 1; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; }
+  .bar-fill  { height: 100%; border-radius: 2px; }
+  .bar-num { font-family: 'Helvetica Neue', sans-serif; font-size: 10px; color: rgba(232,228,216,0.3); width: 12px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="sky-gradient"></div>
+<canvas id="stars-canvas"></canvas>
+
+<nav>
+  <div class="logo">
+    <span class="logo-mark">✦</span>
+    <span class="logo-name">Astralla</span>
+    <span class="logo-tag">your life, in the right place</span>
+  </div>
+  <span class="nav-link">Sign in</span>
+</nav>
+
+<main>
+  <div class="badge">✦ Astralla</div>
+  <h1>Some places will<br><em>change you.</em></h1>
+  <p class="sub">Find out which ones. Your birth chart has specific opinions about where you should live, love, and build a career.</p>
+  <a class="cta" href="#">Read my chart →</a>
+  <p class="free-tag">Free to use · Takes 2 minutes</p>
+
+  <!-- Reading card preview -->
+  <div class="preview-card">
+    <div class="card-eyebrow">✦ Astralla Reading · March 2026</div>
+    <div class="card-city">Lisbon</div>
+    <div class="card-country">Portugal</div>
+    <div class="card-verdict">Strongly activated for you.</div>
+    <div class="stars-row">
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-on">★</span><span class="star-on">★</span>
+      <span class="star-off">★</span>
+    </div>
+
+    <div class="quote-bar">
+      A city that puts your ambitions in the sun and asks very little in return — for now.
+    </div>
+
+    <div class="cost-card">
+      <div class="cost-label">What it costs you</div>
+      <div class="cost-text">Your relationships back home may feel the distance more than you expect.</div>
+    </div>
+
+    <div class="score-bars">
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C0507A">♀</span>
+        <span class="bar-label">Love</span>
+        <div class="bar-track"><div class="bar-fill" style="width:60%;background:#C0507A"></div></div>
+        <span class="bar-num">3</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#D4AF37">☉</span>
+        <span class="bar-label">Career</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#D4AF37"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#5A8FC8">☽</span>
+        <span class="bar-label">Inner</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#5A8FC8"></div></div>
+        <span class="bar-num">4</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-icon" style="color:#C04010">♂</span>
+        <span class="bar-label">Vitality</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#C04010"></div></div>
+        <span class="bar-num">5</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Subtle star field
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const stars = [];
+  for (let i = 0; i < 260; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.75, // stars mostly in upper portion
+      r: Math.random() * 1.1 + 0.2,
+      a: Math.random() * 0.6 + 0.15,
+    });
+  }
+
+  // A few brighter ones
+  for (let i = 0; i < 18; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.6,
+      r: Math.random() * 1.6 + 0.8,
+      a: Math.random() * 0.35 + 0.55,
+    });
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(230, 225, 210, ${s.a})`;
+    ctx.fill();
+  });
+</script>
+
+</body>
+</html>

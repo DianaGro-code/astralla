@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import GlobeLoader from '../components/GlobeLoader.jsx';
 import WorldMap from '../components/WorldMap.jsx';
+import WeeklyReading from '../components/WeeklyReading.jsx';
 
 const PLANET_GLYPHS = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
   jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
@@ -566,7 +567,7 @@ export default function Dashboard() {
             </h1>
             <p className="text-text-m text-sm font-sans mt-1">Your birth charts & city readings</p>
           </div>
-          {!showForm && view === 'list' && (
+          {!showForm && (view === 'list') && (
             <button onClick={() => setShowForm(true)} className="btn-gold py-2 px-4 text-sm">
               + New chart
             </button>
@@ -591,6 +592,14 @@ export default function Dashboard() {
               }`}
             >
               🗺 Map
+            </button>
+            <button
+              onClick={() => setView('weekly')}
+              className={`px-4 py-1.5 text-xs font-sans border-l border-border transition-colors ${
+                view === 'weekly' ? 'bg-gold/15 text-gold' : 'text-text-m hover:text-text-p'
+              }`}
+            >
+              ✦ This Week
             </button>
           </div>
         )}
@@ -668,6 +677,17 @@ export default function Dashboard() {
                 </>
               );
             })()}
+          </div>
+        )}
+
+        {/* WEEKLY VIEW */}
+        {view === 'weekly' && (
+          <div className="animate-fade-in">
+            <div className="mb-4">
+              <h2 className="font-serif text-xl text-text-p">Your week, by the sky</h2>
+              <p className="text-text-m text-sm font-sans mt-1">A fresh reading every week, tied to where you actually are.</p>
+            </div>
+            <WeeklyReading charts={charts} />
           </div>
         )}
 

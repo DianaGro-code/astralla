@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a1a;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #ccc;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .option {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .label {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .label strong {
+    display: block;
+    font-size: 13px;
+    color: #aaa;
+    font-weight: 500;
+    margin-bottom: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .frame-wrap {
+    width: 100%;
+    /* 390px wide frame, scaled to fit column */
+    aspect-ratio: 390 / 780;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+  }
+
+  iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 390px;
+    height: 780px;
+    border: none;
+    transform-origin: top left;
+    /* scale will be set by JS */
+  }
+
+  .pick-btn {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #666;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .pick-btn:hover {
+    border-color: #555;
+    color: #aaa;
+    background: rgba(255,255,255,0.04);
+  }
+</style>
+</head>
+<body>
+
+<h1>Design Options</h1>
+
+<div class="grid" id="grid">
+  <div class="option">
+    <div class="frame-wrap" id="wrap1">
+      <iframe src="/mockup-light.html" id="f1" scrolling="no"></iframe>
+    </div>
+    <div class="label"><strong>Option 1</strong>Light sky · minimalist</div>
+  </div>
+
+  <div class="option">
+    <div class="frame-wrap" id="wrap2">
+      <iframe src="/mockup-stars.html" id="f2" scrolling="no"></iframe>
+    </div>
+    <div class="label"><strong>Option 2</strong>Night sky · navy</div>
+  </div>
+
+  <div class="option">
+    <div class="frame-wrap" id="wrap3">
+      <iframe src="/mockup-warm.html" id="f3" scrolling="no"></iframe>
+    </div>
+    <div class="label"><strong>Option 3</strong>Warm dark · charcoal</div>
+  </div>
+
+  <div class="option">
+    <div class="frame-wrap" id="wrap4">
+      <iframe src="/mockup-hybrid.html" id="f4" scrolling="no"></iframe>
+    </div>
+    <div class="label"><strong>Hybrid</strong>Navy + warm stars</div>
+  </div>
+</div>
+
+<script>
+  function scaleFrames() {
+    const grid = document.getElementById('grid');
+    const colWidth = (grid.offsetWidth - 48) / 4; // 48 = 3 gaps of 16px
+
+    ['1','2','3','4'].forEach(n => {
+      const wrap = document.getElementById('wrap' + n);
+      const iframe = document.getElementById('f' + n);
+      const scale = colWidth / 390;
+      wrap.style.height = (780 * scale) + 'px';
+      iframe.style.transform = `scale(${scale})`;
+    });
+  }
+
+  scaleFrames();
+  window.addEventListener('resize', scaleFrames);
+</script>
+
+</body>
+</html>

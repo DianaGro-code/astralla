@@ -319,3 +319,47 @@ Return ONLY valid JSON — no markdown, no fences — with this exact structure:
     score: top3[i].score,
   }));
 }
+
+// ── Weekly Reading ─────────────────────────────────────────────────────────────
+
+export async function generateWeeklyReading(chart, city, weekStart, weekEnd, transitData) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const prompt = `Birth data: born ${chart.birth_date} at ${chart.birth_time} in ${chart.birth_place}.
+Current location: ${city.displayName}
+This week: ${weekStart} → ${weekEnd}
+
+TRANSITING PLANETARY LINES THROUGH ${city.displayName.split(',')[0].toUpperCase()} THIS WEEK:
+${formatTransitLines(transitData.lines)}
+
+TRANSIT-TO-NATAL ASPECTS ACTIVE THIS WEEK:
+${formatTransitAspects(transitData.aspects)}
+
+${WRITING_STYLE}
+
+You are writing a WEEKLY horoscope — but one grounded in where this person actually is RIGHT NOW, not a generic sun-sign forecast. The transiting lines tell you which planetary energies are physically activated at their city this week. The transit-to-natal aspects tell you what's stirring internally.
+
+Write this like a sharp, intimate weekly column — the kind someone saves and re-reads on Thursday. Make it feel personal and specific to their location.
+
+Return ONLY valid JSON with exactly these keys:
+
+- "headline": One punchy sentence (under 12 words) that captures the week's energy. No planet names — just the consequence.
+- "overview": 2–3 sentences. What is the sky saying about THIS week for THIS person in THIS city? What's the dominant theme? Lead with consequence.
+- "energy": "high" | "medium" | "low" — overall activation level this week
+- "themes": array of 2–3 objects, each with "title" (short label, 2–4 words) and "text" (2–3 sentences). Cover the most significant influences for the week. Name specific planets and angles. End at least one with a question or a dare.
+- "watchFor": 1–2 sentences. One honest heads-up — a friction point, blind spot, or thing this week will demand.
+- "bestDays": 1 sentence. When in the week is the energy highest or most useful?
+
+{"headline":"...","overview":"...","energy":"medium","themes":[{"title":"...","text":"..."}],"watchFor":"...","bestDays":"..."}`;
+
+  const response = await client.messages.create({
+    model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    system: 'You are a sharp astrocartographer who writes weekly columns like a magazine editor. Respond with ONLY valid JSON.',
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const raw     = response.content[0].text.trim();
+  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+  return JSON.parse(cleaned);
+}

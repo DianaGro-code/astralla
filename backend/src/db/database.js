@@ -58,6 +58,25 @@ export function initDb() {
   // Add themes column if it doesn't exist (migration)
   try { db.exec('ALTER TABLE readings ADD COLUMN themes TEXT'); } catch {}
 
+  // Add home city fields to users (migration)
+  try { db.exec('ALTER TABLE users ADD COLUMN home_city TEXT'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN home_lat REAL'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN home_lng REAL'); } catch {}
+
+  // Weekly readings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS weekly_readings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chart_id INTEGER NOT NULL REFERENCES birth_charts(id) ON DELETE CASCADE,
+      city_name TEXT NOT NULL,
+      city_lat REAL NOT NULL,
+      city_lng REAL NOT NULL,
+      week_start TEXT NOT NULL,
+      reading TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Transit readings table
   db.exec(`
     CREATE TABLE IF NOT EXISTS transit_readings (
