@@ -1,17 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 
-const ENERGY_COLORS = {
-  high:   'text-gold border-gold/40 bg-gold/10',
-  medium: 'text-amber-300 border-amber-300/40 bg-amber-300/10',
-  low:    'text-blue-300 border-blue-300/40 bg-blue-300/10',
+const ENERGY_DOT = {
+  high:   'bg-gold',
+  medium: 'bg-amber-400',
+  low:    'bg-blue-400',
 };
+const ENERGY_LABEL = { high: 'High energy', medium: 'Medium energy', low: 'Low energy' };
 
-function Spinner() {
-  return <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin inline-block" />;
+function Spinner({ size = 'md' }) {
+  const s = size === 'sm' ? 'w-3.5 h-3.5 border' : 'w-5 h-5 border-2';
+  return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
 }
 
-function CitySearch({ onSelect, placeholder = 'Search for a city…' }) {
+function CitySearch({ onSelect, placeholder = 'Search for a city…', autoFocus = false }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -32,7 +34,7 @@ function CitySearch({ onSelect, placeholder = 'Search for a city…' }) {
   }, [q]);
 
   function pick(city) {
-    setQ(city.displayName);
+    setQ('');
     setOpen(false);
     onSelect(city);
   }
@@ -43,14 +45,15 @@ function CitySearch({ onSelect, placeholder = 'Search for a city…' }) {
         <input
           className="input pr-8"
           value={q}
+          autoFocus={autoFocus}
           onChange={e => setQ(e.target.value)}
           placeholder={placeholder}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
           onFocus={() => results.length > 0 && setOpen(true)}
         />
         {searching && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60">
-            <Spinner />
+            <Spinner size="sm" />
           </span>
         )}
       </div>
@@ -73,51 +76,56 @@ function CitySearch({ onSelect, placeholder = 'Search for a city…' }) {
   );
 }
 
-function WeeklyCard({ reading, city, weekStart, weekEnd }) {
-  const energyClass = ENERGY_COLORS[reading.energy] || ENERGY_COLORS.medium;
-  const fmt = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function WeeklyCard({ reading, city, weekStart, weekEnd, isComparison = false }) {
+  const dot   = ENERGY_DOT[reading.energy] || ENERGY_DOT.medium;
+  const label = ENERGY_LABEL[reading.energy] || 'Medium energy';
+  const fmt   = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   return (
-    <div className="space-y-5 animate-slide-up">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-text-m text-xs font-sans uppercase tracking-widest mb-1">
-            Week of {fmt(weekStart)} – {fmt(weekEnd)}
-          </p>
-          <h2 className="font-serif text-2xl text-text-p leading-snug">
-            {reading.headline}
-          </h2>
-          <p className="text-text-m text-sm mt-1 font-sans">📍 {city}</p>
+    <div className="space-y-4 animate-slide-up">
+
+      {/* Headline + meta */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+          <span className="text-text-m text-xs font-sans">{label} · {fmt(weekStart)}–{fmt(weekEnd)}</span>
+          {isComparison && (
+            <span className="ml-auto text-xs font-sans text-text-m border border-white/10 px-2 py-0.5 rounded-full">
+              📍 {city.split(',')[0]}
+            </span>
+          )}
         </div>
-        <span className={`text-xs font-sans px-3 py-1 rounded-full border font-medium shrink-0 ${energyClass}`}>
-          {reading.energy} energy
-        </span>
+        <h2 className={`font-serif leading-tight ${isComparison ? 'text-xl' : 'text-2xl'} text-text-p`}>
+          {reading.headline}
+        </h2>
+        {!isComparison && (
+          <p className="text-text-m text-xs font-sans mt-1">📍 {city}</p>
+        )}
       </div>
 
-      {/* Overview */}
-      <p className="text-text-p font-sans text-sm leading-relaxed border-l-2 border-gold/40 pl-4">
+      {/* Overview — the lede */}
+      <p className="text-text-p font-sans text-sm leading-relaxed">
         {reading.overview}
       </p>
 
-      {/* Themes */}
-      <div className="space-y-3">
+      {/* Themes — clean list, no card wrappers */}
+      <div className="divide-y divide-white/5">
         {reading.themes?.map((theme, i) => (
-          <div key={i} className="card border-white/5 space-y-1 py-3 px-4">
-            <p className="text-gold text-xs font-sans uppercase tracking-widest">{theme.title}</p>
+          <div key={i} className="py-3 first:pt-0 last:pb-0">
+            <p className="text-gold text-[11px] font-sans uppercase tracking-widest mb-1">{theme.title}</p>
             <p className="text-text-p font-sans text-sm leading-relaxed">{theme.text}</p>
           </div>
         ))}
       </div>
 
-      {/* Watch For + Best Days */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="card border-amber-400/20 bg-amber-400/5 py-3 px-4">
-          <p className="text-amber-300 text-xs font-sans uppercase tracking-widest mb-1">Watch for</p>
+      {/* Watch for + Best days — inline */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-1">
+        <div className="flex-1 bg-amber-400/5 border border-amber-400/15 rounded-xl px-4 py-3">
+          <p className="text-amber-300 text-[10px] font-sans uppercase tracking-widest mb-1">⚠ Watch for</p>
           <p className="text-text-p font-sans text-sm leading-relaxed">{reading.watchFor}</p>
         </div>
-        <div className="card border-emerald-400/20 bg-emerald-400/5 py-3 px-4">
-          <p className="text-emerald-300 text-xs font-sans uppercase tracking-widest mb-1">Best days</p>
+        <div className="flex-1 bg-emerald-400/5 border border-emerald-400/15 rounded-xl px-4 py-3">
+          <p className="text-emerald-300 text-[10px] font-sans uppercase tracking-widest mb-1">✓ Best days</p>
           <p className="text-text-p font-sans text-sm leading-relaxed">{reading.bestDays}</p>
         </div>
       </div>
@@ -126,63 +134,47 @@ function WeeklyCard({ reading, city, weekStart, weekEnd }) {
 }
 
 export default function WeeklyReading({ charts }) {
-  const [profile, setProfile] = useState(null);
-  const [homeCity, setHomeCity] = useState(null); // { displayName, lat, lng }
+  const [homeCity, setHomeCity]         = useState(null);
   const [selectedChart, setSelectedChart] = useState(null);
-  const [reading, setReading] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [savingCity, setSavingCity] = useState(false);
+  const [reading, setReading]           = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
+  const [savingCity, setSavingCity]     = useState(false);
 
-  // What-if city
-  const [whatIfCity, setWhatIfCity] = useState(null);
+  const [whatIfCity, setWhatIfCity]       = useState(null);
   const [whatIfReading, setWhatIfReading] = useState(null);
   const [whatIfLoading, setWhatIfLoading] = useState(false);
 
-  // Load profile on mount
   useEffect(() => {
     api.profile.get().then(p => {
-      setProfile(p);
-      if (p.home_city) {
-        setHomeCity({ displayName: p.home_city, lat: p.home_lat, lng: p.home_lng });
-      }
+      if (p.home_city) setHomeCity({ displayName: p.home_city, lat: p.home_lat, lng: p.home_lng });
     }).catch(() => {});
   }, []);
 
-  // Auto-select first chart
   useEffect(() => {
     if (charts?.length && !selectedChart) setSelectedChart(charts[0]);
   }, [charts]);
 
-  // Generate home reading when chart + city are ready
   useEffect(() => {
-    if (selectedChart && homeCity) generateReading(selectedChart, homeCity, setReading, setLoading);
+    if (selectedChart && homeCity) doGenerate(selectedChart, homeCity, setReading, setLoading);
   }, [selectedChart, homeCity]);
 
-  async function generateReading(chart, city, setR, setL) {
-    setL(true);
-    setError('');
+  async function doGenerate(chart, city, setR, setL) {
+    setL(true); setError('');
     try {
-      const data = await api.weekly.generate({
-        chartId: chart.id,
-        cityName: city.displayName,
-        cityLat: city.lat,
-        cityLng: city.lng,
-      });
+      const data = await api.weekly.generate({ chartId: chart.id, cityName: city.displayName, cityLat: city.lat, cityLng: city.lng });
       setR(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setL(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setL(false); }
   }
 
   async function saveHomeCity(city) {
     setSavingCity(true);
+    setReading(null);
+    setWhatIfReading(null);
     try {
       await api.profile.setHomeCity({ cityName: city.displayName, cityLat: city.lat, cityLng: city.lng });
       setHomeCity(city);
-      setReading(null);
     } catch { /* ignore */ }
     finally { setSavingCity(false); }
   }
@@ -190,71 +182,53 @@ export default function WeeklyReading({ charts }) {
   async function handleWhatIf(city) {
     setWhatIfCity(city);
     setWhatIfReading(null);
-    if (selectedChart) generateReading(selectedChart, city, setWhatIfReading, setWhatIfLoading);
+    if (selectedChart) doGenerate(selectedChart, city, setWhatIfReading, setWhatIfLoading);
   }
 
   if (!charts?.length) {
-    return (
-      <div className="card text-center py-10 text-text-m font-sans text-sm">
-        Add a birth chart first to see your weekly reading.
-      </div>
-    );
+    return <div className="card text-center py-10 text-text-m font-sans text-sm">Add a birth chart first.</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* Controls */}
-      <div className="card border-white/5 space-y-4">
-        {/* Chart selector */}
+
+      {/* Top bar: chart pick + city */}
+      <div className="flex flex-col sm:flex-row gap-3 items-end">
         {charts.length > 1 && (
-          <div>
+          <div className="sm:w-40 shrink-0">
             <label className="label">Chart</label>
-            <select
-              className="input"
-              value={selectedChart?.id || ''}
-              onChange={e => {
-                const c = charts.find(ch => ch.id === Number(e.target.value));
-                setSelectedChart(c);
-                setReading(null);
-                setWhatIfReading(null);
-              }}
-            >
+            <select className="input" value={selectedChart?.id || ''} onChange={e => {
+              const c = charts.find(ch => ch.id === Number(e.target.value));
+              setSelectedChart(c); setReading(null); setWhatIfReading(null);
+            }}>
               {charts.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
         )}
-
-        {/* Home city */}
-        <div>
-          <label className="label">
-            Your city this week
-            {homeCity && <span className="text-text-m font-normal normal-case tracking-normal ml-2">— {homeCity.displayName}</span>}
+        <div className="flex-1">
+          <label className="label flex items-center gap-2">
+            Where are you this week?
+            {savingCity && <Spinner size="sm" />}
           </label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <CitySearch
-                placeholder={homeCity ? 'Change city…' : 'Where are you this week?'}
-                onSelect={saveHomeCity}
-              />
-            </div>
-            {savingCity && <Spinner />}
-          </div>
+          <CitySearch
+            placeholder={homeCity ? `${homeCity.displayName.split(',')[0]} — change city…` : 'Enter your city…'}
+            onSelect={saveHomeCity}
+          />
         </div>
       </div>
 
-      {/* Home reading */}
-      {!homeCity && (
-        <div className="card text-center py-10 space-y-2">
-          <p className="text-4xl">📍</p>
-          <p className="text-text-p font-sans font-medium">Where are you this week?</p>
-          <p className="text-text-m font-sans text-sm">Enter your city above to get your weekly reading.</p>
+      {/* Empty state */}
+      {!homeCity && !loading && (
+        <div className="card text-center py-12 space-y-1 border-dashed border-white/10">
+          <p className="text-text-p font-sans font-medium">Enter your city to get started</p>
+          <p className="text-text-m font-sans text-xs">Your reading refreshes every Monday.</p>
         </div>
       )}
 
-      {homeCity && loading && (
-        <div className="card text-center py-10 space-y-3">
-          <Spinner />
-          <p className="text-text-m font-sans text-sm">Reading the sky over {homeCity.displayName}…</p>
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center gap-3 py-8 justify-center text-text-m font-sans text-sm">
+          <Spinner /> Reading the sky over {homeCity?.displayName?.split(',')[0]}…
         </div>
       )}
 
@@ -262,6 +236,7 @@ export default function WeeklyReading({ charts }) {
         <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">{error}</p>
       )}
 
+      {/* Main reading */}
       {reading && !loading && (
         <WeeklyCard
           reading={reading.reading}
@@ -271,35 +246,35 @@ export default function WeeklyReading({ charts }) {
         />
       )}
 
-      {/* What-if section */}
+      {/* ── What if block ── */}
       {reading && !loading && (
-        <div className="space-y-4 pt-2 border-t border-white/5">
+        <div className="rounded-2xl border border-gold/20 bg-gold/5 px-5 py-5 space-y-4">
           <div>
-            <p className="text-text-p font-sans font-medium text-sm mb-1">What if you were somewhere else?</p>
-            <p className="text-text-m font-sans text-xs mb-3">See how your week would look in a different city.</p>
-            <CitySearch placeholder="Try another city…" onSelect={handleWhatIf} />
+            <p className="font-serif text-lg text-text-p">What if you were somewhere else?</p>
+            <p className="text-text-m text-xs font-sans mt-0.5">Compare your week in any city — instantly.</p>
           </div>
+          <CitySearch placeholder="Try Tokyo, Lisbon, New York…" onSelect={handleWhatIf} />
 
           {whatIfLoading && (
-            <div className="card text-center py-8 space-y-3">
-              <Spinner />
-              <p className="text-text-m font-sans text-sm">Checking {whatIfCity?.displayName}…</p>
+            <div className="flex items-center gap-3 py-4 text-text-m font-sans text-sm">
+              <Spinner /> Checking {whatIfCity?.displayName?.split(',')[0]}…
             </div>
           )}
 
           {whatIfReading && !whatIfLoading && (
-            <div className="space-y-2">
-              <p className="text-text-m font-sans text-xs uppercase tracking-widest">If you were in {whatIfReading.city_name}</p>
+            <div className="pt-2 border-t border-white/10">
               <WeeklyCard
                 reading={whatIfReading.reading}
                 city={whatIfReading.city_name}
                 weekStart={whatIfReading.weekStart}
                 weekEnd={whatIfReading.weekEnd}
+                isComparison
               />
             </div>
           )}
         </div>
       )}
+
     </div>
   );
 }
