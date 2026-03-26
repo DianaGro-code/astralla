@@ -4,6 +4,7 @@ import Landing   from './pages/Landing.jsx';
 import Auth      from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Reading   from './pages/Reading.jsx';
+import Admin     from './pages/Admin.jsx';
 import Navbar    from './components/Navbar.jsx';
 import StarField from './components/StarField.jsx';
 
@@ -29,6 +30,7 @@ function AppRoutes() {
         <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <Auth />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/reading/:id" element={<PrivateRoute><Reading /></PrivateRoute>} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>

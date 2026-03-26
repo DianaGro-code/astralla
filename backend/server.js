@@ -14,6 +14,7 @@ import topCitiesRoutes from './src/routes/topCities.js';
 import transitsRoutes from './src/routes/transits.js';
 import solarReturnsRoutes from './src/routes/solarReturns.js';
 import weeklyRoutes from './src/routes/weekly.js';
+import adminRoutes from './src/routes/admin.js';
 
 dotenv.config({ override: true });
 
@@ -44,6 +45,7 @@ app.use('/api/solar-returns', solarReturnsRoutes);
 app.use('/api/weekly', weeklyRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.use('/api/admin', adminRoutes);
 
 // Serve frontend in production
 if (isProd) {
