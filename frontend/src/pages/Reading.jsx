@@ -277,128 +277,95 @@ function ShareCardModal({ reading, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: 320,
-          background: 'linear-gradient(155deg, #0e1022 0%, #090b16 55%, #0b0e20 100%)',
-          border: '1px solid rgba(212,175,55,0.22)',
+          background: 'linear-gradient(155deg, #0d0f1e 0%, #070810 55%, #0a0d1c 100%)',
+          border: '1px solid rgba(212,175,55,0.20)',
           borderRadius: 20,
-          padding: '30px 26px 26px',
+          padding: '28px 26px 24px',
           position: 'relative',
           overflow: 'hidden',
           userSelect: 'none',
-          boxShadow: '0 0 60px rgba(212,175,55,0.06)',
+          boxShadow: '0 0 80px rgba(212,175,55,0.07), 0 24px 48px rgba(0,0,0,0.5)',
         }}
       >
-        {/* Ambient glow top-right */}
+        {/* Ambient glow top-right — larger for more drama */}
         <div style={{
-          position: 'absolute', top: -50, right: -30,
-          width: 180, height: 180,
-          background: 'radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)',
+          position: 'absolute', top: -60, right: -40,
+          width: 240, height: 240,
+          background: 'radial-gradient(circle, rgba(212,175,55,0.10) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
         {/* Ambient glow bottom-left */}
         <div style={{
-          position: 'absolute', bottom: -40, left: -20,
-          width: 140, height: 140,
-          background: 'radial-gradient(circle, rgba(90,100,180,0.07) 0%, transparent 70%)',
+          position: 'absolute', bottom: -50, left: -30,
+          width: 180, height: 180,
+          background: 'radial-gradient(circle, rgba(80,90,200,0.08) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
         {/* Brand label */}
         <p style={{
-          color: '#D4AF37', fontSize: 9, letterSpacing: '0.25em',
+          color: '#D4AF37', fontSize: 9, letterSpacing: '0.28em',
           fontFamily: 'sans-serif', textTransform: 'uppercase',
-          marginBottom: 22, opacity: 0.65,
+          marginBottom: 24, opacity: 0.55,
         }}>
           ✦ &nbsp;Astralla
         </p>
 
         {/* City */}
         <h2 style={{
-          fontFamily: 'Georgia, serif', fontSize: 40, fontWeight: 300,
-          color: '#F2EDE5', lineHeight: 1.05, margin: 0, letterSpacing: '-0.5px',
+          fontFamily: 'Georgia, serif', fontSize: 46, fontWeight: 300,
+          color: '#F4EFE8', lineHeight: 1.0, margin: 0, letterSpacing: '-0.5px',
         }}>
           {city}
         </h2>
         {country && (
           <p style={{
-            fontFamily: 'sans-serif', fontSize: 11, color: '#5A6070',
-            marginTop: 5, marginBottom: 0, letterSpacing: '0.05em',
+            fontFamily: 'sans-serif', fontSize: 11, color: '#48505E',
+            marginTop: 5, marginBottom: 0, letterSpacing: '0.06em',
+            textTransform: 'uppercase',
           }}>
             {country}
           </p>
         )}
 
-        {/* Stars + verdict */}
-        {overall != null && (
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: 'flex', gap: 2 }}>
-              {[1,2,3,4,5].map(n => (
-                <span key={n} style={{ fontSize: 15, color: '#D4AF37', opacity: n <= overall ? 1 : 0.14 }}>★</span>
-              ))}
-            </div>
-            {verdictEntry && (
-              <p style={{
-                fontFamily: 'Georgia, serif', fontSize: 13, fontStyle: 'italic',
-                color: verdictEntry.color, marginTop: 5, marginBottom: 0,
-                lineHeight: 1.3,
-              }}>
-                {verdictEntry.text}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Overview quote */}
-        {quote && (
+        {/* Verdict — the emotional hook, given room to breathe */}
+        {verdictEntry && (
           <p style={{
-            fontFamily: 'Georgia, serif', fontSize: 13, fontStyle: 'italic',
-            color: '#B8B0A6', lineHeight: 1.65,
-            borderLeft: '2px solid rgba(212,175,55,0.45)',
-            paddingLeft: 12, marginTop: 18, marginBottom: 0,
+            fontFamily: 'Georgia, serif', fontSize: 22, fontStyle: 'italic',
+            color: verdictEntry.color, marginTop: 22, marginBottom: 0,
+            lineHeight: 1.2, letterSpacing: '-0.2px',
           }}>
-            "{quote}"
+            {verdictEntry.text}
           </p>
         )}
 
-        {/* Divider */}
-        <div style={{ height: 1, background: 'rgba(212,175,55,0.12)', margin: '18px 0' }} />
-
-        {/* Planet line pills */}
-        {topLines.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-            {topLines.map((inf, i) => {
-              const col = CARD_PLANET_COLORS[inf.planet] || '#D4AF37';
-              return (
-                <span key={i} style={{
-                  fontSize: 10, fontFamily: 'sans-serif',
-                  color: col,
-                  background: col + '14',
-                  borderRadius: 100, padding: '3px 9px',
-                  border: `1px solid ${col}28`,
-                  letterSpacing: '0.03em',
-                }}>
-                  {PLANET_GLYPHS[inf.planet]} {inf.planetLabel} {inf.angle}
-                </span>
-              );
-            })}
+        {/* Stars — score sits quietly below the verdict */}
+        {overall != null && (
+          <div style={{ display: 'flex', gap: 3, marginTop: 10 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} style={{ fontSize: 13, color: '#D4AF37', opacity: n <= overall ? 1 : 0.15 }}>★</span>
+            ))}
           </div>
         )}
 
-        {/* Dream/Comfort badge */}
-        {dc && DREAM_COMFORT_CARD[dc] && (
+        {/* Overview quote — flavor, not headline */}
+        {quote && (
           <p style={{
-            fontSize: 11, fontFamily: 'sans-serif',
-            color: DREAM_COMFORT_CARD[dc].color,
-            marginBottom: 18, letterSpacing: '0.02em',
+            fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic',
+            color: '#8A8898', lineHeight: 1.65,
+            borderLeft: '2px solid rgba(212,175,55,0.30)',
+            paddingLeft: 13, marginTop: 22, marginBottom: 0,
           }}>
-            {DREAM_COMFORT_CARD[dc].label}
+            "{quote}"
           </p>
         )}
 
         {/* Footer */}
         <p style={{
           fontFamily: 'sans-serif', fontSize: 9,
-          color: 'rgba(212,175,55,0.35)',
-          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'rgba(212,175,55,0.28)',
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          marginTop: 26, marginBottom: 0,
         }}>
           astralla.app
         </p>
