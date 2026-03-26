@@ -225,7 +225,7 @@ export default function WeeklyReading({ charts }) {
     <div className="space-y-6">
 
       {/* ── Top bar: chart selector + city indicator ── */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="space-y-2">
         {charts.length > 1 && (
           <select
             className="input py-1 text-sm w-auto"
@@ -243,7 +243,7 @@ export default function WeeklyReading({ charts }) {
         {homeCity && !showCitySearch ? (
           <button
             onClick={() => setShowCitySearch(true)}
-            className="flex items-center gap-1.5 text-xs font-sans text-text-m hover:text-text-p transition-colors ml-auto"
+            className="flex items-center gap-1.5 text-xs font-sans text-text-m hover:text-text-p transition-colors"
           >
             {savingCity ? <Spinner size="sm" /> : <span className="opacity-60">📍</span>}
             <span>{homeCity.displayName.split(',')[0]}</span>
@@ -251,17 +251,15 @@ export default function WeeklyReading({ charts }) {
             <span className="text-text-m/35">· change</span>
           </button>
         ) : !detecting && (
-          <div className={`${charts.length > 1 ? 'w-full' : 'flex-1'}`}>
-            <CitySearch
-              placeholder="Where are you this week?"
-              autoFocus={showCitySearch}
-              onSelect={saveHomeCity}
-            />
-          </div>
+          <CitySearch
+            placeholder="Where are you this week?"
+            autoFocus={showCitySearch}
+            onSelect={saveHomeCity}
+          />
         )}
 
         {detecting && (
-          <span className="flex items-center gap-2 text-xs font-sans text-text-m ml-auto">
+          <span className="flex items-center gap-2 text-xs font-sans text-text-m">
             <Spinner size="sm" /> Detecting location…
           </span>
         )}
