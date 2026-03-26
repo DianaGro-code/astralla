@@ -1,98 +1,136 @@
 export default function Logo({ size = 36, showWordmark = false }) {
-  const gold = "#c9a84c";
+  const gold      = "#c9a84c";
   const goldLight = "#e4c97e";
-  const navy = "#0d1220";
+  const goldBright= "#f5d878";
+  const navy      = "#0d1220";
+  const white     = "#f0eeea";
 
-  const planets = [
-    { angle: -60,  r: 40, size: 3.5, color: goldLight,  opacity: 1    },
-    { angle: 20,   r: 40, size: 2.5, color: "#d97090",  opacity: 0.9  },
-    { angle: 110,  r: 40, size: 2,   color: "#6090c8",  opacity: 0.85 },
-    { angle: 200,  r: 40, size: 2.5, color: "#8870c8",  opacity: 0.85 },
+  const starPts = [
+    [18,12],[72,8],[88,28],[12,52],[92,58],[28,82],
+    [78,88],[8,72],[62,22],[42,92],[82,68],[22,38],
+    [55,15],[38,55],[68,45],[15,30],[85,45],[50,78],
+    [94,80],[6,20],[44,18],[76,50],[30,65],[60,92],
   ];
 
-  const stars = [[20,15,0.8],[75,20,0.7],[85,65,0.6],[15,70,0.7],[60,88,0.6],[90,40,0.5]];
+  const planets = [
+    { angle: -55, r: 38, size: 6,   color: "#e4c97e", glow: true  },
+    { angle:  25, r: 38, size: 4.5, color: "#e07090", glow: false },
+    { angle: 100, r: 38, size: 4,   color: "#70a8e0", glow: false },
+    { angle: 185, r: 38, size: 4,   color: "#a080e0", glow: false },
+    { angle: 255, r: 38, size: 3.5, color: "#e09060", glow: false },
+  ];
+
+  const toXY = (angle, r) => {
+    const a = (angle - 90) * Math.PI / 180;
+    return [60 + r * Math.cos(a), 60 + r * Math.sin(a)];
+  };
+
+  // SVG is rendered at size*0.82 inside the circle badge
+  const svgSize = size * 0.82;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: size * 0.28 }}>
+
       {/* Circular badge */}
       <div style={{
-        width: size, height: size,
-        borderRadius: '50%',
+        width: size, height: size, borderRadius: '50%',
         background: navy,
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: `0 0 ${size * 0.6}px rgba(201,168,76,0.18), 0 2px ${size * 0.4}px rgba(0,0,0,0.6)`,
+        position: 'relative', overflow: 'hidden', flexShrink: 0,
+        boxShadow: `0 0 ${size * 0.7}px rgba(245,216,120,0.22), 0 0 ${size * 1.4}px rgba(201,168,76,0.1), 0 ${size * 0.15}px ${size * 0.55}px rgba(0,0,0,0.9)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
       }}>
+
         {/* Stars */}
         <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-          {stars.map(([cx, cy, r], i) => (
-            <circle key={i} cx={cx + '%'} cy={cy + '%'} r={r * size / 160} fill="white" opacity={0.45} />
+          {starPts.map(([cx, cy], i) => (
+            <circle key={i}
+              cx={cx + '%'} cy={cy + '%'}
+              r={i % 4 === 0 ? 1.2 * size / 160 : 0.8 * size / 160}
+              fill="white" opacity={i % 3 === 0 ? 0.6 : 0.35}
+            />
           ))}
+          <circle cx="15%" cy="20%" r={1.5 * size / 160} fill={goldLight} opacity="0.4" />
+          <circle cx="85%" cy="75%" r={1.2 * size / 160} fill={goldLight} opacity="0.3" />
         </svg>
 
-        {/* Glow */}
+        {/* Ambient glow */}
         <div style={{
-          position: 'absolute',
-          width: size * 0.75, height: size * 0.75,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)',
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(circle at 50% 50%, rgba(245,216,120,0.1) 0%, rgba(201,168,76,0.04) 40%, transparent 70%)',
         }} />
 
         {/* Chart wheel */}
-        <svg
-          width={size * 0.7}
-          height={size * 0.7}
-          viewBox="0 0 120 120"
-          style={{ position: 'relative' }}
-        >
-          <circle cx="60" cy="60" r="56" fill="none" stroke={gold} strokeWidth="1.2" opacity="0.6" />
-          <circle cx="60" cy="60" r="40" fill="none" stroke={gold} strokeWidth="0.8" opacity="0.35" />
-          <circle cx="60" cy="60" r="24" fill="none" stroke={gold} strokeWidth="0.8" opacity="0.25" />
+        <svg width={svgSize} height={svgSize} viewBox="0 0 120 120" style={{ position: 'relative' }}>
 
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i * 30 - 90) * Math.PI / 180;
-            return (
-              <line key={i}
-                x1={60 + 24 * Math.cos(angle)} y1={60 + 24 * Math.sin(angle)}
-                x2={60 + 56 * Math.cos(angle)} y2={60 + 56 * Math.sin(angle)}
-                stroke={gold} strokeWidth="0.6" opacity="0.3"
-              />
-            );
+          {/* Rings */}
+          <circle cx="60" cy="60" r="57" fill="none" stroke={goldBright} strokeWidth="0.5" opacity="0.15" />
+          <circle cx="60" cy="60" r="52" fill="none" stroke={goldBright} strokeWidth="2"   opacity="0.9"  />
+          <circle cx="60" cy="60" r="52" fill="none" stroke={goldBright} strokeWidth="5"   opacity="0.08" />
+          <circle cx="60" cy="60" r="38" fill="none" stroke={gold}       strokeWidth="1"   opacity="0.35" />
+          <circle cx="60" cy="60" r="22" fill="none" stroke={gold}       strokeWidth="0.7" opacity="0.2"  />
+
+          {/* Cardinal spokes — bold */}
+          {[0, 90, 180, 270].map((deg, i) => {
+            const a = (deg - 90) * Math.PI / 180;
+            return <line key={i}
+              x1={60 + 22 * Math.cos(a)} y1={60 + 22 * Math.sin(a)}
+              x2={60 + 52 * Math.cos(a)} y2={60 + 52 * Math.sin(a)}
+              stroke={gold} strokeWidth="1.2" opacity="0.45"
+            />;
           })}
 
+          {/* Diagonal spokes — thin */}
+          {[45, 135, 225, 315].map((deg, i) => {
+            const a = (deg - 90) * Math.PI / 180;
+            return <line key={i}
+              x1={60 + 22 * Math.cos(a)} y1={60 + 22 * Math.sin(a)}
+              x2={60 + 52 * Math.cos(a)} y2={60 + 52 * Math.sin(a)}
+              stroke={gold} strokeWidth="0.5" opacity="0.2"
+            />;
+          })}
+
+          {/* Planets */}
           {planets.map((p, i) => {
-            const a = (p.angle - 90) * Math.PI / 180;
+            const [cx, cy] = toXY(p.angle, p.r);
             return (
-              <circle key={i}
-                cx={60 + p.r * Math.cos(a)}
-                cy={60 + p.r * Math.sin(a)}
-                r={p.size} fill={p.color} opacity={p.opacity}
-              />
+              <g key={i}>
+                <circle cx={cx} cy={cy} r={p.size + 6} fill={p.color} opacity="0.08" />
+                <circle cx={cx} cy={cy} r={p.size + 3} fill={p.color} opacity={p.glow ? 0.18 : 0.1} />
+                <circle cx={cx} cy={cy} r={p.size}     fill={p.color} />
+                <circle cx={cx - p.size * 0.25} cy={cy - p.size * 0.25} r={p.size * 0.35} fill="white" opacity="0.35" />
+              </g>
             );
           })}
 
-          <line x1="60" y1="20" x2="60" y2="100" stroke={gold} strokeWidth="0.6" opacity="0.2" />
-          <line x1="20" y1="60" x2="100" y2="60" stroke={gold} strokeWidth="0.6" opacity="0.2" />
-          <circle cx="60" cy="60" r="5" fill="none" stroke={goldLight} strokeWidth="1.5" />
-          <circle cx="60" cy="60" r="2" fill={goldLight} />
+          {/* Centre — layered */}
+          <circle cx="60" cy="60" r="18" fill="none" stroke={goldBright} strokeWidth="0.5" opacity="0.12" />
+          <circle cx="60" cy="60" r="14" fill={navy}      opacity="0.5"  />
+          <circle cx="60" cy="60" r="10" fill="none" stroke={goldBright} strokeWidth="0.8" opacity="0.25" />
+          <circle cx="60" cy="60" r="7"  fill="none" stroke={goldBright} strokeWidth="1.2" opacity="0.6"  />
+          <circle cx="60" cy="60" r="3.5" fill={goldBright} />
+          <circle cx="58.5" cy="58.5" r="1.2" fill="white" opacity="0.6" />
+
         </svg>
       </div>
 
-      {/* Optional wordmark */}
+      {/* Wordmark */}
       {showWordmark && (
-        <span style={{
-          fontFamily: 'Georgia, serif',
-          fontSize: size * 0.45,
-          fontWeight: 400,
-          color: '#f0eeea',
-          letterSpacing: '4px',
-          textTransform: 'uppercase',
-        }}>
-          Astralla
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: size * 0.1, position: 'relative' }}>
+          <div style={{ width: size * 2.2, height: 1, background: `linear-gradient(to right, transparent, ${gold}, transparent)`, opacity: 0.5 }} />
+          <span style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: size * 0.42,
+            color: white,
+            letterSpacing: `${size * 0.16}px`,
+            textTransform: 'uppercase',
+            lineHeight: 1,
+          }}>
+            ASTRALLA
+          </span>
+          <div style={{ width: size * 2.2, height: 1, background: `linear-gradient(to right, transparent, ${gold}, transparent)`, opacity: 0.5 }} />
+        </div>
       )}
+
     </div>
   );
 }
