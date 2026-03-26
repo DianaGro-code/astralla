@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Astralla</string>
+    <string name="title_activity_main">Astralla</string>
+    <string name="package_name">com.astralla.app</string>
+    <string name="custom_url_scheme">com.astralla.app</string>
+</resources>

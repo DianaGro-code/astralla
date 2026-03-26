@@ -22,7 +22,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === 'production';
 
-app.use(cors({ origin: process.env.FRONTEND_URL || (isProd ? false : 'http://localhost:5173') }));
+// Allow the web deployment + Capacitor native apps (iOS: capacitor://localhost, Android: https://localhost)
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'capacitor://localhost',   // iOS Capacitor
+  'https://localhost',       // Android Capacitor
+  ...(isProd ? [] : ['http://localhost:5173']),
+].filter(Boolean);
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 initDb();

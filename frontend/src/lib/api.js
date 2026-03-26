@@ -1,4 +1,6 @@
-const BASE = '/api';
+// In the browser (Railway), /api is proxied to the backend.
+// In the native Capacitor app, we need the full backend URL — set via VITE_API_URL at build time.
+const BASE = import.meta.env.VITE_API_URL || '/api';
 
 function getToken() {
   return localStorage.getItem('astro_token');

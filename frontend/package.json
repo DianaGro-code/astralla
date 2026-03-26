@@ -5,9 +5,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:sync": "vite build --mode capacitor && npx cap sync",
+    "cap:ios": "vite build --mode capacitor && npx cap sync ios && npx cap open ios",
+    "cap:android": "vite build --mode capacitor && npx cap sync android && npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -19,6 +26,7 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
+    "typescript": "^6.0.2",
     "vite": "^5.2.0",
     "vite-plugin-pwa": "^1.2.0"
   }
