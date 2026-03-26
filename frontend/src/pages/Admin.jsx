@@ -16,7 +16,9 @@ export default function Admin() {
       const res = await fetch(`${BASE}/admin/stats`, {
         headers: { 'x-admin-password': password },
       });
-      if (!res.ok) { setError('Wrong password'); setLoading(false); return; }
+      if (res.status === 401) { setError('Wrong password'); setLoading(false); return; }
+      if (res.status === 503) { setError('ADMIN_PASSWORD not set on server'); setLoading(false); return; }
+      if (!res.ok) { setError(`Server error (${res.status}) — Railway may still be deploying, try again in a minute`); setLoading(false); return; }
       setData(await res.json());
     } catch {
       setError('Could not connect to server');
