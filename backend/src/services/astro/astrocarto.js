@@ -287,3 +287,77 @@ export function calculateInfluences(chart, city) {
 
   return { influences, parans: uniqueParans };
 }
+
+/**
+ * Generate full planetary line paths for world-map rendering.
+ *
+ * For each planet returns:
+ *   mc  — longitude (number) of the MC line  (vertical line at that longitude)
+ *   ic  — longitude (number) of the IC line  (mc + 180°)
+ *   ac  — array of coordinate segments [[lng,lat],…] (curved rising line)
+ *   dc  — array of coordinate segments [[lng,lat],…] (curved setting line)
+ *
+ * AC/DC lines are pre-split at real discontinuities so each segment can be
+ * drawn as a single smooth GeoJSON LineString.
+ */
+export function generateMapLines(chart) {
+  const jde      = birthChartToJDE(chart);
+  const gmstDeg  = gmst(jde);
+  const positions = getAllPositions(jde);
+
+  const LAT_STEP   = 0.5;   // degrees — dense enough for smooth curves
+  const LAT_MIN    = -85;
+  const LAT_MAX    =  85;
+  const BREAK_DEG  =  30;   // longitude jump that signals a real discontinuity
+
+  return PLANET_NAMES.map(planet => {
+    const { ra, dec } = positions[planet];
+
+    const mc = mcLineLng(ra, gmstDeg);
+    const ic = normalize180(mc + 180);
+
+    const acSegments = [];
+    const dcSegments = [];
+    let acSeg = [], dcSeg = [];
+    let prevAcLng = null, prevDcLng = null;
+
+    for (let latRaw = LAT_MIN; latRaw <= LAT_MAX + 0.01; latRaw += LAT_STEP) {
+      const lat = Math.round(latRaw * 10) / 10;
+
+      // ── AC ──
+      const lngAC = acLineLng(ra, dec, lat, gmstDeg);
+      if (lngAC !== null) {
+        if (prevAcLng !== null && Math.abs(normalize180(lngAC - prevAcLng)) > BREAK_DEG) {
+          if (acSeg.length > 1) acSegments.push(acSeg);
+          acSeg = [];
+        }
+        acSeg.push([+lngAC.toFixed(4), lat]);
+        prevAcLng = lngAC;
+      } else {
+        if (acSeg.length > 1) acSegments.push(acSeg);
+        acSeg = [];
+        prevAcLng = null;
+      }
+
+      // ── DC ──
+      const lngDC = dcLineLng(ra, dec, lat, gmstDeg);
+      if (lngDC !== null) {
+        if (prevDcLng !== null && Math.abs(normalize180(lngDC - prevDcLng)) > BREAK_DEG) {
+          if (dcSeg.length > 1) dcSegments.push(dcSeg);
+          dcSeg = [];
+        }
+        dcSeg.push([+lngDC.toFixed(4), lat]);
+        prevDcLng = lngDC;
+      } else {
+        if (dcSeg.length > 1) dcSegments.push(dcSeg);
+        dcSeg = [];
+        prevDcLng = null;
+      }
+    }
+
+    if (acSeg.length > 1) acSegments.push(acSeg);
+    if (dcSeg.length > 1) dcSegments.push(dcSeg);
+
+    return { planet, planetLabel: PLANET_LABELS[planet], mc, ic, ac: acSegments, dc: dcSegments };
+  });
+}

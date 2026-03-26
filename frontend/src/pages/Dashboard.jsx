@@ -533,6 +533,8 @@ export default function Dashboard() {
   const [mapLoading, setMapLoading] = useState(false);
   const [mapChartId, setMapChartId] = useState('all');
   const [expandedChartId, setExpandedChartId] = useState(null);
+  const [mapLines, setMapLines] = useState(null);
+  const [mapLinesLoading, setMapLinesLoading] = useState(false);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
@@ -544,6 +546,21 @@ export default function Dashboard() {
       api.readings.all().then(setAllReadings).catch(console.error).finally(() => setMapLoading(false));
     }
   }, [view]);
+
+  // Fetch planet lines when map opens or chart selection changes
+  useEffect(() => {
+    if (view !== 'map') return;
+    // Resolve which chart ID to use for lines (single chart → auto-select it)
+    const chartId = mapChartId !== 'all'
+      ? mapChartId
+      : charts.length === 1 ? charts[0].id : null;
+    if (!chartId) { setMapLines(null); return; }
+    setMapLinesLoading(true);
+    api.charts.lines(chartId)
+      .then(setMapLines)
+      .catch(() => setMapLines(null))
+      .finally(() => setMapLinesLoading(false));
+  }, [view, mapChartId, charts]);
 
   function handleCreated(chart) {
     setCharts(cs => [chart, ...cs]);
@@ -660,12 +677,11 @@ export default function Dashboard() {
                   {mapLoading ? (
                     <div className="flex justify-center py-16"><Spinner /></div>
                   ) : (
-                    <div style={{ height: 440 }}>
-                      <WorldMap
-                        readings={filtered}
-                        onReadingClick={(id) => navigate(`/reading/${id}`)}
-                      />
-                    </div>
+                    <WorldMap
+                      readings={filtered}
+                      onReadingClick={(id) => navigate(`/reading/${id}`)}
+                      planetLines={mapLines}
+                    />
                   )}
                   {filtered.length === 0 && !mapLoading && (
                     <p className="text-center text-text-m text-sm font-serif italic mt-4">

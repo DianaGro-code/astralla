@@ -36,6 +36,7 @@ export const api = {
     create: (body)   => request('/charts', { method: 'POST', body: JSON.stringify(body) }),
     get:    (id)     => request(`/charts/${id}`),
     delete: (id)     => request(`/charts/${id}`, { method: 'DELETE' }),
+    lines:  (id)     => request(`/charts/${id}/lines`),
   },
   readings: {
     generate:   (body) => request('/readings', { method: 'POST', body: JSON.stringify(body) }),

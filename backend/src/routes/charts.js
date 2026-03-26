@@ -2,6 +2,7 @@ import express from 'express';
 import { getDb } from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { geocode } from '../services/geocoding.js';
+import { generateMapLines } from '../services/astro/astrocarto.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -54,6 +55,22 @@ router.delete('/:id', (req, res) => {
   ).run(req.params.id, req.user.id);
   if (!result.changes) return res.status(404).json({ error: 'Chart not found' });
   res.json({ success: true });
+});
+
+// GET /api/charts/:id/lines — planetary line paths for world-map rendering
+router.get('/:id/lines', (req, res) => {
+  const db = getDb();
+  const chart = db.prepare(
+    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
+  ).get(Number(req.params.id), req.user.id);
+  if (!chart) return res.status(404).json({ error: 'Chart not found' });
+  try {
+    const lines = generateMapLines(chart);
+    res.json(lines);
+  } catch (err) {
+    console.error('generateMapLines error:', err);
+    res.status(500).json({ error: 'Failed to generate map lines' });
+  }
 });
 
 export default router;

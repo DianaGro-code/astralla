@@ -348,7 +348,7 @@ Return ONLY valid JSON with exactly these keys:
 - "energy": "high" | "medium" | "low" — overall activation level this week
 - "themes": array of 2–3 objects, each with "title" (short label, 2–4 words) and "text" (2–3 sentences). Cover the most significant influences for the week. Name specific planets and angles. End at least one with a question or a dare.
 - "watchFor": 1–2 sentences. One honest heads-up — a friction point, blind spot, or thing this week will demand.
-- "bestDays": 1 sentence. When in the week is the energy highest or most useful?
+- "bestDays": 1 sentence. Name the specific days of the week (Monday, Tuesday, etc.) when the energy peaks or is most useful — e.g. "Tuesday and Wednesday carry the strongest momentum, with Friday softening for reflection."
 
 {"headline":"...","overview":"...","energy":"medium","themes":[{"title":"...","text":"..."}],"watchFor":"...","bestDays":"..."}`;
 
