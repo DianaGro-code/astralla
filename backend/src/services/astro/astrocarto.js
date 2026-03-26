@@ -37,9 +37,9 @@ const PARAN_LAT_THRESHOLD = 2.5; // degrees
  * Convert birth chart data (with naive local date/time) to UTC Julian Day.
  */
 function birthChartToJDE(chart) {
-  // chart.birth_date = "YYYY-MM-DD", chart.birth_time = "HH:MM"
+  // chart.birth_date = "YYYY-MM-DD", chart.birth_time = "HH:MM" (or null → noon default)
   const [year, month, day] = chart.birth_date.split('-').map(Number);
-  const [hour, minute]     = chart.birth_time.split(':').map(Number);
+  const [hour, minute]     = (chart.birth_time || '12:00').split(':').map(Number);
 
   // Detect timezone from birth location coordinates
   const tzNames = findTimezone(chart.birth_lat, chart.birth_lng);

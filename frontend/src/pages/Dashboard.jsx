@@ -32,7 +32,14 @@ function NewChartForm({ onCreated, onCancel }) {
   const [form, setForm] = useState({ label: '', birthDate: '', birthTime: '', birthPlace: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [unknownTime, setUnknownTime] = useState(false);
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  function handleUnknownTime() {
+    const next = !unknownTime;
+    setUnknownTime(next);
+    if (next) setForm(f => ({ ...f, birthTime: '' }));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -51,7 +58,6 @@ function NewChartForm({ onCreated, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="card space-y-4 animate-slide-up border-gold/30">
       <h3 className="font-serif text-xl text-text-p">New Birth Chart</h3>
-      <p className="text-text-m text-xs font-sans -mt-2">Exact birth time unlocks your Midheaven and Ascendant lines — the most personal part of your reading. Leave blank if you don't know it.</p>
       <div>
         <label className="label">Chart Label</label>
         <input className="input" placeholder="e.g. My Chart, Sarah's Chart…" value={form.label} onChange={set('label')} required />
@@ -62,14 +68,49 @@ function NewChartForm({ onCreated, onCancel }) {
           <input className="input" type="date" value={form.birthDate} onChange={set('birthDate')} required />
         </div>
         <div>
-          <label className="label">Birth Time <span className="text-text-m font-normal normal-case tracking-normal">(optional)</span></label>
-          <input className="input" type="time" value={form.birthTime} onChange={set('birthTime')} />
+          <label className="label">
+            Birth Time
+            <span className="text-text-m font-normal normal-case tracking-normal ml-1">(optional)</span>
+          </label>
+          <input
+            className={`input transition-opacity ${unknownTime ? 'opacity-30 pointer-events-none' : ''}`}
+            type="time"
+            value={form.birthTime}
+            onChange={set('birthTime')}
+            disabled={unknownTime}
+          />
+          <button
+            type="button"
+            onClick={handleUnknownTime}
+            className={`mt-1.5 text-xs font-sans transition-colors flex items-center gap-1.5 ${
+              unknownTime ? 'text-gold' : 'text-text-m hover:text-text-s'
+            }`}
+          >
+            {unknownTime ? (
+              <>
+                <span className="text-gold">✓</span>
+                <span>Using noon as placeholder — <span className="underline underline-offset-2 cursor-pointer">undo</span></span>
+              </>
+            ) : (
+              "I don't know my birth time"
+            )}
+          </button>
+          {unknownTime && (
+            <p className="mt-1.5 text-text-m text-xs font-sans leading-relaxed bg-gold/5 border border-gold/15 rounded-lg px-3 py-2">
+              Planet positions will be accurate. Ascendant &amp; Midheaven lines need an exact time to personalise fully.
+            </p>
+          )}
         </div>
       </div>
       <div>
         <label className="label">Birth Place</label>
         <input className="input" placeholder="City, Country (e.g. Paris, France)" value={form.birthPlace} onChange={set('birthPlace')} required />
       </div>
+      {!unknownTime && (
+        <p className="text-text-m text-xs font-sans -mt-1">
+          Exact birth time unlocks your Midheaven &amp; Ascendant lines — the most personal part of your reading.
+        </p>
+      )}
       {error && <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>}
       <div className="flex gap-3 pt-1">
         <button type="submit" className="btn-gold flex-1" disabled={loading}>

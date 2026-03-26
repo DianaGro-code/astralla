@@ -192,10 +192,221 @@ function ScoreBar({ themes }) {
   );
 }
 
-function ShareButton({ cityName, themes }) {
+// ── Share Card ────────────────────────────────────────────────────────────────
+const CARD_PLANET_COLORS = {
+  sun:'#F5C518', moon:'#9BB5CC', mercury:'#88E0A4', venus:'#F4849A',
+  mars:'#F47A58', jupiter:'#E8A044', saturn:'#8AB0D0',
+  uranus:'#48D8D8', neptune:'#8888F0', pluto:'#C080C0',
+};
+const DREAM_COMFORT_CARD = {
+  dream:   { label: '⚡ Dream Destination', color: '#D4AF37' },
+  comfort: { label: '☽ Home Away From Home', color: '#4BC9C8' },
+  both:    { label: '✦ Dream & Comfort', color: '#9B6FBA' },
+};
+
+function ShareCardModal({ reading, onClose }) {
+  const { city_name, themes, influences = [] } = reading;
+  const city    = city_name?.split(',')[0] || '';
+  const country = city_name?.includes(',') ? city_name.split(',').slice(1).join(',').trim() : '';
+  const overall = themes?.overallRating;
+  const dc      = themes?.dreamOrComfort;
+
+  // Trim overview to ~115 chars on a word boundary
+  const overview = themes?.overview || '';
+  const quote = overview.length > 115
+    ? overview.slice(0, 112).replace(/\s+\S*$/, '') + '…'
+    : overview;
+
+  const topLines = influences.slice(0, 3);
+
+  async function handleShareLink() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${city} — Astralla`,
+          text: themes?.overview || `My astrocartography reading for ${city}`,
+          url,
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+    navigator.clipboard.writeText(url);
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 60,
+        background: 'rgba(0,0,0,0.88)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '20px 16px',
+        backdropFilter: 'blur(4px)',
+      }}
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute', top: 20, right: 20,
+          background: 'rgba(255,255,255,0.08)', border: 'none',
+          color: 'rgba(255,255,255,0.5)', fontSize: 20,
+          width: 36, height: 36, borderRadius: '50%',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >×</button>
+
+      {/* Card — fixed size so it screenshots consistently */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: 320,
+          background: 'linear-gradient(155deg, #0e1022 0%, #090b16 55%, #0b0e20 100%)',
+          border: '1px solid rgba(212,175,55,0.22)',
+          borderRadius: 20,
+          padding: '30px 26px 26px',
+          position: 'relative',
+          overflow: 'hidden',
+          userSelect: 'none',
+          boxShadow: '0 0 60px rgba(212,175,55,0.06)',
+        }}
+      >
+        {/* Ambient glow top-right */}
+        <div style={{
+          position: 'absolute', top: -50, right: -30,
+          width: 180, height: 180,
+          background: 'radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        {/* Ambient glow bottom-left */}
+        <div style={{
+          position: 'absolute', bottom: -40, left: -20,
+          width: 140, height: 140,
+          background: 'radial-gradient(circle, rgba(90,100,180,0.07) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Brand label */}
+        <p style={{
+          color: '#D4AF37', fontSize: 9, letterSpacing: '0.25em',
+          fontFamily: 'sans-serif', textTransform: 'uppercase',
+          marginBottom: 22, opacity: 0.65,
+        }}>
+          ✦ &nbsp;Astralla
+        </p>
+
+        {/* City */}
+        <h2 style={{
+          fontFamily: 'Georgia, serif', fontSize: 40, fontWeight: 300,
+          color: '#F2EDE5', lineHeight: 1.05, margin: 0, letterSpacing: '-0.5px',
+        }}>
+          {city}
+        </h2>
+        {country && (
+          <p style={{
+            fontFamily: 'sans-serif', fontSize: 11, color: '#5A6070',
+            marginTop: 5, marginBottom: 0, letterSpacing: '0.05em',
+          }}>
+            {country}
+          </p>
+        )}
+
+        {/* Stars */}
+        {overall != null && (
+          <div style={{ display: 'flex', gap: 2, marginTop: 14 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} style={{ fontSize: 16, color: '#D4AF37', opacity: n <= overall ? 1 : 0.14 }}>★</span>
+            ))}
+          </div>
+        )}
+
+        {/* Overview quote */}
+        {quote && (
+          <p style={{
+            fontFamily: 'Georgia, serif', fontSize: 13, fontStyle: 'italic',
+            color: '#B8B0A6', lineHeight: 1.65,
+            borderLeft: '2px solid rgba(212,175,55,0.45)',
+            paddingLeft: 12, marginTop: 18, marginBottom: 0,
+          }}>
+            "{quote}"
+          </p>
+        )}
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(212,175,55,0.12)', margin: '18px 0' }} />
+
+        {/* Planet line pills */}
+        {topLines.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+            {topLines.map((inf, i) => {
+              const col = CARD_PLANET_COLORS[inf.planet] || '#D4AF37';
+              return (
+                <span key={i} style={{
+                  fontSize: 10, fontFamily: 'sans-serif',
+                  color: col,
+                  background: col + '14',
+                  borderRadius: 100, padding: '3px 9px',
+                  border: `1px solid ${col}28`,
+                  letterSpacing: '0.03em',
+                }}>
+                  {PLANET_GLYPHS[inf.planet]} {inf.planetLabel} {inf.angle}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Dream/Comfort badge */}
+        {dc && DREAM_COMFORT_CARD[dc] && (
+          <p style={{
+            fontSize: 11, fontFamily: 'sans-serif',
+            color: DREAM_COMFORT_CARD[dc].color,
+            marginBottom: 18, letterSpacing: '0.02em',
+          }}>
+            {DREAM_COMFORT_CARD[dc].label}
+          </p>
+        )}
+
+        {/* Footer */}
+        <p style={{
+          fontFamily: 'sans-serif', fontSize: 9,
+          color: 'rgba(212,175,55,0.35)',
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+        }}>
+          astralla.app
+        </p>
+      </div>
+
+      {/* Instructions + share link button */}
+      <p style={{
+        color: 'rgba(255,255,255,0.3)', fontSize: 11,
+        fontFamily: 'sans-serif', marginTop: 14, textAlign: 'center', lineHeight: 1.5,
+      }}>
+        Screenshot &amp; share · tap outside to close
+      </p>
+      <button
+        onClick={handleShareLink}
+        style={{
+          marginTop: 10, padding: '8px 22px',
+          background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)',
+          borderRadius: 100, color: 'rgba(212,175,55,0.8)', fontSize: 12,
+          fontFamily: 'sans-serif', cursor: 'pointer', letterSpacing: '0.04em',
+        }}
+      >
+        ↑ Share link
+      </button>
+    </div>
+  );
+}
+
+function ShareButton({ cityName, themes, onOpenCard }) {
   const [copied, setCopied] = useState(false);
 
-  async function handleShare() {
+  async function handleShareLink() {
     const city = cityName?.split(',')[0] || 'this city';
     const url  = window.location.href;
 
@@ -208,19 +419,23 @@ function ShareButton({ cityName, themes }) {
         });
         return;
       } catch (err) {
-        if (err.name === 'AbortError') return; // user dismissed sheet
+        if (err.name === 'AbortError') return;
       }
     }
-    // Desktop fallback — copy link
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }
 
   return (
-    <button onClick={handleShare} className="btn-ghost text-sm py-2 px-4">
-      {copied ? '✓ Link copied' : '↑ Share this reading'}
-    </button>
+    <div className="flex gap-2 flex-wrap">
+      <button onClick={onOpenCard} className="btn-gold text-sm py-2 px-4">
+        ✦ Share card
+      </button>
+      <button onClick={handleShareLink} className="btn-ghost text-sm py-2 px-4">
+        {copied ? '✓ Link copied' : '↑ Share link'}
+      </button>
+    </div>
   );
 }
 
@@ -666,6 +881,7 @@ export default function Reading() {
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCard, setShowCard] = useState(false);
 
   useEffect(() => {
     api.readings.get(id)
@@ -702,6 +918,7 @@ export default function Reading() {
 
   return (
     <div className="min-h-screen pt-20 pb-20 px-4">
+      {showCard && <ShareCardModal reading={reading} onClose={() => setShowCard(false)} />}
       <div className="max-w-2xl mx-auto">
 
         {/* Back */}
@@ -758,7 +975,7 @@ export default function Reading() {
 
         {/* Share */}
         <div className="flex gap-3 mb-6 animate-fade-in">
-          <ShareButton cityName={city_name} themes={themes} />
+          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => setShowCard(true)} />
         </div>
 
         {/* Active lines + Parans — collapsed by default */}
@@ -790,7 +1007,7 @@ export default function Reading() {
 
         {/* Bottom share */}
         <div className="mt-12 flex justify-center">
-          <ShareButton cityName={city_name} themes={themes} />
+          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => setShowCard(true)} />
         </div>
 
       </div>

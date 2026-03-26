@@ -17,8 +17,8 @@ router.get('/', (req, res) => {
 
 router.post('/', async (req, res) => {
   const { label, birthDate, birthTime, birthPlace } = req.body;
-  if (!label || !birthDate || !birthTime || !birthPlace) {
-    return res.status(400).json({ error: 'All fields required' });
+  if (!label || !birthDate || !birthPlace) {
+    return res.status(400).json({ error: 'Label, birth date, and birth place are required' });
   }
 
   try {
