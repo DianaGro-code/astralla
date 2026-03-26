@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import {
   ComposableMap,
   Geographies,
@@ -29,7 +29,10 @@ const PLANET_GLYPHS = {
   jupiter: '♃', saturn: '♄', uranus: '♅', neptune: '♆', pluto: '♇',
 };
 
-// Default: the personal + social planets most relevant for this audience
+// Per-chart accent colors for pin rings and line tinting
+const CHART_COLORS = ['#D4AF37', '#4BC9C8', '#B08AE0', '#E06840', '#5A8FC8', '#E890A0'];
+
+// Default: personal + social planets
 const DEFAULT_VISIBLE = new Set(['sun', 'moon', 'venus', 'mars', 'jupiter']);
 
 // ── Reading pin helpers ────────────────────────────────────────────────────────
@@ -58,7 +61,11 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
     if (!visiblePlanets.has(pl.planet)) continue;
     const color = PLANET_COLORS[pl.planet];
 
-    // MC — solid, full opacity (vertical meridian line)
+    // Opacity based on chartIndex so multiple charts don't all look the same
+    const baseOpacity = pl.chartIndex === 1 ? 0.5 : pl.chartIndex === 2 ? 0.4 : 0.7;
+    const dashOpacity = baseOpacity * 0.55;
+
+    // MC — solid vertical meridian line
     if (pl.mc !== null) {
       const d = path({
         type: 'Feature',
@@ -66,9 +73,9 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
         properties: {},
       });
       if (d) elements.push(
-        <path key={`${pl.planet}-MC`} d={d} stroke={color}
-          strokeWidth={1.2} strokeOpacity={0.65} fill="none"
-          vectorEffect="non-scaling-stroke" />
+        <path key={`${pl.planet}-${pl.chartIndex ?? 0}-MC`} d={d}
+          stroke={color} strokeWidth={3} strokeOpacity={baseOpacity} fill="none"
+          strokeLinecap="round" />
       );
     }
 
@@ -80,13 +87,13 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
         properties: {},
       });
       if (d) elements.push(
-        <path key={`${pl.planet}-IC`} d={d} stroke={color}
-          strokeWidth={1} strokeOpacity={0.35} fill="none"
-          strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+        <path key={`${pl.planet}-${pl.chartIndex ?? 0}-IC`} d={d}
+          stroke={color} strokeWidth={2} strokeOpacity={dashOpacity} fill="none"
+          strokeDasharray="6 5" strokeLinecap="round" />
       );
     }
 
-    // AC — solid, curved rising line
+    // AC — solid curved rising line
     pl.ac.forEach((seg, i) => {
       const d = path({
         type: 'Feature',
@@ -94,13 +101,13 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
         properties: {},
       });
       if (d) elements.push(
-        <path key={`${pl.planet}-AC-${i}`} d={d} stroke={color}
-          strokeWidth={1.2} strokeOpacity={0.65} fill="none"
-          vectorEffect="non-scaling-stroke" />
+        <path key={`${pl.planet}-${pl.chartIndex ?? 0}-AC-${i}`} d={d}
+          stroke={color} strokeWidth={3} strokeOpacity={baseOpacity} fill="none"
+          strokeLinecap="round" />
       );
     });
 
-    // DC — dashed, curved setting line
+    // DC — dashed curved setting line
     pl.dc.forEach((seg, i) => {
       const d = path({
         type: 'Feature',
@@ -108,9 +115,9 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
         properties: {},
       });
       if (d) elements.push(
-        <path key={`${pl.planet}-DC-${i}`} d={d} stroke={color}
-          strokeWidth={1} strokeOpacity={0.35} fill="none"
-          strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+        <path key={`${pl.planet}-${pl.chartIndex ?? 0}-DC-${i}`} d={d}
+          stroke={color} strokeWidth={2} strokeOpacity={dashOpacity} fill="none"
+          strokeDasharray="6 5" strokeLinecap="round" />
       );
     });
   }
@@ -119,21 +126,43 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function WorldMap({ readings, onReadingClick, planetLines }) {
+export default function WorldMap({ readings, onReadingClick, planetLines, charts = [] }) {
   const [tooltip, setTooltip]   = useState(null);
   const [position, setPosition] = useState({ coordinates: [0, 20], zoom: 1 });
   const [visible, setVisible]   = useState(DEFAULT_VISIBLE);
 
-  // Deduplicate pins by city (keep highest-rated)
-  const cityMap = {};
+  // Build chart color map: chartId → { color, label, index }
+  const chartColorMap = {};
+  charts.forEach((c, i) => {
+    chartColorMap[c.id] = { color: CHART_COLORS[i % CHART_COLORS.length], label: c.label, index: i };
+  });
+  const multiChart = charts.length > 1;
+
+  // Deduplicate pins by city (keep highest-rated per city per chart)
+  // If multi-chart: keep one pin per city+chart combo
+  // If single-chart: keep highest-rated per city
+  const pinMap = {};
   for (const r of readings) {
     if (!r.city_lat || !r.city_lng) continue;
-    const key = r.city_name;
-    const existing = cityMap[key];
+    const key = multiChart
+      ? `${r.chart_id}::${r.city_name}`   // separate pins per chart
+      : r.city_name;
+    const existing = pinMap[key];
     const rating = r.themes?.overallRating ?? 0;
-    if (!existing || rating > (existing.themes?.overallRating ?? 0)) cityMap[key] = r;
+    if (!existing || rating > (existing.themes?.overallRating ?? 0)) pinMap[key] = r;
   }
-  const pins = Object.values(cityMap);
+  const pins = Object.values(pinMap);
+
+  // For multi-chart: slightly offset pins for same city across charts so they don't perfectly overlap
+  // Build a map of cityName → [readings] sorted by chartIndex
+  const cityChartPins = {};
+  if (multiChart) {
+    for (const r of pins) {
+      const city = r.city_name;
+      if (!cityChartPins[city]) cityChartPins[city] = [];
+      cityChartPins[city].push(r);
+    }
+  }
 
   function togglePlanet(p) {
     setVisible(prev => {
@@ -145,13 +174,33 @@ export default function WorldMap({ readings, onReadingClick, planetLines }) {
 
   const hasLines = planetLines && planetLines.length > 0;
 
+  // Deduplicate planet chips by planet name (multiple charts may have same planet)
+  const uniquePlanetChips = planetLines
+    ? planetLines.filter((pl, i, arr) => arr.findIndex(x => x.planet === pl.planet) === i)
+    : [];
+
   return (
     <div className="space-y-2">
+
+      {/* ── Per-chart legend (only in multi-chart mode) ── */}
+      {multiChart && charts.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-1">
+          {charts.map((c, i) => (
+            <div key={c.id} className="flex items-center gap-1.5">
+              <span
+                className="w-3 h-3 rounded-full border-2 shrink-0"
+                style={{ borderColor: CHART_COLORS[i % CHART_COLORS.length], background: 'transparent' }}
+              />
+              <span className="font-sans text-[11px] text-text-s">{c.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Planet filter chips ── */}
       {hasLines && (
         <div className="flex flex-wrap gap-1.5">
-          {planetLines.map(pl => {
+          {uniquePlanetChips.map(pl => {
             const on    = visible.has(pl.planet);
             const color = PLANET_COLORS[pl.planet];
             return (
@@ -193,8 +242,8 @@ export default function WorldMap({ readings, onReadingClick, planetLines }) {
           ))}
         </div>
 
-        {/* Pin score legend (only when no planet lines overlay) */}
-        {!hasLines && (
+        {/* Pin score legend (only when no planet lines overlay AND single-chart) */}
+        {!hasLines && !multiChart && (
           <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 bg-cosmos/90 backdrop-blur-sm border border-border rounded-lg px-3 py-2.5">
             <p className="text-text-m text-[10px] font-sans uppercase tracking-wider mb-0.5">Score</p>
             {[
@@ -244,27 +293,56 @@ export default function WorldMap({ readings, onReadingClick, planetLines }) {
             <PlanetLineLayer planetLines={planetLines} visiblePlanets={visible} />
 
             {/* City pins */}
-            {pins.map(r => {
-              const rating   = r.themes?.overallRating ?? 0;
-              const color    = ratingColor(rating);
-              const hovered  = tooltip?.reading?.id === r.id;
+            {pins.map((r, pinIdx) => {
+              const rating      = r.themes?.overallRating ?? 0;
+              const fillColor   = ratingColor(rating);
+              const hovered     = tooltip?.reading?.id === r.id;
+              const chartInfo   = chartColorMap[r.chart_id];
+              const ringColor   = multiChart && chartInfo ? chartInfo.color : '#0D1225';
+              const ringWidth   = multiChart ? 2 : 1.5;
+
+              // Offset same-city pins slightly so they're both visible
+              let offsetLng = 0;
+              let offsetLat = 0;
+              if (multiChart) {
+                const siblings = cityChartPins[r.city_name] || [];
+                const pos      = siblings.indexOf(r);
+                if (siblings.length > 1) {
+                  offsetLng = (pos - (siblings.length - 1) / 2) * 1.5;
+                }
+              }
+
               return (
                 <Marker
-                  key={r.id}
-                  coordinates={[r.city_lng, r.city_lat]}
+                  key={`${r.id}-${pinIdx}`}
+                  coordinates={[r.city_lng + offsetLng, r.city_lat + offsetLat]}
                   onClick={() => onReadingClick(r.id)}
-                  onMouseEnter={() => setTooltip({ reading: r })}
+                  onMouseEnter={() => setTooltip({ reading: r, chartInfo })}
                   onMouseLeave={() => setTooltip(null)}
                   style={{ cursor: 'pointer' }}
                 >
                   <circle
                     r={hovered ? 8 : 5}
-                    fill={color}
+                    fill={fillColor}
                     fillOpacity={hovered ? 1 : 0.9}
-                    stroke="#0D1225"
-                    strokeWidth={1.5}
+                    stroke={hovered && multiChart ? chartInfo?.color : ringColor}
+                    strokeWidth={ringWidth}
                     style={{ transition: 'r 0.15s' }}
                   />
+                  {/* Chart initial label on pin (multi-chart only) */}
+                  {multiChart && chartInfo && (
+                    <text
+                      y={-8}
+                      textAnchor="middle"
+                      fontSize={6}
+                      fontFamily="sans-serif"
+                      fill={chartInfo.color}
+                      fillOpacity={0.85}
+                      style={{ pointerEvents: 'none', userSelect: 'none' }}
+                    >
+                      {chartInfo.label.charAt(0).toUpperCase()}
+                    </text>
+                  )}
                 </Marker>
               );
             })}
@@ -275,7 +353,16 @@ export default function WorldMap({ readings, onReadingClick, planetLines }) {
         {tooltip && (
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             <div className="bg-cosmos border border-border rounded-lg shadow-lg px-4 py-3 min-w-[180px] text-center">
-              <p className="font-serif text-sm text-text-p font-medium">{tooltip.reading.city_name}</p>
+              <p className="font-serif text-sm text-text-p font-medium">{tooltip.reading.city_name.split(',')[0]}</p>
+              {/* Chart label badge (multi-chart mode) */}
+              {multiChart && tooltip.chartInfo && (
+                <p
+                  className="font-sans text-[10px] mt-0.5 font-medium uppercase tracking-wider"
+                  style={{ color: tooltip.chartInfo.color }}
+                >
+                  {tooltip.chartInfo.label}
+                </p>
+              )}
               {tooltip.reading.themes?.overallRating != null && (
                 <div className="flex items-center justify-center gap-1.5 mt-1">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ratingColor(tooltip.reading.themes.overallRating) }} />
@@ -283,9 +370,6 @@ export default function WorldMap({ readings, onReadingClick, planetLines }) {
                     {ratingLabel(tooltip.reading.themes.overallRating)} · {tooltip.reading.themes.overallRating}/5
                   </span>
                 </div>
-              )}
-              {tooltip.reading.themes?.verdict && (
-                <p className="text-text-m text-xs font-serif italic mt-1">{tooltip.reading.themes.verdict}</p>
               )}
               <p className="text-gold text-xs font-sans mt-2">Click to open →</p>
             </div>

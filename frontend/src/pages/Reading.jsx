@@ -211,11 +211,23 @@ function ShareCardModal({ reading, onClose }) {
   const overall = themes?.overallRating;
   const dc      = themes?.dreamOrComfort;
 
-  // Trim overview to ~115 chars on a word boundary
   const overview = themes?.overview || '';
-  const quote = overview.length > 115
-    ? overview.slice(0, 112).replace(/\s+\S*$/, '') + '…'
-    : overview;
+  // Extract first complete sentence; fall back to word-boundary cut at 160 chars
+  const sentenceMatch = overview.match(/^(.*?[.!?])(?:\s+[A-Z]|$)/);
+  const quote = sentenceMatch && sentenceMatch[1].length <= 200
+    ? sentenceMatch[1].trim()
+    : overview.length > 160
+      ? overview.slice(0, 158).replace(/\s+\S*$/, '') + '…'
+      : overview;
+
+  const verdictMap = {
+    5: { text: 'Go. Now.',                   color: '#D4AF37' },
+    4: { text: 'This place wants you here.',  color: '#D4AF37' },
+    3: { text: 'Worth a long visit.',         color: '#8A8A9A' },
+    2: { text: 'More neutral than charged.',  color: '#6A6A78' },
+    1: { text: 'The stars are quiet here.',   color: '#6A6A78' },
+  };
+  const verdictEntry = overall != null ? verdictMap[Math.round(overall)] : null;
 
   const topLines = influences.slice(0, 3);
 
@@ -315,12 +327,23 @@ function ShareCardModal({ reading, onClose }) {
           </p>
         )}
 
-        {/* Stars */}
+        {/* Stars + verdict */}
         {overall != null && (
-          <div style={{ display: 'flex', gap: 2, marginTop: 14 }}>
-            {[1,2,3,4,5].map(n => (
-              <span key={n} style={{ fontSize: 16, color: '#D4AF37', opacity: n <= overall ? 1 : 0.14 }}>★</span>
-            ))}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: 'flex', gap: 2 }}>
+              {[1,2,3,4,5].map(n => (
+                <span key={n} style={{ fontSize: 15, color: '#D4AF37', opacity: n <= overall ? 1 : 0.14 }}>★</span>
+              ))}
+            </div>
+            {verdictEntry && (
+              <p style={{
+                fontFamily: 'Georgia, serif', fontSize: 13, fontStyle: 'italic',
+                color: verdictEntry.color, marginTop: 5, marginBottom: 0,
+                lineHeight: 1.3,
+              }}>
+                {verdictEntry.text}
+              </p>
+            )}
           </div>
         )}
 

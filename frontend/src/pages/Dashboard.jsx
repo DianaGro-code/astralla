@@ -591,16 +591,39 @@ export default function Dashboard() {
   // Fetch planet lines when map opens or chart selection changes
   useEffect(() => {
     if (view !== 'map') return;
-    // Resolve which chart ID to use for lines (single chart → auto-select it)
-    const chartId = mapChartId !== 'all'
-      ? mapChartId
-      : charts.length === 1 ? charts[0].id : null;
-    if (!chartId) { setMapLines(null); return; }
-    setMapLinesLoading(true);
-    api.charts.lines(chartId)
-      .then(setMapLines)
-      .catch(() => setMapLines(null))
-      .finally(() => setMapLinesLoading(false));
+
+    if (mapChartId !== 'all') {
+      // Specific chart selected
+      setMapLinesLoading(true);
+      api.charts.lines(mapChartId)
+        .then(setMapLines)
+        .catch(() => setMapLines(null))
+        .finally(() => setMapLinesLoading(false));
+    } else if (charts.length === 0) {
+      setMapLines(null);
+    } else if (charts.length === 1) {
+      // Auto-select the only chart
+      setMapLinesLoading(true);
+      api.charts.lines(charts[0].id)
+        .then(setMapLines)
+        .catch(() => setMapLines(null))
+        .finally(() => setMapLinesLoading(false));
+    } else {
+      // All charts selected + multiple charts → fetch all and combine
+      setMapLinesLoading(true);
+      Promise.all(
+        charts.map((c, idx) =>
+          api.charts.lines(c.id)
+            .then(lines => (lines || []).map(l => ({ ...l, chartIndex: idx })))
+            .catch(() => [])
+        )
+      )
+        .then(allLinesArrays => {
+          const combined = allLinesArrays.flat();
+          setMapLines(combined.length ? combined : null);
+        })
+        .finally(() => setMapLinesLoading(false));
+    }
   }, [view, mapChartId, charts]);
 
   function handleCreated(chart) {
@@ -722,6 +745,7 @@ export default function Dashboard() {
                       readings={filtered}
                       onReadingClick={(id) => navigate(`/reading/${id}`)}
                       planetLines={mapLines}
+                      charts={mapChartId === 'all' ? charts : charts.filter(c => c.id === mapChartId)}
                     />
                   )}
                   {filtered.length === 0 && !mapLoading && (
