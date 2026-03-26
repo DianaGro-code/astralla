@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 
 // ── Today's year for Solar Return picker ──────────────────────────────────────
@@ -463,8 +463,14 @@ const ENERGY_STYLES = {
   low:    { label: '· Low activation', cls: 'text-text-m' },
 };
 
-function TravelTransitsPanel({ chartId, cityName }) {
-  const [open,      setOpen]      = useState(false);
+function TravelTransitsPanel({ chartId, cityName, defaultOpen = false }) {
+  const [open,      setOpen]      = useState(defaultOpen);
+  const panelRef = useRef(null);
+  useEffect(() => {
+    if (defaultOpen && panelRef.current) {
+      setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }
+  }, []);
   const [startDate, setStartDate] = useState('');
   const [endDate,   setEndDate]   = useState('');
   const [loading,   setLoading]   = useState(false);
@@ -489,7 +495,7 @@ function TravelTransitsPanel({ chartId, cityName }) {
   const energy = result?.tripEnergy ? ENERGY_STYLES[result.tripEnergy] : null;
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div ref={panelRef} className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -591,8 +597,14 @@ function TravelTransitsPanel({ chartId, cityName }) {
 }
 
 // ── Solar Return Panel ────────────────────────────────────────────────────────
-function SolarReturnPanel({ chartId, cityName, birthDate }) {
-  const [open,    setOpen]    = useState(false);
+function SolarReturnPanel({ chartId, cityName, birthDate, defaultOpen = false }) {
+  const [open,    setOpen]    = useState(defaultOpen);
+  const panelRef = useRef(null);
+  useEffect(() => {
+    if (defaultOpen && panelRef.current) {
+      setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }
+  }, []);
   const [year,    setYear]    = useState(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
@@ -624,7 +636,7 @@ function SolarReturnPanel({ chartId, cityName, birthDate }) {
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div ref={panelRef} className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -868,6 +880,8 @@ function TheReadingAccordion({ themes, readingText }) {
 export default function Reading() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const panelTarget = searchParams.get('panel'); // 'transits' | 'solar' | null
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -986,11 +1000,13 @@ export default function Reading() {
             <TravelTransitsPanel
               chartId={reading.chart_id}
               cityName={city_name}
+              defaultOpen={panelTarget === 'transits'}
             />
             <SolarReturnPanel
               chartId={reading.chart_id}
               cityName={city_name}
               birthDate={reading.birth_date}
+              defaultOpen={panelTarget === 'solar'}
             />
           </div>
         </section>
