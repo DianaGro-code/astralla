@@ -63,6 +63,19 @@ export function initDb() {
   try { db.exec('ALTER TABLE users ADD COLUMN home_lat REAL'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN home_lng REAL'); } catch {}
 
+  // Tier + usage (migration)
+  try { db.exec("ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'"); } catch {}
+
+  // Usage log table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS usage_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      feature TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Weekly readings table
   db.exec(`
     CREATE TABLE IF NOT EXISTS weekly_readings (

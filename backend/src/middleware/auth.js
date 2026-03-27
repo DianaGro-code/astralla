@@ -7,7 +7,7 @@ export function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = getDb().prepare('SELECT id, name, email FROM users WHERE id = ?').get(payload.id);
+    const user = getDb().prepare('SELECT id, name, email, tier FROM users WHERE id = ?').get(payload.id);
     if (!user) return res.status(401).json({ error: 'Account not found' });
     req.user = user;
     next();

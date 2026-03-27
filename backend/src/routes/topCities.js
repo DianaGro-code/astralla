@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { WORLD_CITIES, scoreCity } from '../services/worldCities.js';
 import { calculateInfluences } from '../services/astro/astrocarto.js';
 import { generateTopCitiesReading } from '../services/claude.js';
+import { checkLimit, logUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -37,8 +38,18 @@ router.post('/', async (req, res) => {
     scored.sort((a, b) => b.score - a.score);
     const top3 = scored.slice(0, 3);
 
+    // Check weekly limit before calling Claude
+    const limit = checkLimit(req.user);
+    if (!limit.allowed) {
+      return res.status(402).json({
+        error: `You've used all ${limit.limit} free readings this week.`,
+        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      });
+    }
+
     // Generate readings for all 3 in one Claude call
     const cities = await generateTopCitiesReading(chart, top3, intent);
+    logUsage(req.user.id, 'top_cities');
 
     res.json({ cities });
   } catch (err) {

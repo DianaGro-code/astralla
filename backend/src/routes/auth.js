@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
+import { getUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 
@@ -51,12 +52,19 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 });
 
-// GET /api/auth/me — return current user profile (including home city)
+// GET /api/auth/me — return current user profile (including home city + tier + usage)
 router.get('/me', requireAuth, (req, res) => {
   const db = getDb();
-  const user = db.prepare('SELECT id, email, name, home_city, home_lat, home_lng FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, email, name, tier, home_city, home_lat, home_lng FROM users WHERE id = ?').get(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json(user);
+  const usage = user.tier === 'pro' ? { unlimited: true } : getUsage(user.id);
+  res.json({ ...user, usage });
+});
+
+// GET /api/auth/usage — lightweight usage check
+router.get('/usage', requireAuth, (req, res) => {
+  if (req.user.tier === 'pro') return res.json({ tier: 'pro', unlimited: true });
+  res.json({ tier: 'free', ...getUsage(req.user.id) });
 });
 
 // PUT /api/auth/home-city — save user's home city
