@@ -157,15 +157,22 @@ ${formatTransitAspects(transitData.aspects)}
 
 ${WRITING_STYLE}
 
-You are interpreting a travel transit window — not the natal chart, but the sky's current weather AT this location for THIS person during these specific dates. The transiting lines tell you which planetary energies are physically activated at the city. The transit-to-natal aspects tell you what's stirring internally.
+You are writing practical travel guidance — what this trip will actually feel like and what to do with it. Lead with lived experience, not planetary mechanics.
+
+RULES FOR THIS READING:
+- Never open with a planet name or aspect. Open with what the person will feel or experience.
+- Highlights must be actionable. Tell the person what to DO, not what the planets are doing.
+- "Book the meeting." "Stay in — you'll want to." "Say yes to the invitation." "Don't make the big decision yet."
+- One dry, sharp observation per highlight. Treat it like advice from a very well-informed friend.
+- Planetary names may appear briefly as supporting detail, never as the lead.
 
 Return ONLY valid JSON with exactly these keys:
 
-- "overview": 2–3 sentences. What is the sky saying about this trip for this person RIGHT NOW? What's the dominant energy? Lead with consequence, not planet names.
+- "overview": 2 sentences max. What will this trip actually feel like? What's the dominant energy the person will notice? No planet names in this field.
 - "tripEnergy": "high" | "medium" | "low" — overall activation level for this window
-- "highlights": array of 2–4 objects, each with "title" (one short label) and "text" (2–3 sentences). Cover the most significant transits. Name planets. End at least one with a question or dare.
-- "watchFor": 1–2 sentences. One honest warning or thing to watch — what this window might demand or reveal.
-- "timing": 1 sentence. Is there a specific part of the window (early/mid/late) that is especially activated?
+- "highlights": array of 2–4 objects, each with "title" (3–5 words, action-oriented) and "text" (2 sentences max: one observation + one concrete action or dare).
+- "watchFor": 1 sentence. One honest practical heads-up — something to watch or avoid, phrased as lived advice not astrology.
+- "timing": 1 sentence. When in the trip (early/mid/late days) is the peak energy — and what to do with it.
 
 {"overview":"...","tripEnergy":"medium","highlights":[{"title":"...","text":"..."}],"watchFor":"...","timing":"..."}`;
 
@@ -234,18 +241,20 @@ ${formatMonthlyData(srData.monthlyData)}
 
 ${WRITING_STYLE}
 
-You are interpreting a Solar Return chart for ${srData.targetYear} at ${city.displayName}.
+You are interpreting a Solar Return chart for ${srData.targetYear}.
+
+CRITICAL FRAMING: Spending the birthday in ${cityName} sets the SR chart — it determines which planetary themes dominate the whole year. But the person will NOT necessarily stay in ${cityName}. The monthly themes describe how these energies move through their LIFE over the year — their inner world, moods, circumstances, decisions — regardless of where they physically are. Never say "in ${cityName}" or reference the city in the monthly section.
 
 Return ONLY valid JSON with exactly these keys:
 
 - "yearTheme": One phrase (3–7 words). The title of this year. E.g. "The Year of the Reckoning."
-- "overview": Exactly 2 punchy sentences. The dominant theme of ${srData.targetYear} at ${cityName}. Lead with consequence. No generic openers.
+- "overview": Exactly 2 punchy sentences. What does ${srData.targetYear} hold for this person? What is the dominant energy the birthday in ${cityName} sets in motion? Lead with consequence.
 - "overallRating": integer 1–5
-- "cost": Exactly 1 sentence. What does spending the birthday here demand?
+- "cost": Exactly 1 sentence. What does spending the birthday in ${cityName} demand or activate?
 - "months": Array of exactly 12 objects in order, one per month. Each object has:
   - "month": the month string exactly as given (e.g. "April 2025")
   - "theme": 2–4 word theme title (e.g. "Push for Visibility", "Emotional Reckoning", "Money Moves")
-  - "text": Exactly 2 sentences. What does this month hold? Reference the strongest transit if relevant. Make it feel distinct from adjacent months.
+  - "text": Exactly 2 sentences. Describe the energy the person will feel and what to do with it. No city references. Write as if describing a season of their inner life.
 
 Return JSON now.`;
 
