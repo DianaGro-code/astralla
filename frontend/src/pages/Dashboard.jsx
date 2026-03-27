@@ -520,22 +520,52 @@ function FeaturePanel({ feature, charts, navigate, onClose }) {
         />
       )}
 
-      {/* Travel Transits — same city entry, opens transits panel on arrival */}
+      {/* Travel Transits */}
       {chart && feature === 'transits' && (
-        <LocationForm
-          chart={chart}
-          label="Pick the city you're travelling to — we'll read your chart for that trip."
-          onReading={r => navigate(`/reading/${r.id}?panel=transits`)}
-        />
+        <div className="space-y-4">
+          <div
+            className="rounded-lg px-4 py-3"
+            style={{ background: `${featureCfg?.color}12`, borderLeft: `3px solid ${featureCfg?.color}` }}
+          >
+            <p className="text-[10px] font-sans uppercase tracking-wider mb-1.5" style={{ color: featureCfg?.color }}>
+              How it works
+            </p>
+            <p className="text-xs font-sans text-text-s leading-relaxed">
+              The planets move through your chart differently depending on where you are on Earth.
+              Enter your destination and we'll show how this trip activates your natal chart —
+              what energies open up, what tensions arise, and what the journey is really for.
+            </p>
+          </div>
+          <LocationForm
+            chart={chart}
+            label="Where are you travelling to?"
+            onReading={r => navigate(`/reading/${r.id}?panel=transits`)}
+          />
+        </div>
       )}
 
-      {/* Solar Return — same city entry, opens solar panel on arrival */}
+      {/* Solar Return */}
       {chart && feature === 'solar' && (
-        <LocationForm
-          chart={chart}
-          label="Pick the city where you'll spend your birthday — we'll show you the year it unlocks."
-          onReading={r => navigate(`/reading/${r.id}?panel=solar`)}
-        />
+        <div className="space-y-4">
+          <div
+            className="rounded-lg px-4 py-3"
+            style={{ background: `${featureCfg?.color}12`, borderLeft: `3px solid ${featureCfg?.color}` }}
+          >
+            <p className="text-[10px] font-sans uppercase tracking-wider mb-1.5" style={{ color: featureCfg?.color }}>
+              How it works
+            </p>
+            <p className="text-xs font-sans text-text-s leading-relaxed">
+              Each year the Sun returns to its exact natal position — and the chart cast for that
+              moment reveals your entire coming year. The city you're in at that instant changes
+              everything: where you live your birthday shapes the year ahead.
+            </p>
+          </div>
+          <LocationForm
+            chart={chart}
+            label="Where will you be on your birthday?"
+            onReading={r => navigate(`/reading/${r.id}?panel=solar`)}
+          />
+        </div>
       )}
     </div>
   );
@@ -899,6 +929,7 @@ export default function Dashboard() {
             {/* ── Feature panel ── */}
             {activeFeature && charts.length > 0 && (
               <FeaturePanel
+                key={activeFeature}
                 feature={activeFeature}
                 charts={charts}
                 navigate={navigate}

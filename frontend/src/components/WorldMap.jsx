@@ -32,9 +32,6 @@ const PLANET_GLYPHS = {
 // Per-chart accent colors for pin rings and line tinting
 const CHART_COLORS = ['#D4AF37', '#4BC9C8', '#B08AE0', '#E06840', '#5A8FC8', '#E890A0'];
 
-// Default: personal + social planets
-const DEFAULT_VISIBLE = new Set(['sun', 'moon', 'venus', 'mars', 'jupiter']);
-
 // ── Reading pin helpers ────────────────────────────────────────────────────────
 function ratingColor(r) {
   if (r >= 4.5) return '#B88FD8';
@@ -51,19 +48,29 @@ function ratingLabel(r) {
 
 // ── Planetary line renderer ────────────────────────────────────────────────────
 // Must be a child of ComposableMap so it can call useMapContext()
-function PlanetLineLayer({ planetLines, visiblePlanets }) {
+function PlanetLineLayer({ planetLines, focusedPlanet }) {
   const { path } = useMapContext();
   if (!planetLines || !path) return null;
 
   const elements = [];
 
   for (const pl of planetLines) {
-    if (!visiblePlanets.has(pl.planet)) continue;
     const color = PLANET_COLORS[pl.planet];
 
-    // Opacity based on chartIndex so multiple charts don't all look the same
-    const baseOpacity = pl.chartIndex === 1 ? 0.5 : pl.chartIndex === 2 ? 0.4 : 0.7;
-    const dashOpacity = baseOpacity * 0.55;
+    const isFocused  = focusedPlanet === pl.planet;
+    const isAnyFocus = focusedPlanet !== null;
+
+    // Opacity: dimmed when something else is focused, boosted when this planet is focused
+    const baseOpacity = isAnyFocus
+      ? (isFocused ? 0.95 : 0.10)
+      : (pl.chartIndex === 1 ? 0.5 : pl.chartIndex === 2 ? 0.4 : 0.7);
+    const dashOpacity = isAnyFocus
+      ? (isFocused ? 0.65 : 0.07)
+      : baseOpacity * 0.55;
+
+    // Stroke widths: thicker when focused
+    const solidW = isFocused ? 4.5 : 3;
+    const dashW  = isFocused ? 3   : 2;
 
     // MC — solid vertical meridian line
     if (pl.mc !== null) {
@@ -74,7 +81,7 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
       });
       if (d) elements.push(
         <path key={`${pl.planet}-${pl.chartIndex ?? 0}-MC`} d={d}
-          stroke={color} strokeWidth={3} strokeOpacity={baseOpacity} fill="none"
+          stroke={color} strokeWidth={solidW} strokeOpacity={baseOpacity} fill="none"
           strokeLinecap="round" />
       );
     }
@@ -88,7 +95,7 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
       });
       if (d) elements.push(
         <path key={`${pl.planet}-${pl.chartIndex ?? 0}-IC`} d={d}
-          stroke={color} strokeWidth={2} strokeOpacity={dashOpacity} fill="none"
+          stroke={color} strokeWidth={dashW} strokeOpacity={dashOpacity} fill="none"
           strokeDasharray="6 5" strokeLinecap="round" />
       );
     }
@@ -102,7 +109,7 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
       });
       if (d) elements.push(
         <path key={`${pl.planet}-${pl.chartIndex ?? 0}-AC-${i}`} d={d}
-          stroke={color} strokeWidth={3} strokeOpacity={baseOpacity} fill="none"
+          stroke={color} strokeWidth={solidW} strokeOpacity={baseOpacity} fill="none"
           strokeLinecap="round" />
       );
     });
@@ -116,7 +123,7 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
       });
       if (d) elements.push(
         <path key={`${pl.planet}-${pl.chartIndex ?? 0}-DC-${i}`} d={d}
-          stroke={color} strokeWidth={2} strokeOpacity={dashOpacity} fill="none"
+          stroke={color} strokeWidth={dashW} strokeOpacity={dashOpacity} fill="none"
           strokeDasharray="6 5" strokeLinecap="round" />
       );
     });
@@ -127,9 +134,9 @@ function PlanetLineLayer({ planetLines, visiblePlanets }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function WorldMap({ readings, onReadingClick, planetLines, charts = [] }) {
-  const [tooltip, setTooltip]   = useState(null);
-  const [position, setPosition] = useState({ coordinates: [0, 20], zoom: 1 });
-  const [visible, setVisible]   = useState(DEFAULT_VISIBLE);
+  const [tooltip, setTooltip]     = useState(null);
+  const [position, setPosition]   = useState({ coordinates: [0, 20], zoom: 1 });
+  const [focusedPlanet, setFocusedPlanet] = useState(null);
 
   // Build chart color map: chartId → { color, label, index }
   const chartColorMap = {};
@@ -164,12 +171,10 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
     }
   }
 
+  // Clicking a planet chip focuses it (highlights it, dims others).
+  // Clicking the focused planet again returns to all-equal visibility.
   function togglePlanet(p) {
-    setVisible(prev => {
-      const next = new Set(prev);
-      next.has(p) ? next.delete(p) : next.add(p);
-      return next;
-    });
+    setFocusedPlanet(prev => (prev === p ? null : p));
   }
 
   const hasLines = planetLines && planetLines.length > 0;
@@ -201,17 +206,21 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
       {hasLines && (
         <div className="flex flex-wrap gap-1.5">
           {uniquePlanetChips.map(pl => {
-            const on    = visible.has(pl.planet);
-            const color = PLANET_COLORS[pl.planet];
+            const color     = PLANET_COLORS[pl.planet];
+            const isFocused = focusedPlanet === pl.planet;
+            const isAny     = focusedPlanet !== null;
+            const isDimmed  = isAny && !isFocused;
             return (
               <button
                 key={pl.planet}
                 onClick={() => togglePlanet(pl.planet)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-sans border transition-all duration-150"
+                title={isFocused ? 'Click to reset' : 'Click to highlight'}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-sans border transition-all duration-200"
                 style={{
-                  borderColor:     on ? color : 'rgba(255,255,255,0.10)',
-                  color:           on ? color : 'rgba(255,255,255,0.30)',
-                  backgroundColor: on ? `${color}1A` : 'transparent',
+                  borderColor:     isDimmed ? 'rgba(255,255,255,0.06)' : color,
+                  color:           isDimmed ? 'rgba(255,255,255,0.20)' : color,
+                  backgroundColor: isFocused ? `${color}28` : isDimmed ? 'transparent' : `${color}10`,
+                  boxShadow:       isFocused ? `0 0 0 1px ${color}60` : 'none',
                 }}
               >
                 <span>{PLANET_GLYPHS[pl.planet]}</span>
@@ -292,7 +301,7 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
             </Geographies>
 
             {/* Planetary lines (below pins) */}
-            <PlanetLineLayer planetLines={planetLines} visiblePlanets={visible} />
+            <PlanetLineLayer planetLines={planetLines} focusedPlanet={focusedPlanet} />
 
             {/* City pins */}
             {pins.map((r, pinIdx) => {
@@ -389,7 +398,7 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
       </div>
 
       {/* ── Angle key ── */}
-      {hasLines && visible.size > 0 && (
+      {hasLines && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-0.5 pt-0.5">
           {[
             { dash: false, label: 'MC · career & legacy'     },
