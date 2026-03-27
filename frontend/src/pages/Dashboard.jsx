@@ -104,6 +104,44 @@ function NewChartForm({ onCreated, onCancel }) {
   const [unknownTime, setUnknownTime] = useState(false);
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
+  // City autocomplete state
+  const [cityResults, setCityResults]   = useState([]);
+  const [citySearching, setCitySearching] = useState(false);
+  const [cityOpen, setCityOpen]         = useState(false);
+  const cityDebounce = useRef(null);
+  const cityWrapperRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function onOutside(e) {
+      if (cityWrapperRef.current && !cityWrapperRef.current.contains(e.target)) setCityOpen(false);
+    }
+    document.addEventListener('mousedown', onOutside);
+    return () => document.removeEventListener('mousedown', onOutside);
+  }, []);
+
+  function handleCityInput(e) {
+    const val = e.target.value;
+    setForm(f => ({ ...f, birthPlace: val }));
+    clearTimeout(cityDebounce.current);
+    if (val.length < 2) { setCityResults([]); setCityOpen(false); return; }
+    cityDebounce.current = setTimeout(async () => {
+      setCitySearching(true);
+      try {
+        const data = await api.geocode.search(val);
+        setCityResults(data);
+        setCityOpen(data.length > 0);
+      } catch {}
+      setCitySearching(false);
+    }, 350);
+  }
+
+  function handleCitySelect(city) {
+    setForm(f => ({ ...f, birthPlace: city.displayName }));
+    setCityResults([]);
+    setCityOpen(false);
+  }
+
   function handleUnknownTime() {
     const next = !unknownTime;
     setUnknownTime(next);
@@ -171,10 +209,45 @@ function NewChartForm({ onCreated, onCancel }) {
           )}
         </div>
       </div>
+
+      {/* Birth Place with city autocomplete */}
       <div>
         <label className="label">Birth Place</label>
-        <input className="input" placeholder="City, Country (e.g. Paris, France)" value={form.birthPlace} onChange={set('birthPlace')} required />
+        <div className="relative" ref={cityWrapperRef}>
+          <div className="relative">
+            <input
+              className="input pr-8"
+              placeholder="Search for a city…"
+              value={form.birthPlace}
+              onChange={handleCityInput}
+              onFocus={() => cityResults.length > 0 && setCityOpen(true)}
+              autoComplete="off"
+              required
+            />
+            {citySearching && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60 pointer-events-none">
+                <Spinner size="sm" />
+              </span>
+            )}
+          </div>
+          {cityOpen && cityResults.length > 0 && (
+            <ul className="absolute z-50 w-full mt-1 bg-surface border border-white/10 rounded-xl shadow-xl overflow-hidden">
+              {cityResults.map((city, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-2.5 text-sm text-text-p hover:bg-white/5 transition-colors"
+                    onMouseDown={() => handleCitySelect(city)}
+                  >
+                    {city.displayName}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
+
       {!unknownTime && (
         <p className="text-text-m text-xs font-sans -mt-1">
           Exact birth time unlocks your Midheaven &amp; Ascendant lines — the most personal part of your reading.
