@@ -24,6 +24,14 @@ async function request(path, options = {}) {
     window.location.href = '/auth';
     throw new Error('Session expired. Please sign in again.');
   }
+  if (res.status === 402) {
+    const err = new Error(data.error || 'Weekly limit reached');
+    err.limitReached = true;
+    err.used      = data.used;
+    err.limit     = data.limit;
+    err.resetsOn  = data.resetsOn;
+    throw err;
+  }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
@@ -62,6 +70,7 @@ export const api = {
   profile: {
     get:         ()     => request('/auth/me'),
     setHomeCity: (body) => request('/auth/home-city', { method: 'PUT', body: JSON.stringify(body) }),
+    usage:       ()     => request('/auth/usage'),
   },
   weekly: {
     generate: (body) => request('/weekly', { method: 'POST', body: JSON.stringify(body) }),

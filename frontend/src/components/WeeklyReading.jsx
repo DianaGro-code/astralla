@@ -143,7 +143,7 @@ function WeeklyCard({ reading, city, weekStart, weekEnd, isComparison = false })
   );
 }
 
-export default function WeeklyReading({ charts }) {
+export default function WeeklyReading({ charts, onLimitReached }) {
   const [homeCity, setHomeCity]             = useState(null);
   const [showCitySearch, setShowCitySearch] = useState(false);
   const [selectedChart, setSelectedChart]   = useState(null);
@@ -194,7 +194,10 @@ export default function WeeklyReading({ charts }) {
     try {
       const data = await api.weekly.generate({ chartId: chart.id, cityName: city.displayName, cityLat: city.lat, cityLng: city.lng });
       setR(data);
-    } catch (err) { setError(err.message); }
+    } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); }
+      else { setError(err.message); }
+    }
     finally { setL(false); }
   }
 

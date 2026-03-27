@@ -74,6 +74,28 @@ function Spinner({ size = 'md' }) {
   return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
 }
 
+// ── Usage Limit Modal ──────────────────────────────────────────────────────────
+function LimitModal({ error, onClose }) {
+  if (!error) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative card border-gold/30 max-w-sm w-full text-center space-y-4 py-8 px-6 animate-slide-up">
+        <div className="text-3xl">☽</div>
+        <h3 className="font-serif text-lg text-text-p">Weekly limit reached</h3>
+        <p className="text-text-m text-sm font-sans leading-relaxed">
+          You've used <span className="text-gold font-semibold">{error.used} of {error.limit}</span> free readings this week.
+          Your limit resets on <span className="text-text-p">{error.resetsOn}</span>.
+        </p>
+        <p className="text-text-s text-xs font-sans">
+          Cached readings you've already generated are always free to re-open.
+        </p>
+        <button onClick={onClose} className="btn-primary w-full mt-2">Got it</button>
+      </div>
+    </div>
+  );
+}
+
 // ── New Chart Form ────────────────────────────────────────────────────────────
 function NewChartForm({ onCreated, onCancel }) {
   const [form, setForm] = useState({ label: '', birthDate: '', birthTime: '', birthPlace: '' });
@@ -179,7 +201,7 @@ const REGIONS = [
 ];
 
 // ── Discover: Top 3 Cities ────────────────────────────────────────────────────
-function DiscoverForm({ chart, onCitySelect, generatingCity }) {
+function DiscoverForm({ chart, onCitySelect, generatingCity, onLimitReached }) {
   const [intent, setIntent] = useState(null);
   const [region, setRegion] = useState('worldwide');
   const [loading, setLoading] = useState(false);
@@ -200,6 +222,7 @@ function DiscoverForm({ chart, onCitySelect, generatingCity }) {
       const data = await api.topCities.find({ chartId: chart.id, intent, region });
       setResults(data.cities);
     } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); return; }
       setError(err.message);
     } finally {
       setLoading(false);
@@ -309,7 +332,7 @@ function DiscoverForm({ chart, onCitySelect, generatingCity }) {
 }
 
 // ── Location Query Form ────────────────────────────────────────────────────────
-function LocationForm({ chart, onReading, label, extraParams = {}, apiCall, submitLabel }) {
+function LocationForm({ chart, onReading, label, extraParams = {}, apiCall, submitLabel, onLimitReached }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -360,6 +383,7 @@ function LocationForm({ chart, onReading, label, extraParams = {}, apiCall, subm
         : await api.readings.generate({ chartId: chart.id, cityQuery: selected.displayName, ...extraParams });
       onReading(reading);
     } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); return; }
       setError(err.message);
     } finally {
       setLoading(false);
@@ -454,7 +478,7 @@ function SRMonthCard({ month, index }) {
   );
 }
 
-function SolarReturnView({ charts, navigate, onBack }) {
+function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
   const featureCfg = FEATURES.find(f => f.key === 'solar');
   const currentYear = new Date().getFullYear();
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
@@ -546,6 +570,7 @@ function SolarReturnView({ charts, navigate, onBack }) {
             apiCall={({ chartId: cid, cityQuery }) => api.solarReturns.generate({ chartId: cid, cityQuery, targetYear: year })}
             submitLabel={city => `☉ Read ${city} Solar Return ${year}`}
             onReading={handleResult}
+            onLimitReached={onLimitReached}
           />
         )}
       </div>
@@ -615,7 +640,7 @@ const TRANSIT_ENERGY_STYLES = {
   low:    { label: '· Low activation', cls: 'text-text-m' },
 };
 
-function TransitsView({ charts, navigate, onBack }) {
+function TransitsView({ charts, navigate, onBack, onLimitReached }) {
   const featureCfg = FEATURES.find(f => f.key === 'transits');
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
   const today = new Date().toISOString().split('T')[0];
@@ -718,6 +743,7 @@ function TransitsView({ charts, navigate, onBack }) {
             })}
             submitLabel={city => `♃ Read my transits in ${city}`}
             onReading={handleResult}
+            onLimitReached={onLimitReached}
           />
         )}
       </div>
@@ -779,7 +805,7 @@ function TransitsView({ charts, navigate, onBack }) {
 
 // ── Feature Panel ─────────────────────────────────────────────────────────────
 // Shown below the feature grid when a feature card is tapped
-function FeaturePanel({ feature, charts, navigate, onClose }) {
+function FeaturePanel({ feature, charts, navigate, onClose, onLimitReached }) {
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
   const [generatingCity, setGeneratingCity] = useState(null);
   const chart = charts.find(c => c.id === chartId);
@@ -796,7 +822,8 @@ function FeaturePanel({ feature, charts, navigate, onClose }) {
       });
       navigate(`/reading/${reading.id}`);
     } catch (err) {
-      console.error(err);
+      if (err.limitReached) { onLimitReached?.(err); }
+      else console.error(err);
     } finally {
       setGeneratingCity(null);
     }
@@ -1000,6 +1027,7 @@ export default function Dashboard() {
   const [expandedChartId, setExpandedChartId] = useState(null);
   const [mapLines, setMapLines] = useState(null);
   const [mapLinesLoading, setMapLinesLoading] = useState(false);
+  const [limitError, setLimitError] = useState(null);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
@@ -1074,6 +1102,7 @@ export default function Dashboard() {
 
   return (
     <div className={`min-h-screen px-4 ${native ? 'pt-6 pb-28' : 'pt-20 pb-16'}`}>
+      <LimitModal error={limitError} onClose={() => setLimitError(null)} />
       <div className="max-w-2xl mx-auto">
 
         {/* ── MAP VIEW ── */}
@@ -1162,12 +1191,12 @@ export default function Dashboard() {
 
         {/* ── SOLAR RETURN VIEW ── */}
         {view === 'solar' && (
-          <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} />
+          <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
         )}
 
         {/* ── TRAVEL TRANSITS VIEW ── */}
         {view === 'transits' && (
-          <TransitsView charts={charts} navigate={navigate} onBack={goHome} />
+          <TransitsView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
         )}
 
         {/* ── WEEKLY VIEW ── */}
@@ -1180,7 +1209,7 @@ export default function Dashboard() {
               <h1 className="font-serif text-3xl text-text-p">This Week</h1>
               <p className="text-text-m text-sm font-sans mt-1">A fresh reading every week, tied to where you actually are.</p>
             </div>
-            <WeeklyReading charts={charts} />
+            <WeeklyReading charts={charts} onLimitReached={setLimitError} />
           </div>
         )}
 
@@ -1249,6 +1278,7 @@ export default function Dashboard() {
                 charts={charts}
                 navigate={navigate}
                 onClose={() => setActiveFeature(null)}
+                onLimitReached={setLimitError}
               />
             )}
 
