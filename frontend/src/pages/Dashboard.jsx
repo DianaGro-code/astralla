@@ -309,7 +309,7 @@ function DiscoverForm({ chart, onCitySelect, generatingCity }) {
 }
 
 // ── Location Query Form ────────────────────────────────────────────────────────
-function LocationForm({ chart, onReading, label, extraParams = {}, submitLabel }) {
+function LocationForm({ chart, onReading, label, extraParams = {}, apiCall, submitLabel }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -355,11 +355,9 @@ function LocationForm({ chart, onReading, label, extraParams = {}, submitLabel }
     setError('');
     setLoading(true);
     try {
-      const reading = await api.readings.generate({
-        chartId: chart.id,
-        cityQuery: selected.displayName,
-        ...extraParams,
-      });
+      const reading = apiCall
+        ? await apiCall({ chartId: chart.id, cityQuery: selected.displayName })
+        : await api.readings.generate({ chartId: chart.id, cityQuery: selected.displayName, ...extraParams });
       onReading(reading);
     } catch (err) {
       setError(err.message);
@@ -425,13 +423,32 @@ function LocationForm({ chart, onReading, label, extraParams = {}, submitLabel }
 }
 
 // ── Solar Return full-page view ────────────────────────────────────────────────
+const SR_THEMES = [
+  { key: 'love',     icon: '♀', title: 'Love',     ratingKey: 'loveRating',     color: '#C0507A' },
+  { key: 'career',   icon: '☉', title: 'Career',   ratingKey: 'careerRating',   color: '#D4AF37' },
+  { key: 'inner',    icon: '☽', title: 'Inner',    ratingKey: 'innerRating',    color: '#5A8FC8' },
+  { key: 'vitality', icon: '♂', title: 'Vitality', ratingKey: 'vitalityRating', color: '#E06840' },
+  { key: 'growth',   icon: '♃', title: 'Growth',   ratingKey: 'growthRating',   color: '#9B6FBA' },
+];
+
 function SolarReturnView({ charts, navigate, onBack }) {
   const featureCfg = FEATURES.find(f => f.key === 'solar');
   const currentYear = new Date().getFullYear();
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
   const [year, setYear] = useState(currentYear);
+  const [result, setResult] = useState(null);
+  const [srData, setSrData] = useState(null);
+  const [cityName, setCityName] = useState('');
+  const resultRef = useRef(null);
   const chart = charts.find(c => c.id === chartId);
   const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+
+  function handleResult(data) {
+    setResult(data.reading);
+    setSrData(data.srData);
+    setCityName(data.city_name || '');
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }
 
   return (
     <div className="animate-fade-in">
@@ -461,7 +478,7 @@ function SolarReturnView({ charts, navigate, onBack }) {
               {charts.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => setChartId(c.id)}
+                  onClick={() => { setChartId(c.id); setResult(null); setSrData(null); }}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
                     chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
                   }`}
@@ -480,7 +497,7 @@ function SolarReturnView({ charts, navigate, onBack }) {
             {years.map(y => (
               <button
                 key={y}
-                onClick={() => setYear(y)}
+                onClick={() => { setYear(y); setResult(null); setSrData(null); }}
                 className="px-5 py-2 rounded-lg text-sm font-sans border transition-all duration-150"
                 style={{
                   borderColor:     year === y ? featureCfg.color : 'rgba(255,255,255,0.12)',
@@ -503,24 +520,116 @@ function SolarReturnView({ charts, navigate, onBack }) {
           <LocationForm
             chart={chart}
             label={`Which city will you be in for your ${year} birthday?`}
-            extraParams={{ solarYear: year, readingType: 'solar' }}
+            apiCall={({ chartId: cid, cityQuery }) => api.solarReturns.generate({ chartId: cid, cityQuery, targetYear: year })}
             submitLabel={city => `☉ Read ${city} Solar Return ${year}`}
-            onReading={r => navigate(`/reading/${r.id}?panel=solar`)}
+            onReading={handleResult}
           />
         )}
       </div>
+
+      {/* Inline result */}
+      {result && srData && (
+        <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
+          <div className="flex items-baseline gap-3">
+            <h2 className="font-serif text-2xl text-text-p">{cityName?.split(',')[0]}</h2>
+            <span className="text-text-m text-sm font-sans">{year} Solar Return</span>
+          </div>
+
+          {srData.srLocalDate && (
+            <p className="text-text-m text-xs font-sans">
+              Solar Return date: <span className="text-gold">{srData.srLocalDate}</span>
+            </p>
+          )}
+
+          {/* Year theme + overview */}
+          <div className="relative rounded-xl border border-gold/20 bg-gradient-to-br from-gold/8 via-card to-card px-4 py-4 overflow-hidden">
+            <span className="absolute top-2 right-3 text-gold text-5xl font-serif pointer-events-none select-none leading-none opacity-[0.06]">☀</span>
+            {result.yearTheme && (
+              <p className="font-sans text-[10px] uppercase tracking-widest text-gold/80 mb-1">{result.yearTheme}</p>
+            )}
+            {result.overallRating != null && (
+              <div className="flex items-center gap-1 mb-2">
+                {[1,2,3,4,5].map(n => (
+                  <span key={n} className="text-base" style={{ color: '#D4AF37', opacity: n <= result.overallRating ? 1 : 0.2 }}>★</span>
+                ))}
+              </div>
+            )}
+            <p className="font-serif text-base text-text-p leading-relaxed relative z-10">{result.overview}</p>
+          </div>
+
+          {/* Cost */}
+          {result.cost && (
+            <div className="rounded-xl border border-border bg-card overflow-hidden relative">
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-400/70" />
+              <div className="px-4 py-3 pl-5">
+                <p className="font-sans text-xs text-text-m mb-1">What it costs you</p>
+                <p className="font-serif text-sm text-text-p leading-relaxed">{result.cost}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Score bars */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 px-1">
+            {SR_THEMES.map(t => {
+              const r = result[t.ratingKey];
+              if (r == null) return null;
+              return (
+                <div key={t.key} className="flex items-center gap-2.5">
+                  <span className="text-sm w-4 shrink-0" style={{ color: t.color }}>{t.icon}</span>
+                  <span className="font-sans text-xs text-text-m w-14 shrink-0">{t.title}</span>
+                  <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+                    <div className="h-1 rounded-full" style={{ width: `${(r / 5) * 100}%`, background: t.color }} />
+                  </div>
+                  <span className="font-sans text-[10px] text-text-m w-4 text-right shrink-0">{r}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Theme texts */}
+          <div className="space-y-3">
+            {SR_THEMES.map(t => result[t.key] && (
+              <div key={t.key} className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="h-0.5" style={{ background: t.color }} />
+                <div className="px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ color: t.color }}>{t.icon}</span>
+                    <span className="font-sans text-xs uppercase tracking-widest font-medium" style={{ color: t.color }}>{t.title}</span>
+                  </div>
+                  <p className="font-serif text-sm text-text-p leading-relaxed">{result[t.key]}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Travel Transits full-page view ─────────────────────────────────────────────
+const TRANSIT_ENERGY_STYLES = {
+  high:   { label: '⚡ High activation', cls: 'text-gold' },
+  medium: { label: '◈ Medium activation', cls: 'text-violet' },
+  low:    { label: '· Low activation', cls: 'text-text-m' },
+};
+
 function TransitsView({ charts, navigate, onBack }) {
   const featureCfg = FEATURES.find(f => f.key === 'transits');
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
   const today = new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [result, setResult] = useState(null);
+  const [cityName, setCityName] = useState('');
+  const resultRef = useRef(null);
   const chart = charts.find(c => c.id === chartId);
+
+  function handleResult(data) {
+    setResult(data.reading);
+    setCityName(data.city_name || '');
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }
 
   return (
     <div className="animate-fade-in">
@@ -550,7 +659,7 @@ function TransitsView({ charts, navigate, onBack }) {
               {charts.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => setChartId(c.id)}
+                  onClick={() => { setChartId(c.id); setResult(null); }}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
                     chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
                   }`}
@@ -573,7 +682,7 @@ function TransitsView({ charts, navigate, onBack }) {
                 className="input py-2 text-sm"
                 min={today}
                 value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                onChange={e => { setStartDate(e.target.value); setResult(null); }}
               />
             </div>
             <div>
@@ -583,7 +692,7 @@ function TransitsView({ charts, navigate, onBack }) {
                 className="input py-2 text-sm"
                 min={startDate || today}
                 value={endDate}
-                onChange={e => setEndDate(e.target.value)}
+                onChange={e => { setEndDate(e.target.value); setResult(null); }}
               />
             </div>
           </div>
@@ -597,12 +706,69 @@ function TransitsView({ charts, navigate, onBack }) {
           <LocationForm
             chart={chart}
             label="Where are you travelling?"
-            extraParams={{ travelStartDate: startDate || undefined, travelEndDate: endDate || undefined, readingType: 'transits' }}
+            apiCall={({ chartId: cid, cityQuery }) => api.transits.generate({
+              chartId: cid,
+              cityQuery,
+              startDate: startDate || undefined,
+              endDate: endDate || undefined,
+            })}
             submitLabel={city => `♃ Read my transits in ${city}`}
-            onReading={r => navigate(`/reading/${r.id}?panel=transits`)}
+            onReading={handleResult}
           />
         )}
       </div>
+
+      {/* Inline result */}
+      {result && (
+        <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
+          <div className="flex items-baseline gap-3">
+            <h2 className="font-serif text-2xl text-text-p">{cityName?.split(',')[0]}</h2>
+            {startDate && endDate && (
+              <span className="text-text-m text-sm font-sans">
+                {new Date(startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {' – '}
+                {new Date(endDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+
+          {/* Overview */}
+          <div className="relative rounded-xl border border-violet/20 bg-violet/5 px-4 py-4 overflow-hidden">
+            <span className="absolute top-2 right-3 text-violet text-5xl font-serif pointer-events-none select-none leading-none opacity-[0.06]">◎</span>
+            {result.tripEnergy && TRANSIT_ENERGY_STYLES[result.tripEnergy] && (
+              <p className={`text-[10px] font-sans uppercase tracking-widest mb-2 ${TRANSIT_ENERGY_STYLES[result.tripEnergy].cls}`}>
+                {TRANSIT_ENERGY_STYLES[result.tripEnergy].label}
+              </p>
+            )}
+            <p className="font-serif text-base text-text-p leading-relaxed relative z-10">{result.overview}</p>
+          </div>
+
+          {/* Timing */}
+          {result.timing && (
+            <p className="text-text-s font-sans text-xs italic px-1">{result.timing}</p>
+          )}
+
+          {/* Highlights */}
+          {result.highlights?.length > 0 && (
+            <div className="space-y-3">
+              {result.highlights.map((h, i) => (
+                <div key={i} className="rounded-lg border border-border bg-nebula px-4 py-3">
+                  <p className="font-sans text-xs font-semibold text-text-p mb-1">{h.title}</p>
+                  <p className="font-serif text-sm text-text-s leading-relaxed">{h.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Watch for */}
+          {result.watchFor && (
+            <div className="rounded-lg border border-border/60 bg-nebula px-4 py-3">
+              <p className="text-text-m text-[10px] font-sans uppercase tracking-widest mb-1">Watch for</p>
+              <p className="font-serif text-sm text-text-s leading-relaxed italic">{result.watchFor}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
