@@ -3,7 +3,9 @@ import { getDb } from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { geocode } from '../services/geocoding.js';
 import { calculateTransits } from '../services/astro/transits.js';
+import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateTransitReading } from '../services/claude.js';
+import { checkLimit, logUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -45,11 +47,22 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Calculate transits
-    const transitData = calculateTransits(chart, city, startDate, endDate);
+    // Check weekly limit before calling Claude
+    const limit = checkLimit(req.user);
+    if (!limit.allowed) {
+      return res.status(402).json({
+        error: `You've used all ${limit.limit} free readings this week.`,
+        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      });
+    }
+
+    // Calculate transits + relocated chart
+    const transitData    = calculateTransits(chart, city, startDate, endDate);
+    const relocatedChart = calculateRelocatedChart(chart, city);
 
     // Generate AI reading
-    const reading = await generateTransitReading(chart, city, startDate, endDate, transitData);
+    const reading = await generateTransitReading(chart, city, startDate, endDate, transitData, relocatedChart);
+    logUsage(req.user.id, 'transit');
 
     // Persist
     const result = db.prepare(

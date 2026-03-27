@@ -3,7 +3,9 @@ import { getDb } from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { geocode } from '../services/geocoding.js';
 import { calculateInfluences } from '../services/astro/astrocarto.js';
+import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateReading } from '../services/claude.js';
+import { checkLimit, logUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -39,8 +41,9 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Calculate planetary influences + parans
+    // Calculate planetary influences + parans + relocated chart
     const { influences, parans } = calculateInfluences(chart, city);
+    const relocatedChart = calculateRelocatedChart(chart, city);
 
     if (influences.length === 0 && parans.length === 0) {
       return res.status(200).json({
@@ -56,8 +59,18 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Check weekly limit before calling Claude
+    const limit = checkLimit(req.user);
+    if (!limit.allowed) {
+      return res.status(402).json({
+        error: `You've used all ${limit.limit} free readings this week.`,
+        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      });
+    }
+
     // Generate AI reading (returns themes object)
-    const themes = await generateReading(chart, city, influences, parans, intent);
+    const themes = await generateReading(chart, city, influences, parans, intent, relocatedChart);
+    logUsage(req.user.id, 'city_reading');
 
     // Persist
     const result = db.prepare(

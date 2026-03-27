@@ -1,5 +1,45 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+// ── Relocated chart formatting ────────────────────────────────────────────────
+
+function formatRelocatedChart(rc, cityName) {
+  if (!rc) return '';
+
+  const lines = [`RELOCATED BIRTH CHART IN ${cityName.toUpperCase()} (Whole Sign Houses):`];
+
+  // Ascendant shift
+  if (rc.ascChanged) {
+    lines.push(`  Ascendant: ${rc.natal.asc} (natal) → ${rc.relocated.asc} (in ${cityName}) — your identity presentation and first impressions shift significantly here`);
+  } else {
+    lines.push(`  Ascendant: ${rc.relocated.asc} — same sign as natal, consistent self-expression`);
+  }
+
+  // MC shift
+  if (rc.mcChanged) {
+    lines.push(`  Midheaven: ${rc.natal.mc} (natal) → ${rc.relocated.mc} (in ${cityName}) — career ambition and public reputation take on a different quality here`);
+  } else {
+    lines.push(`  Midheaven: ${rc.relocated.mc} — same sign as natal, consistent career direction`);
+  }
+
+  // Planet house shifts
+  if (rc.planetShifts.length > 0) {
+    lines.push(`\n  PLANETARY HOUSE SHIFTS (planets that move to a different life area):`);
+    for (const p of rc.planetShifts) {
+      lines.push(`  • ${p.label} (${p.zodiac}): ${p.natalHouse}th house (${p.natalMeaning}) → ${p.relocHouse}th house (${p.relocMeaning})`);
+    }
+  } else {
+    lines.push(`\n  No planets change houses — the natal chart architecture is stable in this city.`);
+  }
+
+  // Full relocated house placements
+  lines.push(`\n  ALL KEY PLANETS IN ${cityName.toUpperCase()}:`);
+  for (const [, p] of Object.entries(rc.allHouses)) {
+    lines.push(`  • ${p.label} (${p.zodiac}) — ${p.house}th house: ${p.meaning}`);
+  }
+
+  return '\n' + lines.join('\n');
+}
+
 const ANGLE_MEANINGS = {
   MC:  'Midheaven — career, public life, reputation, calling',
   IC:  'Imum Coeli — home, roots, inner life, ancestry',
@@ -72,20 +112,30 @@ const WRITING_STYLE = `WRITING STYLE — follow every one of these:
 - Name the actual planets and angles every time. Never write "celestial energy" or "the cosmos" — say "Venus DC" or "Saturn MC."
 - Concrete over vague. Not "you may find opportunities" — "Jupiter is on your Midheaven. Someone in this city will hand you something."`;
 
-export async function generateReading(chart, city, influences, parans, intent) {
+export async function generateReading(chart, city, influences, parans, intent, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const cityName = city.displayName.split(',')[0];
 
   const prompt = `Birth data: born ${chart.birth_date} at ${chart.birth_time} in ${chart.birth_place}.
 Target location: ${city.displayName} (${city.lat.toFixed(2)}°N, ${city.lng.toFixed(2)}°E)
 
-ACTIVE PLANETARY LINES:
+ACTIVE PLANETARY LINES (astrocartography):
 ${formatInfluences(influences)}
 
 PARANS AT THIS LATITUDE (${city.lat.toFixed(1)}°):
 ${formatParans(parans)}
+${formatRelocatedChart(relocatedChart, cityName)}
 
 PLANET KEY:
 ${Object.entries(PLANET_MEANINGS).map(([,v]) => `  ${v}`).join('\n')}
+
+HOW TO USE BOTH DATA SOURCES:
+- The planetary LINES tell you which energies are geographically activated at this city (the astrocartography layer).
+- The RELOCATED CHART tells you which life areas (houses) those energies rule when the birth chart is recast for this city — the inner architecture shifts.
+- When both agree (e.g. Venus DC line + Venus in 7th house), the love theme is doubly confirmed — say so.
+- When a planet has a strong line but is in a surprising house, that tension is the story — name it.
+- Always weave both layers into each theme section. Never use just one source.
 
 ${intent && INTENT_PROMPTS[intent] ? `READER'S INTENT — important context:\n${INTENT_PROMPTS[intent]}\n\n` : ''}${WRITING_STYLE}
 
@@ -142,18 +192,20 @@ function formatTransitAspects(aspects) {
   ).join('\n');
 }
 
-export async function generateTransitReading(chart, city, startDate, endDate, transitData) {
+export async function generateTransitReading(chart, city, startDate, endDate, transitData, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tripDays = transitData.totalDays || 1;
+  const cityName = city.displayName.split(',')[0];
 
   const prompt = `Birth data: born ${chart.birth_date} at ${chart.birth_time} in ${chart.birth_place}.
 Travel window: ${startDate} → ${endDate} (${tripDays} days) in ${city.displayName}.
 
-TRANSITING PLANETARY LINES THROUGH ${city.displayName.split(',')[0].toUpperCase()} DURING THIS TRIP:
+TRANSITING PLANETARY LINES THROUGH ${cityName.toUpperCase()} DURING THIS TRIP:
 ${formatTransitLines(transitData.lines)}
 
 TRANSIT-TO-NATAL ASPECTS ACTIVE DURING THIS WINDOW:
 ${formatTransitAspects(transitData.aspects)}
+${formatRelocatedChart(relocatedChart, cityName)}
 
 ${WRITING_STYLE}
 
@@ -218,7 +270,7 @@ function formatMonthlyData(months) {
   }).join('\n');
 }
 
-export async function generateSolarReturnReading(chart, city, srData) {
+export async function generateSolarReturnReading(chart, city, srData, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const cityName = city.displayName.split(',')[0];
@@ -238,6 +290,7 @@ ${formatSRPlanets(srData.srPlanets)}
 
 MONTHLY TRANSIT ASPECTS (transiting planets to SR chart at mid-month):
 ${formatMonthlyData(srData.monthlyData)}
+${formatRelocatedChart(relocatedChart, cityName)}
 
 ${WRITING_STYLE}
 
@@ -342,18 +395,20 @@ Return ONLY valid JSON — no markdown, no fences — with this exact structure:
 
 // ── Weekly Reading ─────────────────────────────────────────────────────────────
 
-export async function generateWeeklyReading(chart, city, weekStart, weekEnd, transitData) {
+export async function generateWeeklyReading(chart, city, weekStart, weekEnd, transitData, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const cityName = city.displayName.split(',')[0];
 
   const prompt = `Birth data: born ${chart.birth_date} at ${chart.birth_time} in ${chart.birth_place}.
 Current location: ${city.displayName}
 This week: ${weekStart} → ${weekEnd}
 
-TRANSITING PLANETARY LINES THROUGH ${city.displayName.split(',')[0].toUpperCase()} THIS WEEK:
+TRANSITING PLANETARY LINES THROUGH ${cityName.toUpperCase()} THIS WEEK:
 ${formatTransitLines(transitData.lines)}
 
 TRANSIT-TO-NATAL ASPECTS ACTIVE THIS WEEK:
 ${formatTransitAspects(transitData.aspects)}
+${formatRelocatedChart(relocatedChart, cityName)}
 
 ${WRITING_STYLE}
 

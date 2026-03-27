@@ -3,7 +3,9 @@ import { getDb } from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { geocode } from '../services/geocoding.js';
 import { calculateSolarReturn } from '../services/astro/solarReturn.js';
+import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateSolarReturnReading } from '../services/claude.js';
+import { checkLimit, logUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -59,11 +61,22 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Calculate solar return
-    const srData = calculateSolarReturn(chart, city, year);
+    // Check weekly limit before calling Claude
+    const limit = checkLimit(req.user);
+    if (!limit.allowed) {
+      return res.status(402).json({
+        error: `You've used all ${limit.limit} free readings this week.`,
+        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      });
+    }
+
+    // Calculate solar return + relocated chart
+    const srData        = calculateSolarReturn(chart, city, year);
+    const relocatedChart = calculateRelocatedChart(chart, city);
 
     // Generate AI reading
-    const reading = await generateSolarReturnReading(chart, city, srData);
+    const reading = await generateSolarReturnReading(chart, city, srData, relocatedChart);
+    logUsage(req.user.id, 'solar_return');
 
     // Persist
     const result = db.prepare(
