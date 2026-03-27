@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1a2540"/>
+      <stop offset="100%" stop-color="#0d1220"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c9a84c"/>
+      <stop offset="50%" stop-color="#f5d878"/>
+      <stop offset="100%" stop-color="#c9a84c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="512" cy="512" r="512" fill="url(#bg)"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="512" cy="512" r="430" fill="none" stroke="#c9a84c" stroke-width="40" opacity="0.06"/>
+  <!-- Main outer ring -->
+  <circle cx="512" cy="512" r="430" fill="none" stroke="#c9a84c" stroke-width="16" opacity="0.9"/>
+
+  <!-- Cardinal spokes -->
+  <line x1="512" y1="82" x2="512" y2="942" stroke="#c9a84c" stroke-width="10" opacity="0.35"/>
+  <line x1="82" y1="512" x2="942" y2="512" stroke="#c9a84c" stroke-width="10" opacity="0.35"/>
+  <!-- Diagonal spokes -->
+  <line x1="207" y1="207" x2="817" y2="817" stroke="#c9a84c" stroke-width="5" opacity="0.18"/>
+  <line x1="817" y1="207" x2="207" y2="817" stroke="#c9a84c" stroke-width="5" opacity="0.18"/>
+
+  <!-- Stars -->
+  <circle cx="184" cy="123" r="8" fill="#f5d878" opacity="0.9"/>
+  <circle cx="738" cy="82" r="7" fill="#f5d878" opacity="0.8"/>
+  <circle cx="904" cy="287" r="9" fill="#f5d878" opacity="0.85"/>
+  <circle cx="123" cy="533" r="6" fill="#f5d878" opacity="0.7"/>
+  <circle cx="943" cy="594" r="8" fill="#f5d878" opacity="0.8"/>
+  <circle cx="287" cy="841" r="7" fill="#f5d878" opacity="0.75"/>
+  <circle cx="799" cy="901" r="9" fill="#f5d878" opacity="0.85"/>
+  <circle cx="82" cy="738" r="6" fill="#f5d878" opacity="0.7"/>
+  <circle cx="635" cy="225" r="7" fill="#f5d878" opacity="0.8"/>
+  <circle cx="430" cy="942" r="7" fill="#f5d878" opacity="0.8"/>
+  <circle cx="840" cy="696" r="8" fill="#f5d878" opacity="0.8"/>
+  <circle cx="225" cy="389" r="6" fill="#f5d878" opacity="0.7"/>
+
+  <!-- Planet orbits -->
+  <circle cx="512" cy="512" r="310" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.12"/>
+
+  <!-- Planets -->
+  <!-- Sun (gold, with glow) at -55deg -->
+  <circle cx="690" cy="258" r="38" fill="#c9a84c" opacity="0.15"/>
+  <circle cx="690" cy="258" r="26" fill="#c9a84c" opacity="0.25"/>
+  <circle cx="690" cy="258" r="18" fill="#e4c97e"/>
+  <circle cx="683" cy="251" r="5" fill="#fff" opacity="0.4"/>
+
+  <!-- Venus (pink) at 25deg -->
+  <circle cx="793" cy="643" r="20" fill="#e07090" opacity="0.25"/>
+  <circle cx="793" cy="643" r="14" fill="#e07090"/>
+  <circle cx="788" cy="638" r="4" fill="#fff" opacity="0.35"/>
+
+  <!-- Moon (blue) at 100deg -->
+  <circle cx="458" cy="826" r="18" fill="#70a8e0" opacity="0.25"/>
+  <circle cx="458" cy="826" r="12" fill="#70a8e0"/>
+  <circle cx="453" cy="821" r="3" fill="#fff" opacity="0.35"/>
+
+  <!-- Saturn (purple) at 185deg -->
+  <circle cx="202" cy="487" r="18" fill="#a080e0" opacity="0.25"/>
+  <circle cx="202" cy="487" r="12" fill="#a080e0"/>
+  <circle cx="197" cy="482" r="3" fill="#fff" opacity="0.35"/>
+
+  <!-- Mars (orange) at 255deg -->
+  <circle cx="432" cy="204" r="16" fill="#e09060" opacity="0.25"/>
+  <circle cx="432" cy="204" r="11" fill="#e09060"/>
+  <circle cx="427" cy="199" r="3" fill="#fff" opacity="0.3"/>
+
+  <!-- Centre layers -->
+  <circle cx="512" cy="512" r="148" fill="#0d1220" opacity="0.5"/>
+  <circle cx="512" cy="512" r="115" fill="none" stroke="#c9a84c" stroke-width="3" opacity="0.25"/>
+  <circle cx="512" cy="512" r="82" fill="none" stroke="#c9a84c" stroke-width="5" opacity="0.55"/>
+  <circle cx="512" cy="512" r="115" fill="#0d1220"/>
+  <circle cx="512" cy="512" r="58" fill="#c9a84c" opacity="0.18"/>
+  <circle cx="512" cy="512" r="42" fill="#e4c97e" opacity="0.35"/>
+  <circle cx="512" cy="512" r="28" fill="#f5d878"/>
+  <circle cx="500" cy="500" r="9" fill="#fff" opacity="0.5"/>
+</svg>
