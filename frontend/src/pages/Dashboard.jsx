@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import GlobeLoader from '../components/GlobeLoader.jsx';
 import WorldMap from '../components/WorldMap.jsx';
 import WeeklyReading from '../components/WeeklyReading.jsx';
+import { useNative } from '../hooks/useNative.js';
 
 const PLANET_GLYPHS = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
   jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
@@ -447,8 +448,17 @@ function FeaturePanel({ feature, charts, navigate, onClose }) {
     }
   }
 
+  const panelRef = useRef(null);
+  useEffect(() => {
+    if (panelRef.current) {
+      setTimeout(() => {
+        panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
+  }, []);
+
   return (
-    <div className="card border-gold/20 animate-slide-up mb-6">
+    <div ref={panelRef} className="card border-gold/20 animate-slide-up mb-6">
       {/* Panel header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
@@ -640,6 +650,7 @@ function ChartCard({ chart, onDelete, isExpanded, onExpand }) {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const native = useNative();
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -727,7 +738,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-16 px-4">
+    <div className={`min-h-screen px-4 ${native ? 'pt-6 pb-28' : 'pt-20 pb-16'}`}>
       <div className="max-w-2xl mx-auto">
 
         {/* ── MAP VIEW ── */}
