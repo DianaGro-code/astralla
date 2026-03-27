@@ -16,7 +16,7 @@ const FEATURES = [
     key: 'city',
     glyph: '✦',
     title: 'City Reading',
-    hook: 'How a city activates your stars.',
+    hook: 'Any city — read personally for you.',
     color: '#D4AF37',
   },
   {
