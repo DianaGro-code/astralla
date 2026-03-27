@@ -11,8 +11,8 @@
     </linearGradient>
   </defs>
 
-  <!-- Background circle -->
-  <circle cx="512" cy="512" r="512" fill="url(#bg)"/>
+  <!-- Background fills full square -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
 
   <!-- Outer glow ring -->
   <circle cx="512" cy="512" r="430" fill="none" stroke="#c9a84c" stroke-width="40" opacity="0.06"/>
