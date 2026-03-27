@@ -101,6 +101,57 @@ function binarySearchSolarReturn(natalSunLon, lo, hi) {
   return (lo + hi) / 2;
 }
 
+const MONTH_NAMES = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
+
+/**
+ * For each of 12 months starting from the SR month, calculate mid-month
+ * transiting planet positions and their aspects to the SR chart planets.
+ */
+function calculateMonthlyTransits(srJDE, srPos) {
+  const utcMs  = Date.UTC(2000, 0, 1) + (srJDE - 2451545.0) * 86400000;
+  const srDate = new Date(utcMs);
+  const baseYear  = srDate.getUTCFullYear();
+  const baseMonth = srDate.getUTCMonth() + 1; // 1-12
+
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    let targetMonth = baseMonth + i;
+    let targetYear  = baseYear;
+    if (targetMonth > 12) { targetMonth -= 12; targetYear += 1; }
+
+    const midJDE    = julianDay(targetYear, targetMonth, 15, 12, 0, 0);
+    const transitPos = getAllPositions(midJDE);
+
+    const aspects = [];
+    for (const tp of PLANET_NAMES) {
+      for (const sp of PLANET_NAMES) {
+        if (tp === sp) continue;
+        const asp = findAspect(transitPos[tp].lon, srPos[sp].lon);
+        if (asp && asp.exactOrb <= 2) {
+          aspects.push({
+            transitLabel: PLANET_LABELS[tp],
+            srLabel:      PLANET_LABELS[sp],
+            aspect:       asp.name,
+            symbol:       asp.symbol,
+            exactOrb:     asp.exactOrb,
+            weight:       (PLANET_WEIGHT[tp] || 1) + (PLANET_WEIGHT[sp] || 1),
+          });
+        }
+      }
+    }
+    aspects.sort((a, b) => (b.weight - a.weight) || (a.exactOrb - b.exactOrb));
+
+    months.push({
+      month:   `${MONTH_NAMES[targetMonth - 1]} ${targetYear}`,
+      aspects: aspects.slice(0, 4),
+    });
+  }
+  return months;
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /**
@@ -189,6 +240,9 @@ export function calculateSolarReturn(chart, city, targetYear) {
   const localDt = DateTime.fromISO(utcDt, { zone: tz });
   const srLocalDate = localDt.toFormat("MMMM d, yyyy 'at' HH:mm");
 
+  // ── 9. Monthly transit aspects (transiting planets → SR chart) ─────────────
+  const monthlyData = calculateMonthlyTransits(srJDE, srPos);
+
   return {
     targetYear,
     srDate:       utcDt.slice(0, 10),
@@ -197,5 +251,6 @@ export function calculateSolarReturn(chart, city, targetYear) {
     natalPlanets,
     srInfluences: srInfluences.slice(0, 10),
     srToNatal:    srToNatal.slice(0, 20),
+    monthlyData,
   };
 }

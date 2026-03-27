@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     const city = await geocode(cityQuery);
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
-    // Check cache
+    // Check cache — only use if it has monthly themes (new format)
     const existing = db.prepare(
       `SELECT * FROM solar_returns
        WHERE chart_id = ? AND city_name = ? AND return_year = ?
@@ -43,11 +43,14 @@ router.post('/', async (req, res) => {
     ).get(chartId, city.displayName, year);
 
     if (existing) {
-      return res.json({
-        ...existing,
-        srData: JSON.parse(existing.sr_data),
-        reading: JSON.parse(existing.reading),
-      });
+      const cachedReading = JSON.parse(existing.reading);
+      if (cachedReading.months && cachedReading.months.length === 12) {
+        return res.json({
+          ...existing,
+          srData: JSON.parse(existing.sr_data),
+          reading: cachedReading,
+        });
+      }
     }
 
     // Calculate solar return

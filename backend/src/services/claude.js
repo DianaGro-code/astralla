@@ -201,49 +201,58 @@ function formatSRToNatal(aspects) {
   ).join('\n');
 }
 
+function formatMonthlyData(months) {
+  if (!months || !months.length) return 'No monthly transit data.';
+  return months.map(m => {
+    const asp = m.aspects.length
+      ? m.aspects.map(a => `${a.transitLabel} ${a.symbol} SR ${a.srLabel} (${a.exactOrb.toFixed(1)}°)`).join(', ')
+      : 'no tight aspects';
+    return `  ${m.month}: ${asp}`;
+  }).join('\n');
+}
+
 export async function generateSolarReturnReading(chart, city, srData) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  const cityName = city.displayName.split(',')[0];
+
   const prompt = `Birth data: born ${chart.birth_date} at ${chart.birth_time} in ${chart.birth_place}.
-Solar Return year: ${srData.targetYear}
-SR moment: ${srData.srLocalDate} (local time in ${city.displayName})
+Solar Return year: ${srData.targetYear}, celebrated in ${city.displayName}.
+SR moment: ${srData.srLocalDate}
 
-SR PLANET POSITIONS (where planets are on your birthday in ${srData.targetYear}):
-${formatSRPlanets(srData.srPlanets)}
-
-NATAL PLANET POSITIONS (for reference):
-${formatSRPlanets(srData.natalPlanets)}
-
-SR PLANETARY LINES THROUGH ${city.displayName.split(',')[0].toUpperCase()}:
-(Planets near angles in the SR chart at this city — these are the year's dominant themes here)
+SR PLANETARY LINES THROUGH ${cityName.toUpperCase()}:
 ${formatSRInfluences(srData.srInfluences)}
 
 SR-TO-NATAL ASPECTS:
 ${formatSRToNatal(srData.srToNatal)}
 
+SR PLANET POSITIONS:
+${formatSRPlanets(srData.srPlanets)}
+
+MONTHLY TRANSIT ASPECTS (transiting planets to SR chart at mid-month):
+${formatMonthlyData(srData.monthlyData)}
+
 ${WRITING_STYLE}
 
-You are interpreting a Solar Return chart: what the year ${srData.targetYear} holds for this person IF they spend their birthday in ${city.displayName}. The SR chart at this city activates different themes than if they had stayed home. This is a one-year forecast anchored to this location.
+You are interpreting a Solar Return chart for ${srData.targetYear} at ${city.displayName}.
 
 Return ONLY valid JSON with exactly these keys:
 
-- "overview": 2–3 punchy sentences. The dominant theme of this year at ${city.displayName.split(',')[0]}. What will this year ask of the person? Lead with consequence.
-- "yearTheme": One phrase (3–7 words). The title of this year for them at this city. E.g. "The Year of the Reckoning" or "Building Something That Lasts."
-- "love": 3 sentences on romance and partnerships for this SR year at this city. Name planets. End with a question or dare.
-- "career": 3 sentences on career, calling, public life for this SR year. Name planets.
-- "inner": 3 sentences on inner life, home feeling, emotional landscape for the year.
-- "vitality": 3 sentences on physical energy, identity, presence.
-- "growth": 3 sentences on transformation, learning, spiritual direction for the year.
-- "loveRating", "careerRating", "innerRating", "vitalityRating", "growthRating": integer 1–5 for each domain
-- "overallRating": integer 1–5 — how activated and favourable this city is for this SR year
-- "cost": 1–2 sentences. What does spending the birthday here demand?
+- "yearTheme": One phrase (3–7 words). The title of this year. E.g. "The Year of the Reckoning."
+- "overview": Exactly 2 punchy sentences. The dominant theme of ${srData.targetYear} at ${cityName}. Lead with consequence. No generic openers.
+- "overallRating": integer 1–5
+- "cost": Exactly 1 sentence. What does spending the birthday here demand?
+- "months": Array of exactly 12 objects in order, one per month. Each object has:
+  - "month": the month string exactly as given (e.g. "April 2025")
+  - "theme": 2–4 word theme title (e.g. "Push for Visibility", "Emotional Reckoning", "Money Moves")
+  - "text": Exactly 2 sentences. What does this month hold? Reference the strongest transit if relevant. Make it feel distinct from adjacent months.
 
-{"overview":"...","yearTheme":"...","love":"...","loveRating":3,"career":"...","careerRating":4,"inner":"...","innerRating":3,"vitality":"...","vitalityRating":4,"growth":"...","growthRating":3,"overallRating":4,"cost":"..."}`;
+Return JSON now.`;
 
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
-    max_tokens: 3000,
-    system: 'You are a sharp astrocartographer who writes like a magazine columnist. Respond with ONLY valid JSON.',
+    max_tokens: 4000,
+    system: 'You are a sharp astrocartographer who writes like a magazine columnist. Respond with ONLY valid JSON — no markdown, no code fences.',
     messages: [{ role: 'user', content: prompt }],
   });
 

@@ -431,6 +431,29 @@ const SR_THEMES = [
   { key: 'growth',   icon: '♃', title: 'Growth',   ratingKey: 'growthRating',   color: '#9B6FBA' },
 ];
 
+function SRMonthCard({ month, index }) {
+  const [open, setOpen] = useState(false);
+  const colors = ['#D4AF37','#C0507A','#5A8FC8','#E06840','#9B6FBA','#4BC9C8','#D4AF37','#C0507A','#5A8FC8','#E06840','#9B6FBA','#4BC9C8'];
+  const color = colors[index % colors.length];
+  return (
+    <button
+      onClick={() => setOpen(o => !o)}
+      className="w-full text-left rounded-xl border border-border bg-card overflow-hidden transition-colors hover:border-white/20"
+    >
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="font-sans text-[10px] font-medium w-24 shrink-0" style={{ color }}>{month.month}</span>
+        <span className="font-sans text-xs text-text-p flex-1 truncate">{month.theme}</span>
+        <span className="text-text-s text-xs shrink-0">{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div className="px-4 pb-3 pt-0 border-t border-border">
+          <p className="font-serif text-sm text-text-p leading-relaxed">{month.text}</p>
+        </div>
+      )}
+    </button>
+  );
+}
+
 function SolarReturnView({ charts, navigate, onBack }) {
   const featureCfg = FEATURES.find(f => f.key === 'solar');
   const currentYear = new Date().getFullYear();
@@ -568,39 +591,17 @@ function SolarReturnView({ charts, navigate, onBack }) {
             </div>
           )}
 
-          {/* Score bars */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 px-1">
-            {SR_THEMES.map(t => {
-              const r = result[t.ratingKey];
-              if (r == null) return null;
-              return (
-                <div key={t.key} className="flex items-center gap-2.5">
-                  <span className="text-sm w-4 shrink-0" style={{ color: t.color }}>{t.icon}</span>
-                  <span className="font-sans text-xs text-text-m w-14 shrink-0">{t.title}</span>
-                  <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
-                    <div className="h-1 rounded-full" style={{ width: `${(r / 5) * 100}%`, background: t.color }} />
-                  </div>
-                  <span className="font-sans text-[10px] text-text-m w-4 text-right shrink-0">{r}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Theme texts */}
-          <div className="space-y-3">
-            {SR_THEMES.map(t => result[t.key] && (
-              <div key={t.key} className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="h-0.5" style={{ background: t.color }} />
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span style={{ color: t.color }}>{t.icon}</span>
-                    <span className="font-sans text-xs uppercase tracking-widest font-medium" style={{ color: t.color }}>{t.title}</span>
-                  </div>
-                  <p className="font-serif text-sm text-text-p leading-relaxed">{result[t.key]}</p>
-                </div>
+          {/* Monthly breakdown */}
+          {result.months && result.months.length > 0 && (
+            <div>
+              <p className="font-sans text-[10px] uppercase tracking-widest text-text-s mb-3">Month by Month</p>
+              <div className="space-y-2">
+                {result.months.map((m, i) => (
+                  <SRMonthCard key={i} month={m} index={i} />
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
