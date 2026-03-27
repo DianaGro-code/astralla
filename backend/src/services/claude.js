@@ -243,7 +243,9 @@ ${WRITING_STYLE}
 
 You are interpreting a Solar Return chart for ${srData.targetYear}.
 
-CRITICAL FRAMING: Spending the birthday in ${cityName} sets the SR chart — it determines which planetary themes dominate the whole year. But the person will NOT necessarily stay in ${cityName}. The monthly themes describe how these energies move through their LIFE over the year — their inner world, moods, circumstances, decisions — regardless of where they physically are. Never say "in ${cityName}" or reference the city in the monthly section.
+CRITICAL FRAMING: Spending the birthday in ${cityName} sets the SR chart — it determines which planetary themes dominate the whole year. But the person will NOT necessarily stay in ${cityName}. The monthly themes describe how these energies move through their LIFE over the year — their inner world, moods, circumstances, decisions — regardless of where they physically are.
+
+ABSOLUTE RULE FOR THE MONTHS ARRAY: Do NOT mention "${cityName}" anywhere — not in theme titles, not in text, not as atmosphere, not as context. Do not say "the ${cityName} energy", "what ${cityName} set in motion", "the themes from ${cityName}", or any variation. The city name must be completely absent from every single month object. Each monthly text should read as if describing a universal season of the person's inner life. The reader should not be able to tell which city was used.
 
 Return ONLY valid JSON with exactly these keys:
 

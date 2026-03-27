@@ -44,7 +44,13 @@ router.post('/', async (req, res) => {
 
     if (existing) {
       const cachedReading = JSON.parse(existing.reading);
-      if (cachedReading.months && cachedReading.months.length === 12) {
+      const hasMonths = cachedReading.months && cachedReading.months.length === 12;
+      const cityRef = city.displayName.split(',')[0].toLowerCase();
+      const hasCityRefInMonths = hasMonths && cachedReading.months.some(m =>
+        (m.text  && m.text.toLowerCase().includes(cityRef)) ||
+        (m.theme && m.theme.toLowerCase().includes(cityRef))
+      );
+      if (hasMonths && !hasCityRefInMonths) {
         return res.json({
           ...existing,
           srData: JSON.parse(existing.sr_data),
