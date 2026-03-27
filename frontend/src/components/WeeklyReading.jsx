@@ -58,12 +58,12 @@ function CitySearch({ onSelect, placeholder = 'Search for a city…', autoFocus 
         )}
       </div>
       {open && (
-        <ul className={`absolute z-50 w-full bg-surface border border-white/10 rounded-xl shadow-xl overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'mt-1'}`}>
+        <ul className={`absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'mt-1'}`}>
           {results.map((city, i) => (
             <li key={i}>
               <button
                 type="button"
-                className="w-full text-left px-4 py-2.5 text-sm text-text-p hover:bg-white/5 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
                 onMouseDown={() => pick(city)}
               >
                 {city.displayName}

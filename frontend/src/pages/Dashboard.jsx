@@ -231,12 +231,12 @@ function NewChartForm({ onCreated, onCancel }) {
             )}
           </div>
           {cityOpen && cityResults.length > 0 && (
-            <ul className="absolute z-50 w-full mt-1 bg-surface border border-white/10 rounded-xl shadow-xl overflow-hidden">
+            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
               {cityResults.map((city, i) => (
                 <li key={i}>
                   <button
                     type="button"
-                    className="w-full text-left px-4 py-2.5 text-sm text-text-p hover:bg-white/5 transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
                     onMouseDown={() => handleCitySelect(city)}
                   >
                     {city.displayName}
@@ -577,7 +577,7 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
       </button>
       <div className="flex items-center gap-3 mb-2">
         <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
-        <h1 className="font-serif text-3xl text-text-p">Solar Return</h1>
+        <h1 className="font-serif text-3xl text-text-p">Birthday Reading</h1>
       </div>
       <p className="text-text-m text-sm font-sans mb-7">Your coming year, read from any city.</p>
 
@@ -612,7 +612,7 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
 
         {/* Year picker */}
         <div>
-          <p className="label">Solar Return Year</p>
+          <p className="label">Birthday Year</p>
           <div className="flex gap-2 flex-wrap">
             {years.map(y => (
               <button
@@ -641,7 +641,7 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
             chart={chart}
             label={`Which city will you be in for your ${year} birthday?`}
             apiCall={({ chartId: cid, cityQuery }) => api.solarReturns.generate({ chartId: cid, cityQuery, targetYear: year })}
-            submitLabel={city => `☉ Read ${city} Solar Return ${year}`}
+            submitLabel={city => `☉ Read ${city} Birthday Reading ${year}`}
             onReading={handleResult}
             onLimitReached={onLimitReached}
           />
@@ -653,12 +653,12 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
         <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
           <div className="flex items-baseline gap-3">
             <h2 className="font-serif text-2xl text-text-p">{cityName?.split(',')[0]}</h2>
-            <span className="text-text-m text-sm font-sans">{year} Solar Return</span>
+            <span className="text-text-m text-sm font-sans">{year} Birthday Reading</span>
           </div>
 
           {srData?.srLocalDate && (
             <p className="text-text-m text-xs font-sans">
-              Solar Return date: <span className="text-gold">{srData.srLocalDate}</span>
+              Birthday date: <span className="text-gold">{srData.srLocalDate}</span>
             </p>
           )}
 
@@ -737,7 +737,7 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
       </button>
       <div className="flex items-center gap-3 mb-2">
         <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
-        <h1 className="font-serif text-3xl text-text-p">Travel Transits</h1>
+        <h1 className="font-serif text-3xl text-text-p">Travel Reading</h1>
       </div>
       <p className="text-text-m text-sm font-sans mb-7">How will your next trip hit your chart?</p>
 
@@ -980,7 +980,7 @@ function FeaturePanel({ feature, charts, navigate, onClose, onLimitReached }) {
 }
 
 // ── Chart Card (history view) ─────────────────────────────────────────────────
-function ChartCard({ chart, onDelete, isExpanded, onExpand }) {
+function ChartCard({ chart, onDelete, onSetPrimary, isExpanded, onExpand }) {
   const [readings, setReadings] = useState(null);
   const [loadingReadings, setLoadingReadings] = useState(false);
   const navigate = useNavigate();
@@ -1002,20 +1002,30 @@ function ChartCard({ chart, onDelete, isExpanded, onExpand }) {
   return (
     <div className={`card transition-all duration-300 relative overflow-hidden ${isExpanded ? 'border-gold/30' : 'hover:border-gold/20'}`}>
       {/* Header */}
-      <button onClick={onExpand} className="w-full text-left group">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-base transition-colors ${isExpanded ? 'text-gold' : 'text-gold/60 group-hover:text-gold'}`}>✦</span>
+      <div className="flex items-center gap-3">
+        {/* Star / primary toggle */}
+        <button
+          onClick={e => { e.stopPropagation(); onSetPrimary(chart.id); }}
+          className="shrink-0 leading-none transition-colors"
+          title={chart.is_primary ? 'Primary chart' : 'Set as primary'}
+        >
+          <span className={`text-lg ${chart.is_primary ? 'text-gold' : 'text-gold/20 hover:text-gold/50'}`}>
+            {chart.is_primary ? '★' : '☆'}
+          </span>
+        </button>
+
+        <button onClick={onExpand} className="flex-1 min-w-0 text-left group">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
               <h3 className="font-serif text-lg text-text-p truncate">{chart.label}</h3>
+              <p className="text-text-m text-xs font-sans mt-0.5">
+                {chart.birth_date} · {chart.birth_time} · {chart.birth_place}
+              </p>
             </div>
-            <p className="text-text-m text-xs font-sans">
-              {chart.birth_date} · {chart.birth_time} · {chart.birth_place}
-            </p>
+            <span className={`text-text-m text-sm transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>⌄</span>
           </div>
-          <span className={`text-text-m text-sm transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>⌄</span>
-        </div>
-      </button>
+        </button>
+      </div>
 
       {/* Expanded: past readings */}
       {isExpanded && (
@@ -1157,6 +1167,20 @@ export default function Dashboard() {
     if (!confirm('Delete this birth chart and all its readings?')) return;
     await api.charts.delete(id);
     setCharts(cs => cs.filter(c => c.id !== id));
+  }
+
+  async function handleSetPrimary(id) {
+    // Optimistic update — change UI instantly, then persist
+    setCharts(cs => {
+      const updated = cs.map(c => ({ ...c, is_primary: c.id === id ? 1 : 0 }));
+      return [...updated].sort((a, b) => b.is_primary - a.is_primary);
+    });
+    try {
+      await api.charts.setPrimary(id);
+    } catch {
+      // Revert on failure
+      api.charts.list().then(setCharts);
+    }
   }
 
   function handleFeatureClick(key) {
@@ -1315,7 +1339,7 @@ export default function Dashboard() {
                     <button
                       key={f.key}
                       onClick={() => handleFeatureClick(f.key)}
-                      className={`relative text-left p-4 rounded-xl border transition-all duration-200 group overflow-hidden ${
+                      className={`relative text-left p-4 rounded-xl border transition-all duration-200 group overflow-hidden flex flex-col ${
                         isActive
                           ? 'border-opacity-60 bg-card'
                           : 'border-border bg-card hover:border-opacity-40'
@@ -1330,11 +1354,11 @@ export default function Dashboard() {
                         className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                         style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}14 0%, transparent 70%)` }}
                       />
-                      <div className="relative">
-                        <div className="text-xl mb-3 leading-none" style={{ color: f.color }}>
-                          {f.glyph}
+                      <div className="relative flex-1 flex flex-col">
+                        <div className="min-h-[60px]">
+                          <span className="text-base leading-none mb-1.5 block" style={{ color: f.color }}>{f.glyph}</span>
+                          <p className="font-serif text-sm text-text-p leading-snug">{f.title}</p>
                         </div>
-                        <p className="font-serif text-sm text-text-p mb-1 leading-snug">{f.title}</p>
                         <p className="font-sans text-[11px] text-text-m leading-relaxed">{f.hook}</p>
                       </div>
                     </button>
@@ -1389,12 +1413,20 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {charts.length > 1 && (
+                <p className="text-text-m text-xs font-sans mb-3 flex items-center gap-1.5">
+                  <span className="text-gold/60">★</span>
+                  Tap the star to set your default chart for all readings.
+                </p>
+              )}
+
               <div className="space-y-4">
                 {charts.map(chart => (
                   <ChartCard
                     key={chart.id}
                     chart={chart}
                     onDelete={handleDelete}
+                    onSetPrimary={handleSetPrimary}
                     isExpanded={expandedChartId === chart.id}
                     onExpand={() => setExpandedChartId(id => id === chart.id ? null : chart.id)}
                   />

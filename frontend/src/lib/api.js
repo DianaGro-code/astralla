@@ -42,11 +42,12 @@ export const api = {
     login:    (body) => request('/auth/login',    { method: 'POST', body: JSON.stringify(body) }),
   },
   charts: {
-    list:   ()       => request('/charts'),
-    create: (body)   => request('/charts', { method: 'POST', body: JSON.stringify(body) }),
-    get:    (id)     => request(`/charts/${id}`),
-    delete: (id)     => request(`/charts/${id}`, { method: 'DELETE' }),
-    lines:  (id)     => request(`/charts/${id}/lines`),
+    list:       ()    => request('/charts'),
+    create:     (body)=> request('/charts', { method: 'POST', body: JSON.stringify(body) }),
+    get:        (id)  => request(`/charts/${id}`),
+    delete:     (id)  => request(`/charts/${id}`, { method: 'DELETE' }),
+    lines:      (id)  => request(`/charts/${id}/lines`),
+    setPrimary: (id)  => request(`/charts/${id}/primary`, { method: 'PATCH' }),
   },
   readings: {
     generate:   (body) => request('/readings', { method: 'POST', body: JSON.stringify(body) }),

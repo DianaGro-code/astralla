@@ -110,7 +110,9 @@ const WRITING_STYLE = `WRITING STYLE — follow every one of these:
 - End every theme section with a question or a dare. "The question is whether you're ready to be that visible."
 - Dry wit is welcome — a light touch, never goofy. Think sharp magazine astrology column.
 - Name the actual planets and angles every time. Never write "celestial energy" or "the cosmos" — say "Venus DC" or "Saturn MC."
-- Concrete over vague. Not "you may find opportunities" — "Jupiter is on your Midheaven. Someone in this city will hand you something."`;
+- Concrete over vague. Not "you may find opportunities" — "Jupiter is on your Midheaven. Someone in this city will hand you something."
+- Never hedge. Not "may", "might", "could", "perhaps", "often", "sometimes". Say what IS. "This city makes you visible" — not "this city may increase your visibility." Declarative sentences only.
+- Name the uncomfortable truth. The thing they already know but haven't said out loud. That's what makes a reading feel seen, not just described. Write as if you already know this person.`;
 
 export async function generateReading(chart, city, influences, parans, intent, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -141,7 +143,7 @@ ${intent && INTENT_PROMPTS[intent] ? `READER'S INTENT — important context:\n${
 
 Return ONLY a valid JSON object — no markdown, no code fences, no text outside the JSON — with exactly these keys:
 
-- "overview": 2–3 punchy sentences. The dominant planetary story of ${city.displayName.split(',')[0]} for this person. Lead with consequence. No generic openers.
+- "overview": 2–3 punchy sentences. Don't explain the city — tell them what it will do to them. Write as if you already know this person. Lead with consequence. No generic openers.
 - "overallRating": integer 1–5 reflecting how activated and favorable this location is (5 = highly charged and positive, 1 = minimal activation)
 - "dreamOrComfort": "dream" if this city pushes, challenges, or costs something significant; "comfort" if it nourishes, heals, or feels like home; "both" if genuinely both; "neither" if mostly neutral
 - "cost": 1–2 sentences. What does this city ask of the person? What's the price of its activation? Honest, not scary.
@@ -160,7 +162,7 @@ Theme meanings:
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
     max_tokens: 3000,
-    system: 'You are a sharp, witty astrocartographer who writes like a great magazine columnist — precise, confident, occasionally funny, never fluffy. You know your planets cold. Respond with ONLY valid JSON — no markdown, no code fences, no text outside the JSON object.',
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. You make them feel seen, not informed. You know your planets cold and use them to say something true about a human life. Respond with ONLY valid JSON — no markdown, no code fences, no text outside the JSON object.',
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -231,7 +233,7 @@ Return ONLY valid JSON with exactly these keys:
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
     max_tokens: 2000,
-    system: 'You are a sharp astrocartographer who writes like a magazine columnist. Respond with ONLY valid JSON.',
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. Respond with ONLY valid JSON.',
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -316,7 +318,7 @@ Return JSON now.`;
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
     max_tokens: 4000,
-    system: 'You are a sharp astrocartographer who writes like a magazine columnist. Respond with ONLY valid JSON — no markdown, no code fences.',
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. You make them feel seen, not informed. Respond with ONLY valid JSON — no markdown, no code fences.',
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -376,7 +378,7 @@ Return ONLY valid JSON — no markdown, no fences — with this exact structure:
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
     max_tokens: 1500,
-    system: 'You are a sharp astrocartographer who writes like a magazine columnist. Respond with ONLY valid JSON — no markdown, no code fences.',
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. You make them feel seen, not informed. Respond with ONLY valid JSON — no markdown, no code fences.',
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -430,7 +432,7 @@ Return ONLY valid JSON with exactly these keys:
   const response = await client.messages.create({
     model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
     max_tokens: 1500,
-    system: 'You are a sharp astrocartographer who writes weekly columns like a magazine editor. Respond with ONLY valid JSON.',
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. You make them feel seen, not informed. Respond with ONLY valid JSON.',
     messages: [{ role: 'user', content: prompt }],
   });
 

@@ -505,7 +505,7 @@ function TravelTransitsPanel({ chartId, cityName, defaultOpen = false }) {
           <span className="text-teal text-base">◎</span>
           <div>
             <h3 className="font-sans text-sm font-medium text-text-p group-hover:text-gold transition-colors">
-              Travel Transits
+              Travel Reading
             </h3>
             <p className="text-text-m text-xs font-sans mt-0.5">
               Enter your travel dates for a sky forecast
@@ -646,7 +646,7 @@ function SolarReturnPanel({ chartId, cityName, birthDate, defaultOpen = false })
           <span className="text-gold text-base">☀</span>
           <div>
             <h3 className="font-sans text-sm font-medium text-text-p group-hover:text-gold transition-colors">
-              Solar Return
+              Birthday Reading
             </h3>
             <p className="text-text-m text-xs font-sans mt-0.5">
               Spend your birthday here — see your year
@@ -687,7 +687,7 @@ function SolarReturnPanel({ chartId, cityName, birthDate, defaultOpen = false })
             <div className="space-y-4 animate-fade-in">
               {/* SR date */}
               <p className="text-text-m text-xs font-sans">
-                Solar Return: <span className="text-gold">{srData.srLocalDate}</span>
+                Birthday date: <span className="text-gold">{srData.srLocalDate}</span>
               </p>
 
               {/* Year theme + overview */}

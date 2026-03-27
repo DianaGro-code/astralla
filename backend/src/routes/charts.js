@@ -10,9 +10,19 @@ router.use(requireAuth);
 router.get('/', (req, res) => {
   const db = getDb();
   const charts = db.prepare(
-    'SELECT * FROM birth_charts WHERE user_id = ? ORDER BY created_at DESC'
+    'SELECT * FROM birth_charts WHERE user_id = ? ORDER BY is_primary DESC, created_at ASC'
   ).all(req.user.id);
   res.json(charts);
+});
+
+router.patch('/:id/primary', (req, res) => {
+  const db = getDb();
+  const chart = db.prepare('SELECT * FROM birth_charts WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!chart) return res.status(404).json({ error: 'Chart not found' });
+  // Clear all primary flags for this user, then set the chosen one
+  db.prepare('UPDATE birth_charts SET is_primary = 0 WHERE user_id = ?').run(req.user.id);
+  db.prepare('UPDATE birth_charts SET is_primary = 1 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
 });
 
 router.post('/', async (req, res) => {

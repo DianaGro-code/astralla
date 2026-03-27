@@ -58,6 +58,9 @@ export function initDb() {
   // Add themes column if it doesn't exist (migration)
   try { db.exec('ALTER TABLE readings ADD COLUMN themes TEXT'); } catch {}
 
+  // Add is_primary flag to birth_charts (migration)
+  try { db.exec('ALTER TABLE birth_charts ADD COLUMN is_primary INTEGER NOT NULL DEFAULT 0'); } catch {}
+
   // Add home city fields to users (migration)
   try { db.exec('ALTER TABLE users ADD COLUMN home_city TEXT'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN home_lat REAL'); } catch {}
