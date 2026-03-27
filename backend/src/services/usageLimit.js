@@ -49,9 +49,8 @@ export function getUsage(userId) {
  * Returns { allowed, used, limit, resetsOn } for free users.
  */
 export function checkLimit(user) {
-  if (user.tier === 'pro') return { allowed: true };
-  const usage = getUsage(user.id);
-  return { allowed: usage.used < FREE_LIMIT, ...usage };
+  // Limit enforcement disabled — always allow
+  return { allowed: true };
 }
 
 /** Record one AI generation for the user */
