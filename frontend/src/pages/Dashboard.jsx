@@ -309,7 +309,7 @@ function DiscoverForm({ chart, onCitySelect, generatingCity }) {
 }
 
 // ── Location Query Form ────────────────────────────────────────────────────────
-function LocationForm({ chart, onReading, label }) {
+function LocationForm({ chart, onReading, label, extraParams = {}, submitLabel }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -358,6 +358,7 @@ function LocationForm({ chart, onReading, label }) {
       const reading = await api.readings.generate({
         chartId: chart.id,
         cityQuery: selected.displayName,
+        ...extraParams,
       });
       onReading(reading);
     } catch (err) {
@@ -414,12 +415,195 @@ function LocationForm({ chart, onReading, label }) {
           disabled={loading}
         >
           {selected
-            ? `✦ Read ${selected.displayName.split(',')[0]}`
+            ? (submitLabel ? submitLabel(selected.displayName.split(',')[0]) : `✦ Read ${selected.displayName.split(',')[0]}`)
             : '✦ Search for a city'}
         </button>
         {error && <p className="text-red-400 text-xs">{error}</p>}
       </form>
     </>
+  );
+}
+
+// ── Solar Return full-page view ────────────────────────────────────────────────
+function SolarReturnView({ charts, navigate, onBack }) {
+  const featureCfg = FEATURES.find(f => f.key === 'solar');
+  const currentYear = new Date().getFullYear();
+  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
+  const [year, setYear] = useState(currentYear);
+  const chart = charts.find(c => c.id === chartId);
+  const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+
+  return (
+    <div className="animate-fade-in">
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">Solar Return</h1>
+      </div>
+      <p className="text-text-m text-sm font-sans mb-7">Your coming year, read from any city.</p>
+
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            Each year the Sun returns to its exact natal position — and the chart cast for that moment
+            reveals your entire coming year. The city you choose changes everything: where you are
+            on your birthday shapes the whole year ahead.
+          </p>
+        </div>
+
+        {/* Chart selector */}
+        {charts.length > 1 && (
+          <div>
+            <p className="label">Whose chart?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {charts.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setChartId(c.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                    chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                  }`}
+                >
+                  <span className="text-[10px]">✦</span>{c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Year picker */}
+        <div>
+          <p className="label">Solar Return Year</p>
+          <div className="flex gap-2 flex-wrap">
+            {years.map(y => (
+              <button
+                key={y}
+                onClick={() => setYear(y)}
+                className="px-5 py-2 rounded-lg text-sm font-sans border transition-all duration-150"
+                style={{
+                  borderColor:     year === y ? featureCfg.color : 'rgba(255,255,255,0.12)',
+                  color:           year === y ? featureCfg.color : 'rgba(255,255,255,0.45)',
+                  backgroundColor: year === y ? `${featureCfg.color}18` : 'transparent',
+                  boxShadow:       year === y ? `0 0 0 1px ${featureCfg.color}40` : 'none',
+                }}
+              >
+                {y}{y === currentYear ? ' ·  this year' : y === currentYear + 1 ? ' · next year' : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* City input */}
+        {!chart && charts.length > 1 && (
+          <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
+        )}
+        {chart && (
+          <LocationForm
+            chart={chart}
+            label={`Which city will you be in for your ${year} birthday?`}
+            extraParams={{ solarYear: year, readingType: 'solar' }}
+            submitLabel={city => `☉ Read ${city} Solar Return ${year}`}
+            onReading={r => navigate(`/reading/${r.id}?panel=solar`)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Travel Transits full-page view ─────────────────────────────────────────────
+function TransitsView({ charts, navigate, onBack }) {
+  const featureCfg = FEATURES.find(f => f.key === 'transits');
+  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const chart = charts.find(c => c.id === chartId);
+
+  return (
+    <div className="animate-fade-in">
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">Travel Transits</h1>
+      </div>
+      <p className="text-text-m text-sm font-sans mb-7">How will your next trip hit your chart?</p>
+
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            The planets move through your chart differently depending on where you are on Earth.
+            Enter your destination and travel dates — we'll show how this trip activates your natal
+            chart and what the journey is really for.
+          </p>
+        </div>
+
+        {/* Chart selector */}
+        {charts.length > 1 && (
+          <div>
+            <p className="label">Whose chart?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {charts.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setChartId(c.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                    chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                  }`}
+                >
+                  <span className="text-[10px]">✦</span>{c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Travel dates */}
+        <div>
+          <p className="label">Travel Dates</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-text-m text-[10px] font-sans uppercase tracking-wider mb-1.5">Arriving</p>
+              <input
+                type="date"
+                className="input py-2 text-sm"
+                min={today}
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <p className="text-text-m text-[10px] font-sans uppercase tracking-wider mb-1.5">Leaving</p>
+              <input
+                type="date"
+                className="input py-2 text-sm"
+                min={startDate || today}
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* City input */}
+        {!chart && charts.length > 1 && (
+          <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
+        )}
+        {chart && (
+          <LocationForm
+            chart={chart}
+            label="Where are you travelling?"
+            extraParams={{ travelStartDate: startDate || undefined, travelEndDate: endDate || undefined, readingType: 'transits' }}
+            submitLabel={city => `♃ Read my transits in ${city}`}
+            onReading={r => navigate(`/reading/${r.id}?panel=transits`)}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -520,53 +704,7 @@ function FeaturePanel({ feature, charts, navigate, onClose }) {
         />
       )}
 
-      {/* Travel Transits */}
-      {chart && feature === 'transits' && (
-        <div className="space-y-4">
-          <div
-            className="rounded-lg px-4 py-3"
-            style={{ background: `${featureCfg?.color}12`, borderLeft: `3px solid ${featureCfg?.color}` }}
-          >
-            <p className="text-[10px] font-sans uppercase tracking-wider mb-1.5" style={{ color: featureCfg?.color }}>
-              How it works
-            </p>
-            <p className="text-xs font-sans text-text-s leading-relaxed">
-              The planets move through your chart differently depending on where you are on Earth.
-              Enter your destination and we'll show how this trip activates your natal chart —
-              what energies open up, what tensions arise, and what the journey is really for.
-            </p>
-          </div>
-          <LocationForm
-            chart={chart}
-            label="Where are you travelling to?"
-            onReading={r => navigate(`/reading/${r.id}?panel=transits`)}
-          />
-        </div>
-      )}
-
-      {/* Solar Return */}
-      {chart && feature === 'solar' && (
-        <div className="space-y-4">
-          <div
-            className="rounded-lg px-4 py-3"
-            style={{ background: `${featureCfg?.color}12`, borderLeft: `3px solid ${featureCfg?.color}` }}
-          >
-            <p className="text-[10px] font-sans uppercase tracking-wider mb-1.5" style={{ color: featureCfg?.color }}>
-              How it works
-            </p>
-            <p className="text-xs font-sans text-text-s leading-relaxed">
-              Each year the Sun returns to its exact natal position — and the chart cast for that
-              moment reveals your entire coming year. The city you're in at that instant changes
-              everything: where you live your birthday shapes the year ahead.
-            </p>
-          </div>
-          <LocationForm
-            chart={chart}
-            label="Where will you be on your birthday?"
-            onReading={r => navigate(`/reading/${r.id}?panel=solar`)}
-          />
-        </div>
-      )}
+      {/* Travel Transits and Solar Return are now full-page views — handled in Dashboard */}
     </div>
   );
 }
@@ -751,12 +889,9 @@ export default function Dashboard() {
   }
 
   function handleFeatureClick(key) {
-    if (key === 'map') {
+    if (['map', 'weekly', 'solar', 'transits'].includes(key)) {
       setActiveFeature(null);
-      setView('map');
-    } else if (key === 'weekly') {
-      setActiveFeature(null);
-      setView('weekly');
+      setView(key);
     } else {
       setActiveFeature(prev => prev === key ? null : key);
     }
@@ -853,6 +988,16 @@ export default function Dashboard() {
               );
             })()}
           </div>
+        )}
+
+        {/* ── SOLAR RETURN VIEW ── */}
+        {view === 'solar' && (
+          <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} />
+        )}
+
+        {/* ── TRAVEL TRANSITS VIEW ── */}
+        {view === 'transits' && (
+          <TransitsView charts={charts} navigate={navigate} onBack={goHome} />
         )}
 
         {/* ── WEEKLY VIEW ── */}
