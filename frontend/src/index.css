@@ -5,6 +5,12 @@
 @layer base {
   body {
     @apply bg-cosmos text-text-p font-sans;
+    /* Prevent pull-to-refresh and overscroll on native */
+    overscroll-behavior: none;
+    /* Respect iOS safe areas */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     /* Hybrid sky: cool navy radials + faint warm pull from bottom-right */
     background-image:
       radial-gradient(ellipse at 30% 20%, #1A2238 0%, transparent 55%),
@@ -20,6 +26,8 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: #1E2A3C transparent;
+    /* Remove tap highlight flash on iOS */
+    -webkit-tap-highlight-color: transparent;
   }
   *::-webkit-scrollbar { width: 6px; }
   *::-webkit-scrollbar-track { background: transparent; }

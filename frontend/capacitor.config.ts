@@ -5,11 +5,18 @@ const config: CapacitorConfig = {
   appName: 'Astralla',
   webDir: 'dist',
   server: {
-    // Use https scheme on Android so origin matches what the backend allows
     androidScheme: 'https',
   },
   ios: {
-    contentInset: 'automatic',
+    contentInset: 'always',
+    scrollEnabled: false,
+  },
+  plugins: {
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#0d1220',
+      overlaysWebView: false,
+    },
   },
 };
 
