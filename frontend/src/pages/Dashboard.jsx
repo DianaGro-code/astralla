@@ -528,14 +528,14 @@ function SolarReturnView({ charts, navigate, onBack }) {
       </div>
 
       {/* Inline result */}
-      {result && srData && (
+      {result && (
         <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
           <div className="flex items-baseline gap-3">
             <h2 className="font-serif text-2xl text-text-p">{cityName?.split(',')[0]}</h2>
             <span className="text-text-m text-sm font-sans">{year} Solar Return</span>
           </div>
 
-          {srData.srLocalDate && (
+          {srData?.srLocalDate && (
             <p className="text-text-m text-xs font-sans">
               Solar Return date: <span className="text-gold">{srData.srLocalDate}</span>
             </p>
@@ -702,15 +702,18 @@ function TransitsView({ charts, navigate, onBack }) {
         {!chart && charts.length > 1 && (
           <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
         )}
-        {chart && (
+        {chart && (!startDate || !endDate) && (
+          <p className="text-text-m text-sm font-sans italic">Enter your travel dates above to continue.</p>
+        )}
+        {chart && startDate && endDate && (
           <LocationForm
             chart={chart}
             label="Where are you travelling?"
             apiCall={({ chartId: cid, cityQuery }) => api.transits.generate({
               chartId: cid,
               cityQuery,
-              startDate: startDate || undefined,
-              endDate: endDate || undefined,
+              startDate,
+              endDate,
             })}
             submitLabel={city => `♃ Read my transits in ${city}`}
             onReading={handleResult}
