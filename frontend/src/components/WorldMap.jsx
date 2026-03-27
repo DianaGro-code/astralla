@@ -135,6 +135,7 @@ function PlanetLineLayer({ planetLines, focusedPlanet }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function WorldMap({ readings, onReadingClick, planetLines, charts = [] }) {
   const [tooltip, setTooltip]     = useState(null);
+  const [selected, setSelected]   = useState(null); // tap-selected pin (mobile popup)
   const [position, setPosition]   = useState({ coordinates: [0, 20], zoom: 1 });
   const [focusedPlanet, setFocusedPlanet] = useState(null);
 
@@ -308,6 +309,8 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
               const rating      = r.themes?.overallRating ?? 0;
               const fillColor   = ratingColor(rating);
               const hovered     = tooltip?.reading?.id === r.id;
+              const isSelected  = selected?.reading?.id === r.id;
+              const isActive    = hovered || isSelected;
               const chartInfo   = chartColorMap[r.chart_id];
               const ringColor   = multiChart && chartInfo ? chartInfo.color : '#0D1225';
               const ringWidth   = multiChart ? 2 : 1.5;
@@ -327,16 +330,18 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
                 <Marker
                   key={`${r.id}-${pinIdx}`}
                   coordinates={[r.city_lng + offsetLng, r.city_lat + offsetLat]}
-                  onClick={() => onReadingClick(r.id)}
+                  onClick={() => setSelected(prev =>
+                    prev?.reading?.id === r.id ? null : { reading: r, chartInfo }
+                  )}
                   onMouseEnter={() => setTooltip({ reading: r, chartInfo })}
                   onMouseLeave={() => setTooltip(null)}
                   style={{ cursor: 'pointer' }}
                 >
                   <circle
-                    r={hovered ? 8 : 5}
+                    r={isActive ? 8 : 5}
                     fill={fillColor}
-                    fillOpacity={hovered ? 1 : 0.9}
-                    stroke={hovered && multiChart ? chartInfo?.color : ringColor}
+                    fillOpacity={isActive ? 1 : 0.9}
+                    stroke={isActive && multiChart ? chartInfo?.color : ringColor}
                     strokeWidth={ringWidth}
                     style={{ transition: 'r 0.15s' }}
                   />
@@ -360,12 +365,11 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
           </ZoomableGroup>
         </ComposableMap>
 
-        {/* Hover tooltip */}
-        {tooltip && (
+        {/* Hover tooltip (desktop only — pointer-events-none so it doesn't block) */}
+        {tooltip && !selected && (
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             <div className="bg-cosmos border border-border rounded-lg shadow-lg px-4 py-3 min-w-[180px] text-center">
               <p className="font-serif text-sm text-text-p font-medium">{tooltip.reading.city_name.split(',')[0]}</p>
-              {/* Chart label badge (multi-chart mode) */}
               {multiChart && tooltip.chartInfo && (
                 <p
                   className="font-sans text-[10px] mt-0.5 font-medium uppercase tracking-wider"
@@ -382,7 +386,58 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
                   </span>
                 </div>
               )}
-              <p className="text-gold text-xs font-sans mt-2">Click to open →</p>
+              <p className="text-gold text-xs font-sans mt-2">Tap to open →</p>
+            </div>
+          </div>
+        )}
+
+        {/* Tap-selected popup — interactive, shown after first tap on a pin */}
+        {selected && (
+          <div
+            className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="bg-cosmos border border-border rounded-lg shadow-lg px-4 py-3 min-w-[190px] text-center">
+              {/* Dismiss × */}
+              <button
+                onClick={() => setSelected(null)}
+                className="absolute top-2 right-2.5 text-text-m hover:text-text-s text-xs leading-none transition-colors"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+
+              <p className="font-serif text-sm text-text-p font-medium pr-4">
+                {selected.reading.city_name.split(',')[0]}
+              </p>
+
+              {multiChart && selected.chartInfo && (
+                <p
+                  className="font-sans text-[10px] mt-0.5 font-medium uppercase tracking-wider"
+                  style={{ color: selected.chartInfo.color }}
+                >
+                  {selected.chartInfo.label}
+                </p>
+              )}
+
+              {selected.reading.themes?.overallRating != null && (
+                <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: ratingColor(selected.reading.themes.overallRating) }}
+                  />
+                  <span className="text-text-s text-xs font-sans">
+                    {ratingLabel(selected.reading.themes.overallRating)} · {selected.reading.themes.overallRating}/5
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={() => onReadingClick(selected.reading.id)}
+                className="mt-3 w-full py-1.5 rounded-md border border-gold/40 text-gold text-xs font-sans hover:bg-gold/10 hover:border-gold/70 active:bg-gold/20 transition-colors"
+              >
+                Open reading →
+              </button>
             </div>
           </div>
         )}
