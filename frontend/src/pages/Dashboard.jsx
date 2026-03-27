@@ -489,7 +489,7 @@ function SolarReturnView({ charts, navigate, onBack }) {
                   boxShadow:       year === y ? `0 0 0 1px ${featureCfg.color}40` : 'none',
                 }}
               >
-                {y}{y === currentYear ? ' ·  this year' : y === currentYear + 1 ? ' · next year' : ''}
+                {y}
               </button>
             ))}
           </div>
@@ -565,7 +565,7 @@ function TransitsView({ charts, navigate, onBack }) {
         {/* Travel dates */}
         <div>
           <p className="label">Travel Dates</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div>
               <p className="text-text-m text-[10px] font-sans uppercase tracking-wider mb-1.5">Arriving</p>
               <input
