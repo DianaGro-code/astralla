@@ -876,6 +876,146 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
   );
 }
 
+// ── City Reading full-page view ────────────────────────────────────────────────
+function CityReadingView({ charts, navigate, onBack, onLimitReached }) {
+  const featureCfg = FEATURES.find(f => f.key === 'city');
+  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
+  const chart = charts.find(c => c.id === chartId);
+
+  return (
+    <div className="animate-fade-in">
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">City Reading</h1>
+      </div>
+      <p className="text-text-m text-sm font-sans mb-7">Any city on Earth, read personally for you.</p>
+
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            Your birth chart has specific things to say about every city on Earth. Enter any place —
+            where you live, somewhere you're moving to, or a city that's been calling you — and we'll
+            read it against your natal chart across love, career, inner life, vitality, and growth.
+          </p>
+        </div>
+
+        {charts.length > 1 && (
+          <div>
+            <p className="label">Whose chart?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {charts.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setChartId(c.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                    chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                  }`}
+                >
+                  <span className="text-[10px]">✦</span>{c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!chart && charts.length > 1 && (
+          <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
+        )}
+
+        {chart && (
+          <LocationForm
+            chart={chart}
+            onReading={r => navigate(`/reading/${r.id}`)}
+            onLimitReached={onLimitReached}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Best Places (Discover) full-page view ──────────────────────────────────────
+function DiscoverView({ charts, navigate, onBack, onLimitReached }) {
+  const featureCfg = FEATURES.find(f => f.key === 'discover');
+  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
+  const [generatingCity, setGeneratingCity] = useState(null);
+  const chart = charts.find(c => c.id === chartId);
+
+  async function handleDiscoverSelect(cityName, intent) {
+    if (!chart) return;
+    setGeneratingCity(cityName);
+    try {
+      const reading = await api.readings.generate({
+        chartId: chart.id,
+        cityQuery: cityName,
+        intent: intent || undefined,
+      });
+      navigate(`/reading/${reading.id}`);
+    } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); }
+      else console.error(err);
+    } finally {
+      setGeneratingCity(null);
+    }
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">Best Places for You</h1>
+      </div>
+      <p className="text-text-m text-sm font-sans mb-7">Find where your stars align.</p>
+
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            Tell us what you're looking for — love, career, a fresh start — and we'll scan cities
+            worldwide to find where your chart lights up most. Real cities, ranked for your chart specifically.
+          </p>
+        </div>
+
+        {charts.length > 1 && (
+          <div>
+            <p className="label">Whose chart?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {charts.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setChartId(c.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                    chartId === c.id ? 'border-teal bg-teal/15 text-teal' : 'border-border text-text-s hover:border-teal/40 hover:text-text-p'
+                  }`}
+                >
+                  <span className="text-[10px]">◉</span>{c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!chart && charts.length > 1 && (
+          <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
+        )}
+
+        {chart && (
+          <DiscoverForm
+            chart={chart}
+            onCitySelect={handleDiscoverSelect}
+            generatingCity={generatingCity}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Feature Panel ─────────────────────────────────────────────────────────────
 // Shown below the feature grid when a feature card is tapped
 function FeaturePanel({ feature, charts, navigate, onClose, onLimitReached }) {
@@ -1184,12 +1324,8 @@ export default function Dashboard() {
   }
 
   function handleFeatureClick(key) {
-    if (['map', 'weekly', 'solar', 'transits'].includes(key)) {
-      setActiveFeature(null);
-      setView(key);
-    } else {
-      setActiveFeature(prev => prev === key ? null : key);
-    }
+    setActiveFeature(null);
+    setView(key);
   }
 
   function goHome() {
@@ -1287,6 +1423,16 @@ export default function Dashboard() {
         )}
 
         {/* ── SOLAR RETURN VIEW ── */}
+        {/* ── CITY READING VIEW ── */}
+        {view === 'city' && (
+          <CityReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+        )}
+
+        {/* ── DISCOVER VIEW ── */}
+        {view === 'discover' && (
+          <DiscoverView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+        )}
+
         {view === 'solar' && (
           <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
         )}
@@ -1332,9 +1478,7 @@ export default function Dashboard() {
             {!loading && charts.length > 0 && (
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {FEATURES.map(f => {
-                  const isActive = activeFeature === f.key
-                    || (f.key === 'map' && view === 'map')
-                    || (f.key === 'weekly' && view === 'weekly');
+                  const isActive = view === f.key;
                   return (
                     <button
                       key={f.key}
@@ -1365,18 +1509,6 @@ export default function Dashboard() {
                   );
                 })}
               </div>
-            )}
-
-            {/* ── Feature panel ── */}
-            {activeFeature && charts.length > 0 && (
-              <FeaturePanel
-                key={activeFeature}
-                feature={activeFeature}
-                charts={charts}
-                navigate={navigate}
-                onClose={() => setActiveFeature(null)}
-                onLimitReached={setLimitError}
-              />
             )}
 
             {/* ── Charts section ── */}

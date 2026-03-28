@@ -7,11 +7,6 @@ const OUTCOMES = [
   { glyph: '♇', label: "Where you'll be transformed", desc: 'Pluto asks for everything. Some locations hand it right to him.' },
 ];
 
-const QUOTES = [
-  { text: 'I moved to Lisbon on a whim. Apparently my Venus DC line runs right through it.', city: 'Lisbon' },
-  { text: 'Tokyo felt like a completely different version of me. Saturn MC will do that.', city: 'Tokyo' },
-  { text: 'I knew something was off about London for me. Neptune IC — beautiful but untethering.', city: 'London' },
-];
 
 export default function Landing() {
   return (
@@ -53,19 +48,6 @@ export default function Landing() {
               <div className="text-text-m font-sans text-xs leading-relaxed italic">{f.desc}</div>
             </div>
           ))}
-        </div>
-
-        {/* Social proof */}
-        <div className="mt-16 max-w-3xl w-full animate-fade-in">
-          <p className="text-text-m text-xs font-sans uppercase tracking-widest mb-6">What the lines reveal</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {QUOTES.map((q, i) => (
-              <div key={i} className="card border-border/50 text-left hover:border-gold/20 transition-colors">
-                <p className="font-serif text-sm text-text-s leading-relaxed italic mb-3">"{q.text}"</p>
-                <p className="text-text-m text-xs font-sans">— {q.city}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* How it works */}
