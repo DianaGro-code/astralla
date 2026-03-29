@@ -45,6 +45,7 @@ export const api = {
     list:       ()    => request('/charts'),
     create:     (body)=> request('/charts', { method: 'POST', body: JSON.stringify(body) }),
     get:        (id)  => request(`/charts/${id}`),
+    update:     (id, body) => request(`/charts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete:     (id)  => request(`/charts/${id}`, { method: 'DELETE' }),
     lines:      (id)  => request(`/charts/${id}/lines`),
     setPrimary: (id)  => request(`/charts/${id}/primary`, { method: 'PATCH' }),

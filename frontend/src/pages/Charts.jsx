@@ -10,12 +10,17 @@ function Spinner({ size = 'md' }) {
   return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
 }
 
-// ── New Chart Form ─────────────────────────────────────────────────────────────
-function NewChartForm({ onCreated, onCancel }) {
-  const [form, setForm] = useState({ label: '', birthDate: '', birthTime: '', birthPlace: '' });
+// ── Chart Form (create + edit) ─────────────────────────────────────────────────
+function ChartForm({ initial, onSaved, onCancel }) {
+  const isEdit = !!initial;
+  const [form, setForm] = useState(
+    initial
+      ? { label: initial.label, birthDate: initial.birth_date, birthTime: initial.birth_time || '', birthPlace: initial.birth_place }
+      : { label: '', birthDate: '', birthTime: '', birthPlace: '' }
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [unknownTime, setUnknownTime] = useState(false);
+  const [unknownTime, setUnknownTime] = useState(isEdit && !initial.birth_time);
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const [cityResults, setCityResults]   = useState([]);
@@ -65,8 +70,10 @@ function NewChartForm({ onCreated, onCancel }) {
     setError('');
     setLoading(true);
     try {
-      const chart = await api.charts.create(form);
-      onCreated(chart);
+      const chart = isEdit
+        ? await api.charts.update(initial.id, form)
+        : await api.charts.create(form);
+      onSaved(chart);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -76,7 +83,7 @@ function NewChartForm({ onCreated, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-4 animate-slide-up border-gold/30">
-      <h3 className="font-serif text-xl text-text-p">New Birth Chart</h3>
+      <h3 className="font-serif text-xl text-text-p">{isEdit ? 'Edit Chart' : 'New Birth Chart'}</h3>
       <div>
         <label className="label">Name</label>
         <input className="input" placeholder="e.g. Diana, Samy, Mom…" value={form.label} onChange={set('label')} required />
@@ -167,7 +174,7 @@ function NewChartForm({ onCreated, onCancel }) {
       {error && <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>}
       <div className="flex gap-3 pt-1">
         <button type="submit" className="btn-gold flex-1" disabled={loading}>
-          {loading ? <span className="flex items-center gap-2 justify-center"><Spinner size="sm" />Saving…</span> : 'Save chart →'}
+          {loading ? <span className="flex items-center gap-2 justify-center"><Spinner size="sm" />Saving…</span> : (isEdit ? 'Save changes →' : 'Save chart →')}
         </button>
         <button type="button" onClick={onCancel} className="btn-ghost">Cancel</button>
       </div>
@@ -176,9 +183,10 @@ function NewChartForm({ onCreated, onCancel }) {
 }
 
 // ── Chart Card ────────────────────────────────────────────────────────────────
-function ChartCard({ chart, onDelete, onSetPrimary, isExpanded, onExpand }) {
+function ChartCard({ chart, onDelete, onEdit, onSetPrimary, isExpanded, onExpand }) {
   const [readings, setReadings] = useState(null);
   const [loadingReadings, setLoadingReadings] = useState(false);
+  const [editing, setEditing] = useState(false);
   const navigate = useNavigate();
 
   async function loadReadings() {
@@ -221,7 +229,17 @@ function ChartCard({ chart, onDelete, onSetPrimary, isExpanded, onExpand }) {
         </button>
       </div>
 
-      {isExpanded && (
+      {isExpanded && editing && (
+        <div className="mt-5 pt-5 border-t border-border/60 animate-fade-in">
+          <ChartForm
+            initial={chart}
+            onSaved={updated => { onEdit(updated); setEditing(false); }}
+            onCancel={() => setEditing(false)}
+          />
+        </div>
+      )}
+
+      {isExpanded && !editing && (
         <div className="mt-5 pt-5 border-t border-border/60 animate-fade-in">
           {readings && readings.length > 0 && (
             <div>
@@ -273,7 +291,13 @@ function ChartCard({ chart, onDelete, onSetPrimary, isExpanded, onExpand }) {
 
           {loadingReadings && <div className="flex justify-center py-3"><Spinner /></div>}
 
-          <div className="mt-5 pt-4 border-t border-border/30 flex justify-end">
+          <div className="mt-5 pt-4 border-t border-border/30 flex justify-between items-center">
+            <button
+              onClick={() => setEditing(true)}
+              className="text-[10px] font-sans text-text-m/50 hover:text-gold transition-colors uppercase tracking-wider"
+            >
+              Edit chart
+            </button>
             <button
               onClick={() => onDelete(chart.id)}
               className="text-[10px] font-sans text-text-m/50 hover:text-red-400 transition-colors uppercase tracking-wider"
@@ -302,6 +326,10 @@ export default function Charts() {
   function handleCreated(chart) {
     setCharts(cs => [chart, ...cs]);
     setShowForm(false);
+  }
+
+  function handleEdited(updated) {
+    setCharts(cs => cs.map(c => c.id === updated.id ? updated : c));
   }
 
   async function handleDelete(id) {
@@ -340,7 +368,7 @@ export default function Charts() {
 
         {showForm && (
           <div className="mb-6">
-            <NewChartForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
+            <ChartForm onSaved={handleCreated} onCancel={() => setShowForm(false)} />
           </div>
         )}
 
@@ -374,6 +402,7 @@ export default function Charts() {
               key={chart.id}
               chart={chart}
               onDelete={handleDelete}
+              onEdit={handleEdited}
               onSetPrimary={handleSetPrimary}
               isExpanded={expandedChartId === chart.id}
               onExpand={() => setExpandedChartId(id => id === chart.id ? null : chart.id)}

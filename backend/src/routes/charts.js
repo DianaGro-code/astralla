@@ -58,6 +58,31 @@ router.get('/:id', (req, res) => {
   res.json(chart);
 });
 
+router.put('/:id', async (req, res) => {
+  const { label, birthDate, birthTime, birthPlace } = req.body;
+  if (!label || !birthDate || !birthPlace) {
+    return res.status(400).json({ error: 'Label, birth date, and birth place are required' });
+  }
+  const db = getDb();
+  const chart = db.prepare('SELECT * FROM birth_charts WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!chart) return res.status(404).json({ error: 'Chart not found' });
+
+  try {
+    const location = await geocode(birthPlace);
+    if (!location) return res.status(400).json({ error: `Could not find location: "${birthPlace}"` });
+
+    db.prepare(
+      `UPDATE birth_charts SET label=?, birth_date=?, birth_time=?, birth_place=?, birth_lat=?, birth_lng=? WHERE id=?`
+    ).run(label, birthDate, birthTime, location.displayName, location.lat, location.lng, req.params.id);
+
+    const updated = db.prepare('SELECT * FROM birth_charts WHERE id = ?').get(req.params.id);
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update chart' });
+  }
+});
+
 router.delete('/:id', (req, res) => {
   const db = getDb();
   const result = db.prepare(
