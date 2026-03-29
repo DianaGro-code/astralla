@@ -65,7 +65,7 @@ const FEATURES = [
   {
     key: 'occasion',
     glyph: '✶',
-    title: 'Life Chapter',
+    title: 'Chapter Planner',
     color: '#6B9E78',
     description: 'Tell us what you\'re navigating and we\'ll find the cities that hold the right energy for that chapter of your life.',
   },
@@ -1060,13 +1060,11 @@ function PartnerReadingView({ charts, navigate, onBack, onLimitReached }) {
   );
 }
 
-// ── Occasion Planner full-page view ────────────────────────────────────────────
+// ── Chapter Planner full-page view ────────────────────────────────────────────
 function OccasionView({ charts, navigate, onBack, onLimitReached }) {
   const featureCfg = FEATURES.find(f => f.key === 'occasion');
   const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
   const [occasion, setOccasion] = useState(null);
-  const [customOccasion, setCustomOccasion] = useState('');
-  const [showCustom, setShowCustom] = useState(false);
   const [region, setRegion] = useState('worldwide');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
@@ -1075,10 +1073,8 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
   const [nudge, setNudge] = useState(false);
   const chart = charts.find(c => c.id === chartId);
 
-  const effectiveOccasion = showCustom ? customOccasion : occasion;
-
   async function handleFind() {
-    if (!effectiveOccasion?.trim()) {
+    if (!occasion?.trim()) {
       setNudge(true);
       setTimeout(() => setNudge(false), 2000);
       return;
@@ -1087,7 +1083,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
     setLoading(true);
     setResults(null);
     try {
-      const data = await api.topCities.find({ chartId: chart.id, intent: effectiveOccasion, region });
+      const data = await api.topCities.find({ chartId: chart.id, intent: occasion, region });
       setResults(data.cities);
     } catch (err) {
       if (err.limitReached) { onLimitReached?.(err); return; }
@@ -1104,7 +1100,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
       const reading = await api.readings.generate({
         chartId: chart.id,
         cityQuery: cityName,
-        intent: effectiveOccasion || undefined,
+        intent: occasion || undefined,
       });
       navigate(`/reading/${reading.id}`);
     } catch (err) {
@@ -1122,7 +1118,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
       </button>
       <div className="flex items-center gap-3 mb-2">
         <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
-        <h1 className="font-serif text-3xl text-text-p">Life Chapter</h1>
+        <h1 className="font-serif text-3xl text-text-p">Chapter Planner</h1>
       </div>
       <p className="text-text-m text-sm font-sans mb-7">Find the cities that match this chapter of your life.</p>
 
@@ -1160,9 +1156,9 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
               <button
                 key={o}
                 type="button"
-                onClick={() => { setOccasion(o); setShowCustom(false); setResults(null); }}
+                onClick={() => { setOccasion(o); setResults(null); }}
                 className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
-                  !showCustom && occasion === o
+                  occasion === o
                     ? 'border-gold bg-gold/15 text-gold'
                     : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
                 }`}
@@ -1170,27 +1166,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
                 {o}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => { setShowCustom(true); setOccasion(null); setResults(null); }}
-              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
-                showCustom
-                  ? 'border-gold bg-gold/15 text-gold'
-                  : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
-              }`}
-            >
-              ✏ Custom…
-            </button>
           </div>
-          {showCustom && (
-            <input
-              className="input mt-2"
-              placeholder="e.g. Starting a new relationship, launching a business…"
-              value={customOccasion}
-              onChange={e => { setCustomOccasion(e.target.value); setResults(null); }}
-              autoFocus
-            />
-          )}
         </div>
 
         <div>
@@ -1240,7 +1216,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
         {results && (
           <div className="space-y-3 animate-fade-in">
             <p className="text-text-m text-xs font-sans uppercase tracking-wider">
-              Top cities for "{effectiveOccasion}"
+              Top cities for "{occasion}"
             </p>
             {results.map((city, i) => (
               <div key={i} className="rounded-xl border border-border bg-nebula px-4 py-4 hover:border-gold/30 transition-all">
