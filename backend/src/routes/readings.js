@@ -28,9 +28,9 @@ router.post('/', async (req, res) => {
     const city = await geocode(cityQuery);
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
-    // Return existing reading if one already exists for this chart + city
+    // Return existing reading if one already exists for this chart + city (solo readings only)
     const existing = db.prepare(
-      'SELECT * FROM readings WHERE chart_id = ? AND city_name = ? ORDER BY created_at DESC LIMIT 1'
+      'SELECT * FROM readings WHERE chart_id = ? AND city_name = ? AND partner_chart_id IS NULL ORDER BY created_at DESC LIMIT 1'
     ).get(chartId, city.displayName);
     if (existing) {
       return res.status(200).json({
