@@ -17,7 +17,7 @@ const FEATURES = [
     key: 'city',
     glyph: '✦',
     title: 'City Reading',
-    color: '#D4AF37',
+    color: '#C9A96E',
     description: 'Your birth chart has specific things to say about every city on Earth. Enter any place — somewhere you\'re moving, a dream destination, or a city that\'s been calling you — and we\'ll read it across love, career, inner life, vitality, and growth.',
   },
   {
@@ -1498,20 +1498,20 @@ export default function Dashboard() {
             )}
 
             {!loading && charts.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 {FEATURES.map(f => (
                   <button
                     key={f.key}
                     onClick={() => setPendingFeature(f)}
-                    className="relative text-left p-4 rounded-xl border border-border bg-card hover:border-opacity-40 transition-all duration-200 group overflow-hidden flex flex-col"
+                    className="relative text-left p-5 rounded-2xl border border-border bg-card hover:border-white/10 transition-all duration-200 group overflow-hidden flex flex-col min-h-[128px]"
                   >
                     <div
                       className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}14 0%, transparent 70%)` }}
+                      style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}18 0%, transparent 65%)` }}
                     />
-                    <div className="relative flex-1 flex flex-col gap-2">
-                      <span className="text-base leading-none" style={{ color: f.color }}>{f.glyph}</span>
-                      <p className="font-serif text-xl text-text-p leading-snug">{f.title}</p>
+                    <div className="relative flex-1 flex flex-col justify-between">
+                      <span className="text-lg leading-none mb-3" style={{ color: f.color }}>{f.glyph}</span>
+                      <p className="font-serif text-[1.2rem] text-text-p leading-snug">{f.title}</p>
                     </div>
                   </button>
                 ))}
