@@ -15,12 +15,7 @@ export default function Landing() {
 
       {/* Hero */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-24 pb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold/30 bg-gold/5 text-gold text-xs font-sans mb-8 animate-fade-in tracking-widest uppercase">
-          <span>✦</span>
-          <span>Astralla</span>
-        </div>
-
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-serif font-light text-text-p leading-tight mb-6 animate-slide-up">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-serif font-light text-text-p leading-tight mb-6 animate-slide-up mt-4">
           Some places will<br />
           <span className="text-gold italic">change you.</span>
         </h1>
@@ -43,8 +38,8 @@ export default function Landing() {
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl w-full animate-fade-in">
           {OUTCOMES.map(f => (
             <div key={f.label} className="card text-center hover:border-gold/40 transition-colors cursor-default">
-              <div className="text-gold text-2xl mb-2">{f.glyph}</div>
-              <div className="text-text-p font-sans font-medium text-sm mb-1.5">{f.label}</div>
+              <div className="text-gold text-xl mb-3">{f.glyph}</div>
+              <div className="text-text-p font-serif text-base leading-snug mb-2">{f.label}</div>
               <div className="text-text-m font-sans text-xs leading-relaxed italic">{f.desc}</div>
             </div>
           ))}

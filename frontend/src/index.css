@@ -69,7 +69,8 @@
   }
 
   .label {
-    @apply block text-sm font-sans font-medium text-text-s mb-1.5 tracking-wide uppercase;
+    @apply block text-xs font-sans font-medium text-text-s mb-1.5 tracking-wider uppercase;
+    letter-spacing: 0.08em;
   }
 
   .glyph {

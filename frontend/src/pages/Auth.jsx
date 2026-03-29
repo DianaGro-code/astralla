@@ -34,9 +34,9 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-14">
       <div className="w-full max-w-sm animate-slide-up">
-        <div className="text-center mb-8">
-          <div className="text-gold text-3xl mb-3">✦</div>
-          <h1 className="font-serif text-3xl text-text-p mb-1">
+        <div className="text-center mb-10">
+          <div className="text-gold text-2xl mb-4 opacity-70">✦</div>
+          <h1 className="font-serif text-4xl text-text-p mb-2">
             {mode === 'login' ? 'Welcome back' : 'Your chart is waiting'}
           </h1>
           <p className="text-text-m font-sans text-sm">
@@ -44,7 +44,7 @@ export default function Auth() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <form onSubmit={handleSubmit} className="card space-y-5 p-7">
           {mode === 'register' && (
             <div>
               <label className="label">Name</label>
