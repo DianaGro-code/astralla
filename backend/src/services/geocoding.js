@@ -7,14 +7,21 @@ const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const HEADERS = { 'User-Agent': 'AstrocartographyApp/1.0', 'Accept-Language': 'en' };
 
 export async function searchCities(query) {
-  const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=8&addressdetails=1`;
+  const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=20&addressdetails=1`;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`Geocoding request failed: ${res.status}`);
   const data = await res.json();
 
+  const PLACE_TYPES = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'administrative']);
+
   const seen = new Set();
   const results = [];
   for (const place of data) {
+    // Only include actual populated places, not roads/boundaries/POIs
+    if (place.class !== 'place' && place.class !== 'boundary') continue;
+    if (place.class === 'boundary' && place.type !== 'administrative') continue;
+    if (place.class === 'place' && !PLACE_TYPES.has(place.type)) continue;
+
     const addr = place.address || {};
     const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || place.display_name.split(',')[0];
     const country = addr.country || '';
