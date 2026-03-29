@@ -1491,7 +1491,7 @@ export default function Dashboard() {
                 <p className="text-text-m font-sans text-sm mb-8 max-w-xs mx-auto leading-relaxed">
                   Add your birth data and start exploring which cities are written into your chart.
                 </p>
-                <button onClick={() => navigate('/charts')} className="btn-gold">
+                <button onClick={() => navigate('/charts?new=true')} className="btn-gold">
                   Add my birth chart →
                 </button>
               </div>

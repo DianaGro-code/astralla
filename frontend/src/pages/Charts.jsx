@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import GlobeLoader from '../components/GlobeLoader.jsx';
 import Logo from '../components/Logo.jsx';
@@ -314,9 +314,10 @@ function ChartCard({ chart, onDelete, onEdit, onSetPrimary, isExpanded, onExpand
 // ── Charts Page ────────────────────────────────────────────────────────────────
 export default function Charts() {
   const native = useNative();
+  const [searchParams] = useSearchParams();
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(searchParams.get('new') === 'true');
   const [expandedChartId, setExpandedChartId] = useState(null);
 
   useEffect(() => {
