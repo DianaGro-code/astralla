@@ -12,8 +12,18 @@ const tabs = [
     ),
   },
   {
+    to: '/charts',
+    label: 'Charts',
+    icon: (active) => (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke={active ? '#c9a84c' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3v9l5 3" />
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
-    label: 'Profile',
+    label: 'Account',
     icon: (active) => (
       <svg viewBox="0 0 24 24" className="w-6 h-6" fill={active ? '#c9a84c' : 'none'} stroke={active ? '#c9a84c' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="4" />
@@ -44,7 +54,7 @@ export default function BottomNav() {
             <NavLink
               key={tab.to}
               to={tab.to}
-              className="flex flex-col items-center gap-1 px-8 py-2 transition-opacity active:opacity-60"
+              className="flex flex-col items-center gap-1 px-6 py-2 transition-opacity active:opacity-60"
             >
               {tab.icon(active)}
               <span className="text-[10px] font-medium" style={{ color: active ? '#c9a84c' : '#6b7280' }}>

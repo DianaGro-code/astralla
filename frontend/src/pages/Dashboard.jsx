@@ -6,6 +6,7 @@ import GlobeLoader from '../components/GlobeLoader.jsx';
 import WorldMap from '../components/WorldMap.jsx';
 import WeeklyReading from '../components/WeeklyReading.jsx';
 import { useNative } from '../hooks/useNative.js';
+import Logo from '../components/Logo.jsx';
 
 const PLANET_GLYPHS = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
   jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
@@ -16,43 +17,57 @@ const FEATURES = [
     key: 'city',
     glyph: '✦',
     title: 'City Reading',
-    hook: 'Any city — read personally for you.',
     color: '#D4AF37',
+    description: 'Your birth chart has specific things to say about every city on Earth. Enter any place — somewhere you\'re moving, a dream destination, or a city that\'s been calling you — and we\'ll read it across love, career, inner life, vitality, and growth.',
   },
   {
     key: 'discover',
     glyph: '◉',
     title: 'Best Places for You',
-    hook: 'Find where your stars align.',
     color: '#4BC9C8',
+    description: 'Tell us what you\'re looking for and we\'ll scan hundreds of cities to find which ones align best with your chart.',
   },
   {
     key: 'transits',
     glyph: '♃',
     title: 'Travel Reading',
-    hook: 'What the stars say about your next trip.',
     color: '#B08AE0',
+    description: 'Planning a trip? We\'ll read the current planetary transits against your birth chart for any destination and travel dates.',
   },
   {
     key: 'solar',
     glyph: '☉',
     title: 'Birthday Reading',
-    hook: 'Spend your birthday anywhere. Change your year.',
     color: '#E8A044',
+    description: 'Where you spend your birthday shapes your entire year ahead. Your Solar Return chart shifts based on location — choose wisely.',
   },
   {
     key: 'map',
-    glyph: '⊕',
+    glyph: '◎',
     title: 'World Map',
-    hook: 'All your readings, mapped.',
     color: '#5A8FC8',
+    description: 'See all your city readings mapped on a globe, with your personal planetary lines drawn across every continent.',
   },
   {
     key: 'weekly',
     glyph: '☽',
     title: 'This Week',
-    hook: 'The current sky, read for you.',
     color: '#9BB5CC',
+    description: 'A fresh reading every week — the current sky interpreted personally for you, wherever you are.',
+  },
+  {
+    key: 'partner',
+    glyph: '⊕',
+    title: 'Partner Reading',
+    color: '#C0507A',
+    description: 'Enter a city and see how it lands for two people together — covering love, shared purpose, and what the place asks of you both.',
+  },
+  {
+    key: 'occasion',
+    glyph: '✶',
+    title: 'Occasion Planner',
+    color: '#6B9E78',
+    description: 'Tell us what you\'re navigating and we\'ll find the cities that hold the right energy for that chapter of your life.',
   },
 ];
 
@@ -68,6 +83,25 @@ const INTENT_LABELS = {
   love: 'love & relationships', career: 'career & ambition',
   escape: 'home & belonging', creative: 'creativity & inspiration', change: 'transformation',
 };
+
+const REGIONS = [
+  { key: 'worldwide',      label: '🌐 Worldwide'          },
+  { key: 'europe',         label: '🇪🇺 Europe'             },
+  { key: 'americas',       label: '🌎 Americas'            },
+  { key: 'asia',           label: '🌏 Asia'                },
+  { key: 'africa-mideast', label: '🌍 Africa & Middle East' },
+  { key: 'oceania',        label: '🌊 Oceania'             },
+];
+
+const OCCASIONS = [
+  'Finishing a big project',
+  'Getting over a heartbreak',
+  'Building something that lasts',
+  'Starting completely fresh',
+  'Finding your people',
+  'Creative breakthrough',
+  'Healing and recovery',
+];
 
 function Spinner({ size = 'md' }) {
   const s = size === 'sm' ? 'w-3 h-3 border' : 'w-6 h-6 border-2';
@@ -96,182 +130,28 @@ function LimitModal({ error, onClose }) {
   );
 }
 
-// ── New Chart Form ────────────────────────────────────────────────────────────
-function NewChartForm({ onCreated, onCancel }) {
-  const [form, setForm] = useState({ label: '', birthDate: '', birthTime: '', birthPlace: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [unknownTime, setUnknownTime] = useState(false);
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
-
-  // City autocomplete state
-  const [cityResults, setCityResults]   = useState([]);
-  const [citySearching, setCitySearching] = useState(false);
-  const [cityOpen, setCityOpen]         = useState(false);
-  const cityDebounce = useRef(null);
-  const cityWrapperRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function onOutside(e) {
-      if (cityWrapperRef.current && !cityWrapperRef.current.contains(e.target)) setCityOpen(false);
-    }
-    document.addEventListener('mousedown', onOutside);
-    return () => document.removeEventListener('mousedown', onOutside);
-  }, []);
-
-  function handleCityInput(e) {
-    const val = e.target.value;
-    setForm(f => ({ ...f, birthPlace: val }));
-    clearTimeout(cityDebounce.current);
-    if (val.length < 2) { setCityResults([]); setCityOpen(false); return; }
-    cityDebounce.current = setTimeout(async () => {
-      setCitySearching(true);
-      try {
-        const data = await api.geocode.search(val);
-        setCityResults(data);
-        setCityOpen(data.length > 0);
-      } catch {}
-      setCitySearching(false);
-    }, 350);
-  }
-
-  function handleCitySelect(city) {
-    setForm(f => ({ ...f, birthPlace: city.displayName }));
-    setCityResults([]);
-    setCityOpen(false);
-  }
-
-  function handleUnknownTime() {
-    const next = !unknownTime;
-    setUnknownTime(next);
-    if (next) setForm(f => ({ ...f, birthTime: '' }));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const chart = await api.charts.create(form);
-      onCreated(chart);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+// ── Feature Popup ──────────────────────────────────────────────────────────────
+function FeaturePopup({ feature, onStart, onClose }) {
   return (
-    <form onSubmit={handleSubmit} className="card space-y-4 animate-slide-up border-gold/30">
-      <h3 className="font-serif text-xl text-text-p">New Birth Chart</h3>
-      <div>
-        <label className="label">Chart Label</label>
-        <input className="input" placeholder="e.g. My Chart, Sarah's Chart…" value={form.label} onChange={set('label')} required />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="label">Birth Date</label>
-          <input className="input" type="date" value={form.birthDate} onChange={set('birthDate')} required />
-        </div>
-        <div>
-          <label className="label">
-            Birth Time
-            <span className="text-text-m font-normal normal-case tracking-normal ml-1">(optional)</span>
-          </label>
-          <input
-            className={`input transition-opacity ${unknownTime ? 'opacity-30 pointer-events-none' : ''}`}
-            type="time"
-            value={form.birthTime}
-            onChange={set('birthTime')}
-            disabled={unknownTime}
-          />
-          <button
-            type="button"
-            onClick={handleUnknownTime}
-            className={`mt-1.5 text-xs font-sans transition-colors flex items-center gap-1.5 ${
-              unknownTime ? 'text-gold' : 'text-text-m hover:text-text-s'
-            }`}
-          >
-            {unknownTime ? (
-              <>
-                <span className="text-gold">✓</span>
-                <span>Using noon as placeholder — <span className="underline underline-offset-2 cursor-pointer">undo</span></span>
-              </>
-            ) : (
-              "I don't know my birth time"
-            )}
-          </button>
-          {unknownTime && (
-            <p className="mt-1.5 text-text-m text-xs font-sans leading-relaxed bg-gold/5 border border-gold/15 rounded-lg px-3 py-2">
-              Planet positions will be accurate. Ascendant &amp; Midheaven lines need an exact time to personalise fully.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Birth Place with city autocomplete */}
-      <div>
-        <label className="label">Birth Place</label>
-        <div className="relative" ref={cityWrapperRef}>
-          <div className="relative">
-            <input
-              className="input pr-8"
-              placeholder="Search for a city…"
-              value={form.birthPlace}
-              onChange={handleCityInput}
-              onFocus={() => cityResults.length > 0 && setCityOpen(true)}
-              autoComplete="off"
-              required
-            />
-            {citySearching && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60 pointer-events-none">
-                <Spinner size="sm" />
-              </span>
-            )}
-          </div>
-          {cityOpen && cityResults.length > 0 && (
-            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
-              {cityResults.map((city, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
-                    onMouseDown={() => handleCitySelect(city)}
-                  >
-                    {city.displayName}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      {!unknownTime && (
-        <p className="text-text-m text-xs font-sans -mt-1">
-          Exact birth time unlocks your Midheaven &amp; Ascendant lines — the most personal part of your reading.
-        </p>
-      )}
-      {error && <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>}
-      <div className="flex gap-3 pt-1">
-        <button type="submit" className="btn-gold flex-1" disabled={loading}>
-          {loading ? <span className="flex items-center gap-2 justify-center"><Spinner size="sm" />Saving…</span> : 'Save chart →'}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative card border-white/10 max-w-sm w-full space-y-4 py-8 px-6 animate-slide-up overflow-y-auto max-h-[85vh]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-text-m hover:text-text-p transition-colors w-7 h-7 flex items-center justify-center text-lg"
+        >
+          ✕
         </button>
-        <button type="button" onClick={onCancel} className="btn-ghost">Cancel</button>
+        <div className="text-4xl leading-none" style={{ color: feature.color }}>{feature.glyph}</div>
+        <h2 className="font-serif text-2xl text-text-p">{feature.title}</h2>
+        <p className="text-text-s font-sans text-sm leading-relaxed">{feature.description}</p>
+        <button onClick={onStart} className="btn-gold w-full mt-2">
+          Start reading →
+        </button>
       </div>
-    </form>
+    </div>
   );
 }
-
-const REGIONS = [
-  { key: 'worldwide',      label: '🌐 Worldwide'          },
-  { key: 'europe',         label: '🇪🇺 Europe'             },
-  { key: 'americas',       label: '🌎 Americas'            },
-  { key: 'asia',           label: '🌏 Asia'                },
-  { key: 'africa-mideast', label: '🌍 Africa & Middle East' },
-  { key: 'oceania',        label: '🌊 Oceania'             },
-];
 
 // ── Discover: Top 3 Cities ────────────────────────────────────────────────────
 function DiscoverForm({ chart, onCitySelect, generatingCity, onLimitReached }) {
@@ -590,7 +470,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
           </p>
         </div>
 
-        {/* Chart selector */}
         {charts.length > 1 && (
           <div>
             <p className="label">Whose chart?</p>
@@ -610,7 +489,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
           </div>
         )}
 
-        {/* Year picker */}
         <div>
           <p className="label">Birthday Year</p>
           <div className="flex gap-2 flex-wrap">
@@ -632,7 +510,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
           </div>
         </div>
 
-        {/* City input */}
         {!chart && charts.length > 1 && (
           <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
         )}
@@ -648,7 +525,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
         )}
       </div>
 
-      {/* Inline result */}
       {result && (
         <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
           <div className="flex items-baseline gap-3">
@@ -662,7 +538,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
             </p>
           )}
 
-          {/* Year theme + overview */}
           <div className="relative rounded-xl border border-gold/20 bg-gradient-to-br from-gold/8 via-card to-card px-4 py-4 overflow-hidden">
             <span className="absolute top-2 right-3 text-gold text-5xl font-serif pointer-events-none select-none leading-none opacity-[0.06]">☀</span>
             {result.yearTheme && (
@@ -678,7 +553,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
             <p className="font-serif text-base text-text-p leading-relaxed relative z-10">{result.overview}</p>
           </div>
 
-          {/* Cost */}
           {result.cost && (
             <div className="rounded-xl border border-border bg-card overflow-hidden relative">
               <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-400/70" />
@@ -689,7 +563,6 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
             </div>
           )}
 
-          {/* Monthly breakdown */}
           {result.months && result.months.length > 0 && (
             <div>
               <p className="font-sans text-[10px] uppercase tracking-widest text-text-s mb-3">Month by Month</p>
@@ -750,7 +623,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
           </p>
         </div>
 
-        {/* Chart selector */}
         {charts.length > 1 && (
           <div>
             <p className="label">Whose chart?</p>
@@ -770,7 +642,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
           </div>
         )}
 
-        {/* Travel dates */}
         <div>
           <p className="label">Travel Dates</p>
           <div className="space-y-3">
@@ -797,7 +668,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
           </div>
         </div>
 
-        {/* City input */}
         {!chart && charts.length > 1 && (
           <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
         )}
@@ -821,7 +691,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
         )}
       </div>
 
-      {/* Inline result */}
       {result && (
         <div ref={resultRef} className="mt-6 space-y-4 animate-fade-in">
           <div className="flex items-baseline gap-3">
@@ -835,7 +704,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
             )}
           </div>
 
-          {/* Overview */}
           <div className="relative rounded-xl border border-violet/20 bg-violet/5 px-4 py-4 overflow-hidden">
             <span className="absolute top-2 right-3 text-violet text-5xl font-serif pointer-events-none select-none leading-none opacity-[0.06]">◎</span>
             {result.tripEnergy && TRANSIT_ENERGY_STYLES[result.tripEnergy] && (
@@ -846,12 +714,10 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
             <p className="font-serif text-base text-text-p leading-relaxed relative z-10">{result.overview}</p>
           </div>
 
-          {/* Timing */}
           {result.timing && (
             <p className="text-text-s font-sans text-xs italic px-1">{result.timing}</p>
           )}
 
-          {/* Highlights */}
           {result.highlights?.length > 0 && (
             <div className="space-y-3">
               {result.highlights.map((h, i) => (
@@ -863,7 +729,6 @@ function TransitsView({ charts, navigate, onBack, onLimitReached }) {
             </div>
           )}
 
-          {/* Watch for */}
           {result.watchFor && (
             <div className="rounded-lg border border-border/60 bg-nebula px-4 py-3">
               <p className="text-text-m text-[10px] font-sans uppercase tracking-widest mb-1">Watch for</p>
@@ -1016,22 +881,230 @@ function DiscoverView({ charts, navigate, onBack, onLimitReached }) {
   );
 }
 
-// ── Feature Panel ─────────────────────────────────────────────────────────────
-// Shown below the feature grid when a feature card is tapped
-function FeaturePanel({ feature, charts, navigate, onClose, onLimitReached }) {
-  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
-  const [generatingCity, setGeneratingCity] = useState(null);
-  const chart = charts.find(c => c.id === chartId);
-  const featureCfg = FEATURES.find(f => f.key === feature);
+// ── Partner Reading full-page view ─────────────────────────────────────────────
+function PartnerReadingView({ charts, navigate, onBack, onLimitReached }) {
+  const featureCfg = FEATURES.find(f => f.key === 'partner');
+  const [chartId1, setChartId1] = useState(charts.length >= 1 ? charts[0].id : null);
+  const [chartId2, setChartId2] = useState(charts.length >= 2 ? charts[1].id : null);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const debounceRef = useRef(null);
+  const wrapperRef = useRef(null);
 
-  async function handleDiscoverSelect(cityName, intent) {
+  useEffect(() => {
+    function handleClick(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setResults([]);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  function handleInput(e) {
+    const val = e.target.value;
+    setQuery(val);
+    setSelected(null);
+    clearTimeout(debounceRef.current);
+    if (val.length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await api.geocode.search(val);
+        setResults(data);
+      } catch {}
+      setSearching(false);
+    }, 350);
+  }
+
+  function handleSelect(city) {
+    setSelected(city);
+    setQuery(city.displayName);
+    setResults([]);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!selected || !chartId1 || !chartId2) return;
+    setError('');
+    setLoading(true);
+    try {
+      const reading = await api.partner.generate({ chartId1, chartId2, cityQuery: selected.displayName });
+      navigate(`/reading/${reading.id}`);
+    } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); return; }
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const chart1 = charts.find(c => c.id === chartId1);
+  const chart2 = charts.find(c => c.id === chartId2);
+
+  return (
+    <div className="animate-fade-in">
+      {loading && selected && <GlobeLoader cityName={selected.displayName} lat={selected.lat} lng={selected.lng} />}
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">Partner Reading</h1>
+      </div>
+      <p className="text-text-m text-sm font-sans mb-7">How does a city land for two people together?</p>
+
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            Enter a city and we'll read it for both charts together — covering love, shared purpose,
+            and what the place asks of you as a pair.
+          </p>
+        </div>
+
+        {charts.length < 2 && (
+          <p className="text-text-m text-sm font-sans italic">
+            You need at least two charts for this feature. Add another in the <span className="text-gold">Charts</span> tab.
+          </p>
+        )}
+
+        {charts.length >= 2 && (
+          <>
+            <div>
+              <p className="label">First chart</p>
+              <div className="flex flex-wrap gap-1.5">
+                {charts.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => { setChartId1(c.id); if (chartId2 === c.id) setChartId2(null); }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                      chartId1 === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                    }`}
+                  >
+                    <span className="text-[10px]">✦</span>{c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="label">Second chart</p>
+              <div className="flex flex-wrap gap-1.5">
+                {charts.filter(c => c.id !== chartId1).map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setChartId2(c.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                      chartId2 === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                    }`}
+                  >
+                    <span className="text-[10px]">✦</span>{c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {chart1 && chart2 && (
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <p className="text-text-m text-xs font-sans leading-relaxed">
+                  Which city are you reading for {chart1.label} & {chart2.label}?
+                </p>
+                <div className="relative" ref={wrapperRef}>
+                  <input
+                    className="input w-full py-2 pr-8"
+                    placeholder="Search for a city…"
+                    value={query}
+                    onChange={handleInput}
+                    autoComplete="off"
+                  />
+                  {searching && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Spinner size="sm" />
+                    </span>
+                  )}
+                  {results.length > 0 && (
+                    <div className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+                      {results.map((city, i) => (
+                        <button
+                          type="button"
+                          key={i}
+                          className="w-full text-left px-4 py-2.5 text-sm font-sans text-text-p hover:bg-gold/10 hover:text-gold transition-colors border-b border-border/40 last:border-0"
+                          onClick={() => handleSelect(city)}
+                        >
+                          {city.displayName}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="btn-gold w-full py-2"
+                  disabled={loading || !selected}
+                >
+                  {selected
+                    ? `⊕ Read ${selected.displayName.split(',')[0]} for both`
+                    : '⊕ Search for a city'}
+                </button>
+                {error && <p className="text-red-400 text-xs">{error}</p>}
+              </form>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Occasion Planner full-page view ────────────────────────────────────────────
+function OccasionView({ charts, navigate, onBack, onLimitReached }) {
+  const featureCfg = FEATURES.find(f => f.key === 'occasion');
+  const [chartId, setChartId] = useState(charts.length === 1 ? charts[0].id : null);
+  const [occasion, setOccasion] = useState(null);
+  const [customOccasion, setCustomOccasion] = useState('');
+  const [showCustom, setShowCustom] = useState(false);
+  const [region, setRegion] = useState('worldwide');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [generatingCity, setGeneratingCity] = useState(null);
+  const [error, setError] = useState('');
+  const [nudge, setNudge] = useState(false);
+  const chart = charts.find(c => c.id === chartId);
+
+  const effectiveOccasion = showCustom ? customOccasion : occasion;
+
+  async function handleFind() {
+    if (!effectiveOccasion?.trim()) {
+      setNudge(true);
+      setTimeout(() => setNudge(false), 2000);
+      return;
+    }
+    setError('');
+    setLoading(true);
+    setResults(null);
+    try {
+      const data = await api.topCities.find({ chartId: chart.id, intent: effectiveOccasion, region });
+      setResults(data.cities);
+    } catch (err) {
+      if (err.limitReached) { onLimitReached?.(err); return; }
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCitySelect(cityName) {
     if (!chart) return;
     setGeneratingCity(cityName);
     try {
       const reading = await api.readings.generate({
         chartId: chart.id,
         cityQuery: cityName,
-        intent: intent || undefined,
+        intent: effectiveOccasion || undefined,
       });
       navigate(`/reading/${reading.id}`);
     } catch (err) {
@@ -1042,215 +1115,183 @@ function FeaturePanel({ feature, charts, navigate, onClose, onLimitReached }) {
     }
   }
 
-  const panelRef = useRef(null);
-  useEffect(() => {
-    if (panelRef.current) {
-      setTimeout(() => {
-        panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
-    }
-  }, []);
-
   return (
-    <div ref={panelRef} className="card border-gold/20 animate-slide-up mb-6">
-      {/* Panel header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <span className="text-lg leading-none" style={{ color: featureCfg?.color }}>
-            {featureCfg?.glyph}
-          </span>
-          <h3 className="font-serif text-base text-text-p">{featureCfg?.title}</h3>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-text-m text-sm hover:text-text-p transition-colors w-6 h-6 flex items-center justify-center"
-        >
-          ✕
-        </button>
+    <div className="animate-fade-in">
+      <button onClick={onBack} className="text-text-m hover:text-gold transition-colors text-sm font-sans mb-6 flex items-center gap-1">
+        ← Back
+      </button>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
+        <h1 className="font-serif text-3xl text-text-p">Occasion Planner</h1>
       </div>
+      <p className="text-text-m text-sm font-sans mb-7">Find the cities that match this chapter of your life.</p>
 
-      {/* Chart selector — only shown when user has multiple charts */}
-      {charts.length > 1 && (
-        <div className="mb-5">
-          <p className="text-text-m text-[10px] font-sans uppercase tracking-widest mb-2">Which chart?</p>
+      <div className="card space-y-6">
+        <div className="pl-3 border-l-2" style={{ borderColor: featureCfg.color }}>
+          <p className="text-xs font-sans text-text-s leading-relaxed">
+            Tell us what you're navigating and we'll find the cities that hold the right energy for it.
+          </p>
+        </div>
+
+        {charts.length > 1 && (
+          <div>
+            <p className="label">Whose chart?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {charts.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => { setChartId(c.id); setResults(null); }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                    chartId === c.id ? 'border-gold bg-gold/15 text-gold' : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                  }`}
+                >
+                  <span className="text-[10px]">✦</span>{c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">What are you navigating?</p>
           <div className="flex flex-wrap gap-1.5">
-            {charts.map(c => (
+            {OCCASIONS.map(o => (
               <button
-                key={c.id}
-                onClick={() => setChartId(c.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
-                  chartId === c.id
+                key={o}
+                type="button"
+                onClick={() => { setOccasion(o); setShowCustom(false); setResults(null); }}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                  !showCustom && occasion === o
                     ? 'border-gold bg-gold/15 text-gold'
                     : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
                 }`}
               >
-                <span className="text-[10px]">✦</span>
-                {c.label}
+                {o}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => { setShowCustom(true); setOccasion(null); setResults(null); }}
+              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                showCustom
+                  ? 'border-gold bg-gold/15 text-gold'
+                  : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+              }`}
+            >
+              ✏ Custom…
+            </button>
+          </div>
+          {showCustom && (
+            <input
+              className="input mt-2"
+              placeholder="e.g. Starting a new relationship, launching a business…"
+              value={customOccasion}
+              onChange={e => { setCustomOccasion(e.target.value); setResults(null); }}
+              autoFocus
+            />
+          )}
+        </div>
+
+        <div>
+          <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">Where in the world?</p>
+          <div className="flex flex-wrap gap-1.5">
+            {REGIONS.map(r => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => { setRegion(r.key); setResults(null); }}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                  region === r.key
+                    ? 'border-teal bg-teal/15 text-teal'
+                    : 'border-border text-text-s hover:border-teal/40 hover:text-text-p'
+                }`}
+              >
+                {r.label}
               </button>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Prompt to pick a chart */}
-      {!chart && charts.length > 1 && (
-        <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
-      )}
+        {!chart && charts.length > 1 && (
+          <p className="text-text-m text-sm font-sans italic">Select a chart above to continue.</p>
+        )}
 
-      {/* City Reading */}
-      {chart && feature === 'city' && (
-        <LocationForm
-          chart={chart}
-          onReading={r => navigate(`/reading/${r.id}`)}
-        />
-      )}
+        {chart && (
+          <button
+            onClick={handleFind}
+            disabled={loading}
+            className="btn-gold w-full py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <Spinner size="sm" />
+                Searching for cities…
+              </span>
+            ) : (
+              '✶ Find my cities'
+            )}
+          </button>
+        )}
 
-      {/* Find My Cities */}
-      {chart && feature === 'discover' && (
-        <DiscoverForm
-          chart={chart}
-          onCitySelect={handleDiscoverSelect}
-          generatingCity={generatingCity}
-        />
-      )}
+        {nudge && <p className="text-gold text-xs font-sans text-center animate-fade-in">↑ Choose an occasion first</p>}
+        {error && <p className="text-red-400 text-xs">{error}</p>}
 
-      {/* Travel Transits and Solar Return are now full-page views — handled in Dashboard */}
-    </div>
-  );
-}
-
-// ── Chart Card (history view) ─────────────────────────────────────────────────
-function ChartCard({ chart, onDelete, onSetPrimary, isExpanded, onExpand }) {
-  const [readings, setReadings] = useState(null);
-  const [loadingReadings, setLoadingReadings] = useState(false);
-  const navigate = useNavigate();
-
-  async function loadReadings() {
-    if (readings) return;
-    setLoadingReadings(true);
-    try {
-      const data = await api.readings.forChart(chart.id);
-      setReadings(data);
-    } catch {}
-    setLoadingReadings(false);
-  }
-
-  useEffect(() => {
-    if (isExpanded) loadReadings();
-  }, [isExpanded]);
-
-  return (
-    <div className={`card transition-all duration-300 relative overflow-hidden ${isExpanded ? 'border-gold/30' : 'hover:border-gold/20'}`}>
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        {/* Star / primary toggle */}
-        <button
-          onClick={e => { e.stopPropagation(); onSetPrimary(chart.id); }}
-          className="shrink-0 leading-none transition-colors"
-          title={chart.is_primary ? 'Primary chart' : 'Set as primary'}
-        >
-          <span className={`text-lg ${chart.is_primary ? 'text-gold' : 'text-gold/20 hover:text-gold/50'}`}>
-            {chart.is_primary ? '★' : '☆'}
-          </span>
-        </button>
-
-        <button onClick={onExpand} className="flex-1 min-w-0 text-left group">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-serif text-lg text-text-p truncate">{chart.label}</h3>
-              <p className="text-text-m text-xs font-sans mt-0.5">
-                {chart.birth_date} · {chart.birth_time} · {chart.birth_place}
-              </p>
-            </div>
-            <span className={`text-text-m text-sm transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>⌄</span>
-          </div>
-        </button>
-      </div>
-
-      {/* Expanded: past readings */}
-      {isExpanded && (
-        <div className="mt-5 pt-5 border-t border-border/60 animate-fade-in">
-          {readings && readings.length > 0 && (
-            <div>
-              <p className="text-text-m text-[10px] font-sans mb-2 uppercase tracking-widest">Cities explored</p>
-              <div>
-                {Object.values(
-                  readings.reduce((acc, r) => {
-                    const key = r.city_name.split(',')[0].trim().toLowerCase();
-                    if (!acc[key] || r.created_at > acc[key].created_at) acc[key] = r;
-                    return acc;
-                  }, {})
-                )
-                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                  .map(r => {
-                    const overall = r.themes?.overallRating;
-                    return (
-                      <button
-                        key={r.id}
-                        onClick={() => navigate(`/reading/${r.id}`)}
-                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-nebula transition-all group"
-                      >
-                        <span className="text-gold/30 text-[9px] group-hover:text-gold/60 transition-colors shrink-0">✦</span>
-                        <span className="font-sans text-xs text-text-s group-hover:text-text-p transition-colors flex-1 text-left truncate">
-                          {r.city_name.split(',')[0]}
-                        </span>
-                        {overall != null && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <div className="flex items-center gap-px">
-                              {[1,2,3,4,5].map(n => (
-                                <span key={n} className="text-[8px]" style={{ color: '#D4AF37', opacity: n <= overall ? 0.75 : 0.15 }}>★</span>
-                              ))}
-                            </div>
-                            <span className="text-[10px] text-text-m/60 tabular-nums">{overall}/5</span>
-                          </div>
-                        )}
-                        <span className="text-text-m/50 text-[10px] shrink-0 tabular-nums">
-                          {new Date(r.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
-                        </span>
-                      </button>
-                    );
-                  })}
+        {results && (
+          <div className="space-y-3 animate-fade-in">
+            <p className="text-text-m text-xs font-sans uppercase tracking-wider">
+              Top cities for "{effectiveOccasion}"
+            </p>
+            {results.map((city, i) => (
+              <div key={i} className="rounded-xl border border-border bg-nebula px-4 py-4 hover:border-gold/30 transition-all">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h4 className="font-serif text-base text-text-p">{city.cityName}</h4>
+                  <span className="text-gold text-xs font-sans shrink-0 mt-0.5">#{i + 1}</span>
+                </div>
+                <p className="font-serif text-sm text-text-p leading-relaxed mb-2">"{city.hook}"</p>
+                <p className="font-sans text-xs text-text-s leading-relaxed mb-2">{city.why}</p>
+                {city.cost && (
+                  <div className="mb-3 relative pl-3 border-l-2 border-amber-400/60">
+                    <p className="font-sans text-[10px] text-text-m uppercase tracking-wider mb-0.5">What it costs you</p>
+                    <p className="font-sans text-xs text-text-s leading-relaxed">{city.cost}</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-serif text-xs text-gold italic flex-1">{city.verdict}</p>
+                  <button
+                    onClick={() => handleCitySelect(city.cityName)}
+                    disabled={!!generatingCity}
+                    className="text-xs font-sans text-text-m hover:text-gold transition-colors px-2 py-1 rounded border border-border hover:border-gold/40 shrink-0 disabled:opacity-50"
+                  >
+                    {generatingCity === city.cityName
+                      ? <span className="flex items-center gap-1.5"><Spinner size="sm" />Loading…</span>
+                      : 'Full reading →'}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-
-          {readings && readings.length === 0 && (
-            <p className="text-text-m text-sm font-sans italic">No cities explored yet.</p>
-          )}
-
-          {loadingReadings && <div className="flex justify-center py-3"><Spinner /></div>}
-
-          <div className="mt-5 pt-4 border-t border-border/30 flex justify-end">
-            <button
-              onClick={() => onDelete(chart.id)}
-              className="text-[10px] font-sans text-text-m/50 hover:text-red-400 transition-colors uppercase tracking-wider"
-            >
-              Delete chart
-            </button>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const native = useNative();
+  const { user } = useAuth();
   const [charts, setCharts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [view, setView] = useState('home'); // 'home' | 'map' | 'weekly'
-  const [activeFeature, setActiveFeature] = useState(null);
+  const [view, setView] = useState('home');
   const [allReadings, setAllReadings] = useState([]);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapChartId, setMapChartId] = useState('all');
-  const [expandedChartId, setExpandedChartId] = useState(null);
   const [mapLines, setMapLines] = useState(null);
   const [mapLinesLoading, setMapLinesLoading] = useState(false);
   const [limitError, setLimitError] = useState(null);
+  const [pendingFeature, setPendingFeature] = useState(null);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
@@ -1263,7 +1304,6 @@ export default function Dashboard() {
     }
   }, [view]);
 
-  // Fetch planet lines when map opens or chart selection changes
   useEffect(() => {
     if (view !== 'map') return;
 
@@ -1298,44 +1338,26 @@ export default function Dashboard() {
     }
   }, [view, mapChartId, charts]);
 
-  function handleCreated(chart) {
-    setCharts(cs => [chart, ...cs]);
-    setShowForm(false);
-  }
-
-  async function handleDelete(id) {
-    if (!confirm('Delete this birth chart and all its readings?')) return;
-    await api.charts.delete(id);
-    setCharts(cs => cs.filter(c => c.id !== id));
-  }
-
-  async function handleSetPrimary(id) {
-    // Optimistic update — change UI instantly, then persist
-    setCharts(cs => {
-      const updated = cs.map(c => ({ ...c, is_primary: c.id === id ? 1 : 0 }));
-      return [...updated].sort((a, b) => b.is_primary - a.is_primary);
-    });
-    try {
-      await api.charts.setPrimary(id);
-    } catch {
-      // Revert on failure
-      api.charts.list().then(setCharts);
-    }
-  }
-
   function handleFeatureClick(key) {
-    setActiveFeature(null);
     setView(key);
   }
 
   function goHome() {
     setView('home');
-    setActiveFeature(null);
   }
 
   return (
     <div className={`min-h-screen px-4 ${native ? 'pt-6 pb-28' : 'pt-20 pb-16'}`}>
       <LimitModal error={limitError} onClose={() => setLimitError(null)} />
+
+      {pendingFeature && (
+        <FeaturePopup
+          feature={pendingFeature}
+          onStart={() => { handleFeatureClick(pendingFeature.key); setPendingFeature(null); }}
+          onClose={() => setPendingFeature(null)}
+        />
+      )}
+
       <div className="max-w-2xl mx-auto">
 
         {/* ── MAP VIEW ── */}
@@ -1422,7 +1444,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── SOLAR RETURN VIEW ── */}
         {/* ── CITY READING VIEW ── */}
         {view === 'city' && (
           <CityReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
@@ -1433,6 +1454,7 @@ export default function Dashboard() {
           <DiscoverView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
         )}
 
+        {/* ── SOLAR RETURN VIEW ── */}
         {view === 'solar' && (
           <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
         )}
@@ -1456,116 +1478,70 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* ── PARTNER READING VIEW ── */}
+        {view === 'partner' && (
+          <PartnerReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+        )}
+
+        {/* ── OCCASION PLANNER VIEW ── */}
+        {view === 'occasion' && (
+          <OccasionView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+        )}
+
         {/* ── HOME VIEW ── */}
         {view === 'home' && (
-          <>
-            {/* Header */}
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h1 className="font-serif text-3xl text-text-p">
-                  {user?.name?.split(' ')[0]}'s charts
-                </h1>
-                <p className="text-text-m text-sm font-sans mt-1">Your birth charts & city readings</p>
-              </div>
-              {!showForm && (
-                <button onClick={() => setShowForm(true)} className="btn-gold py-2 px-4 text-sm">
-                  + New chart
-                </button>
-              )}
-            </div>
-
-            {/* ── Feature card grid — only when charts exist ── */}
-            {!loading && charts.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {FEATURES.map(f => {
-                  const isActive = view === f.key;
-                  return (
-                    <button
-                      key={f.key}
-                      onClick={() => handleFeatureClick(f.key)}
-                      className={`relative text-left p-4 rounded-xl border transition-all duration-200 group overflow-hidden flex flex-col ${
-                        isActive
-                          ? 'border-opacity-60 bg-card'
-                          : 'border-border bg-card hover:border-opacity-40'
-                      }`}
-                      style={{
-                        borderColor: isActive ? f.color : undefined,
-                        boxShadow: isActive ? `0 0 0 1px ${f.color}30` : undefined,
-                      }}
-                    >
-                      {/* Hover / active glow */}
-                      <div
-                        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                        style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}14 0%, transparent 70%)` }}
-                      />
-                      <div className="relative flex-1 flex flex-col">
-                        <div className="min-h-[60px]">
-                          <span className="text-base leading-none mb-1.5 block" style={{ color: f.color }}>{f.glyph}</span>
-                          <p className="font-serif text-sm text-text-p leading-snug">{f.title}</p>
-                        </div>
-                        <p className="font-sans text-[11px] text-text-m leading-relaxed">{f.hook}</p>
-                      </div>
-                    </button>
-                  );
-                })}
+          <div>
+            {native && (
+              <div className="mb-10">
+                <Logo size={32} showWordmark />
               </div>
             )}
 
-            {/* ── Charts section ── */}
-            <div className={!loading && charts.length > 0 ? 'mt-2' : ''}>
-              {charts.length > 0 && (
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-text-m text-[10px] font-sans uppercase tracking-widest">
-                    Your charts
-                  </p>
-                </div>
-              )}
+            <div className="mb-10">
+              <h1 className="font-serif text-3xl text-text-p">
+                {user?.name ? `${user.name.split(' ')[0]}'s readings` : 'Your readings'}
+              </h1>
+              <p className="text-text-m text-sm font-sans mt-1">Where do you want to explore?</p>
+            </div>
 
-              {/* New chart form */}
-              {showForm && (
-                <div className="mb-4">
-                  <NewChartForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
-                </div>
-              )}
+            {loading && <div className="flex justify-center py-12"><Spinner /></div>}
 
-              {loading && <div className="flex justify-center py-12"><Spinner /></div>}
-
-              {!loading && charts.length === 0 && !showForm && (
-                <div className="card text-center py-14 border-dashed">
-                  <div className="text-gold text-3xl mb-5">✦</div>
-                  <h2 className="font-serif text-2xl text-text-p mb-3">
-                    Your chart is a map.<br />You haven't unfolded it yet.
-                  </h2>
-                  <p className="text-text-m font-sans text-sm mb-8 max-w-xs mx-auto leading-relaxed">
-                    Add your birth data and start exploring which cities are written into your chart.
-                  </p>
-                  <button onClick={() => setShowForm(true)} className="btn-gold">
-                    Add my birth chart →
-                  </button>
-                </div>
-              )}
-
-              {charts.length > 1 && (
-                <p className="text-text-m text-xs font-sans mb-3 flex items-center gap-1.5">
-                  <span className="text-gold/60">★</span>
-                  Tap the star to set your default chart for all readings.
+            {!loading && charts.length === 0 && (
+              <div className="card text-center py-14 border-dashed">
+                <div className="text-gold text-3xl mb-5">✦</div>
+                <h2 className="font-serif text-2xl text-text-p mb-3">
+                  Your chart is a map.<br />You haven't unfolded it yet.
+                </h2>
+                <p className="text-text-m font-sans text-sm mb-8 max-w-xs mx-auto leading-relaxed">
+                  Add your birth data and start exploring which cities are written into your chart.
                 </p>
-              )}
+                <button onClick={() => navigate('/charts')} className="btn-gold">
+                  Add my birth chart →
+                </button>
+              </div>
+            )}
 
-              <div className="space-y-4">
-                {charts.map(chart => (
-                  <ChartCard
-                    key={chart.id}
-                    chart={chart}
-                    onDelete={handleDelete}
-                    onSetPrimary={handleSetPrimary}
-                    isExpanded={expandedChartId === chart.id}
-                    onExpand={() => setExpandedChartId(id => id === chart.id ? null : chart.id)}
-                  />
+            {!loading && charts.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {FEATURES.map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setPendingFeature(f)}
+                    className="relative text-left p-4 rounded-xl border border-border bg-card hover:border-opacity-40 transition-all duration-200 group overflow-hidden flex flex-col"
+                  >
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}14 0%, transparent 70%)` }}
+                    />
+                    <div className="relative flex-1 flex flex-col gap-2">
+                      <span className="text-base leading-none" style={{ color: f.color }}>{f.glyph}</span>
+                      <p className="font-serif text-xl text-text-p leading-snug">{f.title}</p>
+                    </div>
+                  </button>
                 ))}
               </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
 
       </div>

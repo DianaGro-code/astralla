@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import Landing   from './pages/Landing.jsx';
 import Auth      from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import Charts    from './pages/Charts.jsx';
 import Reading   from './pages/Reading.jsx';
 import Profile   from './pages/Profile.jsx';
 import Admin     from './pages/Admin.jsx';
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <Auth />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/charts" element={<PrivateRoute><Charts /></PrivateRoute>} />
         <Route path="/reading/:id" element={<PrivateRoute><Reading /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/admin" element={<Admin />} />

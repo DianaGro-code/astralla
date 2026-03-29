@@ -440,3 +440,64 @@ Return ONLY valid JSON with exactly these keys:
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
   return JSON.parse(cleaned);
 }
+
+// ── Partner Reading ────────────────────────────────────────────────────────────
+
+export async function generatePartnerReading(chart1, chart2, city, influences1, parans1, influences2, parans2) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const partnerPrompt = `Two people are reading the same city TOGETHER. Interpret how ${city.displayName} lands for this pair — as a unit, not as individuals.
+
+PERSON A — born ${chart1.birth_date} at ${chart1.birth_time} in ${chart1.birth_place}:
+Active planetary lines:
+${formatInfluences(influences1)}
+Parans at this latitude:
+${formatParans(parans1)}
+
+PERSON B — born ${chart2.birth_date} at ${chart2.birth_time} in ${chart2.birth_place}:
+Active planetary lines:
+${formatInfluences(influences2)}
+Parans at this latitude:
+${formatParans(parans2)}
+
+${WRITING_STYLE}
+
+You are writing about what this city does to TWO people when they're in it TOGETHER. This is not two separate readings — it's about the shared field. What does the city activate between them? What does it amplify, what does it ask?
+
+Rules for this reading:
+- Write "you both" and "together" and "between you" — not "Person A" and "Person B."
+- When their lines harmonize (e.g. one has Venus DC, the other has Moon DC), name that resonance.
+- When their lines conflict or create friction, name that too. Friction is information.
+- The "love" theme here is about the relationship itself — intimacy, attraction, what the city stirs between them.
+- Be honest: some cities are great for a couple's chemistry but hard on shared ambition. Name both.
+
+Return ONLY a valid JSON object — no markdown, no code fences — with exactly these keys:
+
+- "overview": 2–3 punchy sentences. What does this city do to them as a pair? Lead with consequence. No generic openers.
+- "overallRating": integer 1–5 reflecting overall compatibility of this city for this pair (5 = deeply resonant for both, 1 = minimal activation)
+- "dreamOrComfort": "dream" if this city challenges or costs something significant; "comfort" if it nourishes and feels safe together; "both" if genuinely both; "neither" if mostly neutral
+- "cost": 1–2 sentences. What does this city demand from them — individually or as a unit?
+- "love": 3–4 sentences on what this city does to their bond — intimacy, attraction, friction, deepening. Lead with the sharpest observation. End with a question or dare.
+- "loveRating": integer 1–5
+- "career": 3–4 sentences on shared ambition, collaborative work, and professional energy in this city.
+- "careerRating": integer 1–5
+- "inner": 3–4 sentences on emotional safety, shared home-feeling, roots. Does this city feel like a sanctuary for both — or does one person thrive while the other fades?
+- "innerRating": integer 1–5
+- "vitality": 3–4 sentences on how each person shows up physically and energetically here — and what the city does to their combined presence.
+- "vitalityRating": integer 1–5
+- "growth": 3–4 sentences on transformation and what this city asks them to evolve — individually and as a pair.
+- "growthRating": integer 1–5
+
+{"overview":"...","overallRating":3,"dreamOrComfort":"both","cost":"...","love":"...","loveRating":4,"career":"...","careerRating":3,"inner":"...","innerRating":3,"vitality":"...","vitalityRating":4,"growth":"...","growthRating":3}`;
+
+  const partnerResponse = await client.messages.create({
+    model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6',
+    max_tokens: 3000,
+    system: 'You write like Pattern meets a great astrology columnist — direct, specific, uncomfortably accurate. Short declarative sentences. No hedging. You name what people already feel but haven\'t admitted. You make them feel seen, not informed. You know your planets cold and use them to say something true about a human life. Respond with ONLY valid JSON — no markdown, no code fences, no text outside the JSON object.',
+    messages: [{ role: 'user', content: partnerPrompt }],
+  });
+
+  const partnerRaw     = partnerResponse.content[0].text.trim();
+  const partnerCleaned = partnerRaw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+  return JSON.parse(partnerCleaned);
+}

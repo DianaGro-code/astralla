@@ -76,4 +76,7 @@ export const api = {
   weekly: {
     generate: (body) => request('/weekly', { method: 'POST', body: JSON.stringify(body) }),
   },
+  partner: {
+    generate: (body) => request('/readings/partner', { method: 'POST', body: JSON.stringify(body) }),
+  },
 };

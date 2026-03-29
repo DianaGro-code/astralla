@@ -129,10 +129,24 @@ const INTENT_WEIGHTS = {
   },
 };
 
+// Balanced fallback for arbitrary/occasion intent strings — all planets scored equally
+const GENERIC_WEIGHTS = {
+  sun:     { AC: 6, MC: 6, DC: 5, IC: 5 },
+  moon:    { IC: 7, AC: 6, DC: 5, MC: 5 },
+  venus:   { AC: 6, DC: 6, IC: 5, MC: 5 },
+  mars:    { AC: 6, MC: 6, DC: 5, IC: 4 },
+  jupiter: { AC: 7, MC: 7, DC: 6, IC: 6 },
+  saturn:  { MC: 6, AC: 5, DC: 5, IC: 6 },
+  neptune: { AC: 5, IC: 5, DC: 5, MC: 4 },
+  pluto:   { AC: 5, MC: 5, DC: 5, IC: 5 },
+  uranus:  { AC: 5, MC: 5, DC: 5, IC: 5 },
+  mercury: { AC: 5, MC: 5, DC: 4, IC: 4 },
+};
+
 const STRENGTH_MULTIPLIER = { exact: 2.0, strong: 1.5, moderate: 1.0, mild: 0.5 };
 
 export function scoreCity(influences, intent) {
-  const weights = INTENT_WEIGHTS[intent] || INTENT_WEIGHTS.love;
+  const weights = INTENT_WEIGHTS[intent] || GENERIC_WEIGHTS;
   let score = 0;
   for (const inf of influences) {
     const planetWeights = weights[inf.planet];

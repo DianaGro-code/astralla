@@ -14,6 +14,7 @@ import topCitiesRoutes from './src/routes/topCities.js';
 import transitsRoutes from './src/routes/transits.js';
 import solarReturnsRoutes from './src/routes/solarReturns.js';
 import weeklyRoutes from './src/routes/weekly.js';
+import partnerReadingsRoutes from './src/routes/partnerReadings.js';
 import adminRoutes from './src/routes/admin.js';
 
 dotenv.config({ override: true });
@@ -37,6 +38,7 @@ initDb();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/charts', chartsRoutes);
+app.use('/api/readings/partner', partnerReadingsRoutes);
 app.use('/api/readings', readingsRoutes);
 app.use('/api/geocode', geocodingRoutes);
 app.use('/api/top-cities', topCitiesRoutes);

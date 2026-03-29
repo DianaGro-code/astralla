@@ -66,6 +66,9 @@ export function initDb() {
   try { db.exec('ALTER TABLE users ADD COLUMN home_lat REAL'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN home_lng REAL'); } catch {}
 
+  // Partner chart reference (migration)
+  try { db.exec('ALTER TABLE readings ADD COLUMN partner_chart_id INTEGER REFERENCES birth_charts(id)'); } catch {}
+
   // Tier + usage (migration)
   try { db.exec("ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'"); } catch {}
 
