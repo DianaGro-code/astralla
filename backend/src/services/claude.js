@@ -446,15 +446,18 @@ Return ONLY valid JSON with exactly these keys:
 export async function generatePartnerReading(chart1, chart2, city, influences1, parans1, influences2, parans2) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  const name1 = chart1.label || 'Person A';
+  const name2 = chart2.label || 'Person B';
+
   const partnerPrompt = `Two people are reading the same city TOGETHER. Interpret how ${city.displayName} lands for this pair — as a unit, not as individuals.
 
-PERSON A — born ${chart1.birth_date} at ${chart1.birth_time} in ${chart1.birth_place}:
+${name1.toUpperCase()} — born ${chart1.birth_date} at ${chart1.birth_time} in ${chart1.birth_place}:
 Active planetary lines:
 ${formatInfluences(influences1)}
 Parans at this latitude:
 ${formatParans(parans1)}
 
-PERSON B — born ${chart2.birth_date} at ${chart2.birth_time} in ${chart2.birth_place}:
+${name2.toUpperCase()} — born ${chart2.birth_date} at ${chart2.birth_time} in ${chart2.birth_place}:
 Active planetary lines:
 ${formatInfluences(influences2)}
 Parans at this latitude:
@@ -465,7 +468,7 @@ ${WRITING_STYLE}
 You are writing about what this city does to TWO people when they're in it TOGETHER. This is not two separate readings — it's about the shared field. What does the city activate between them? What does it amplify, what does it ask?
 
 Rules for this reading:
-- Write "you both" and "together" and "between you" — not "Person A" and "Person B."
+- Use "${name1}" and "${name2}" by name when you need to distinguish their individual experiences (e.g. "For ${name1}, this city..."). Use "you both" and "together" when speaking about the pair as a unit. Never say "one of you" or "Person A/B."
 - When their lines harmonize (e.g. one has Venus DC, the other has Moon DC), name that resonance.
 - When their lines conflict or create friction, name that too. Friction is information.
 - The "love" theme here is about the relationship itself — intimacy, attraction, what the city stirs between them.

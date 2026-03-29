@@ -78,8 +78,8 @@ function NewChartForm({ onCreated, onCancel }) {
     <form onSubmit={handleSubmit} className="card space-y-4 animate-slide-up border-gold/30">
       <h3 className="font-serif text-xl text-text-p">New Birth Chart</h3>
       <div>
-        <label className="label">Chart Label</label>
-        <input className="input" placeholder="e.g. My Chart, Sarah's Chart…" value={form.label} onChange={set('label')} required />
+        <label className="label">Name</label>
+        <input className="input" placeholder="e.g. Diana, Samy, Mom…" value={form.label} onChange={set('label')} required />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
