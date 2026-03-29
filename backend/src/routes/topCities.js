@@ -34,9 +34,18 @@ router.post('/', async (req, res) => {
       return { city, influences, parans, score };
     });
 
-    // Sort descending, take top 3 with any activation
+    // Sort descending, then keep only the strongest city per country
     scored.sort((a, b) => b.score - a.score);
-    const top3 = scored.slice(0, 3);
+    const seenCountries = new Set();
+    const deduped = [];
+    for (const entry of scored) {
+      const country = entry.city.name.split(', ').pop();
+      if (seenCountries.has(country)) continue;
+      seenCountries.add(country);
+      deduped.push(entry);
+      if (deduped.length === 3) break;
+    }
+    const top3 = deduped;
 
     // Check weekly limit before calling Claude
     const limit = checkLimit(req.user);
