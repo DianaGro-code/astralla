@@ -546,7 +546,7 @@ function SolarReturnView({ charts, navigate, onBack, onLimitReached }) {
             {result.overallRating != null && (
               <div className="flex items-center gap-1 mb-2">
                 {[1,2,3,4,5].map(n => (
-                  <span key={n} className="text-base" style={{ color: '#D4AF37', opacity: n <= result.overallRating ? 1 : 0.2 }}>★</span>
+                  <span key={n} className="text-base" style={{ color: '#C9A96E', opacity: n <= result.overallRating ? 1 : 0.2 }}>★</span>
                 ))}
               </div>
             )}

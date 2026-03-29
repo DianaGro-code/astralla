@@ -124,7 +124,7 @@ function StarRating({ value, size = 'sm', color }) {
         <span
           key={n}
           className={`${cls} transition-colors`}
-          style={{ color: n <= value ? (color || '#D4AF37') : undefined, opacity: n <= value ? 1 : 0.2 }}
+          style={{ color: n <= value ? (color || '#C9A96E') : undefined, opacity: n <= value ? 1 : 0.2 }}
         >★</span>
       ))}
     </div>
@@ -699,7 +699,7 @@ function SolarReturnPanel({ chartId, cityName, birthDate, defaultOpen = false })
                 {result.overallRating != null && (
                   <div className="flex items-center gap-1 mb-2">
                     {[1,2,3,4,5].map(n => (
-                      <span key={n} className="text-base" style={{ color: '#D4AF37', opacity: n <= result.overallRating ? 1 : 0.2 }}>★</span>
+                      <span key={n} className="text-base" style={{ color: '#C9A96E', opacity: n <= result.overallRating ? 1 : 0.2 }}>★</span>
                     ))}
                   </div>
                 )}
@@ -851,7 +851,7 @@ function TheReadingAccordion({ themes, readingText }) {
             {themes?.overallRating != null && (
               <div className="flex items-center gap-0.5 mt-0.5">
                 {[1,2,3,4,5].map(n => (
-                  <span key={n} className="text-[10px]" style={{ color: '#D4AF37', opacity: n <= themes.overallRating ? 1 : 0.2 }}>★</span>
+                  <span key={n} className="text-[10px]" style={{ color: '#C9A96E', opacity: n <= themes.overallRating ? 1 : 0.2 }}>★</span>
                 ))}
               </div>
             )}

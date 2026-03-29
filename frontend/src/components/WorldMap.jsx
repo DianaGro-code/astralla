@@ -30,12 +30,12 @@ const PLANET_GLYPHS = {
 };
 
 // Per-chart accent colors for pin rings and line tinting
-const CHART_COLORS = ['#D4AF37', '#4BC9C8', '#B08AE0', '#E06840', '#5A8FC8', '#E890A0'];
+const CHART_COLORS = ['#C9A96E', '#4BC9C8', '#B08AE0', '#E06840', '#5A8FC8', '#E890A0'];
 
 // ── Reading pin helpers ────────────────────────────────────────────────────────
 function ratingColor(r) {
   if (r >= 4.5) return '#B88FD8';
-  if (r >= 3.5) return '#D4AF37';
+  if (r >= 3.5) return '#C9A96E';
   if (r >= 2.5) return '#3DBFB0';
   return '#7A8FA8';
 }
@@ -258,7 +258,7 @@ export default function WorldMap({ readings, onReadingClick, planetLines, charts
             <p className="text-text-m text-[10px] font-sans uppercase tracking-wider mb-0.5">Score</p>
             {[
               { color: '#B88FD8', label: 'Exceptional' },
-              { color: '#D4AF37', label: 'Strong'      },
+              { color: '#C9A96E', label: 'Strong'      },
               { color: '#3DBFB0', label: 'Moderate'    },
               { color: '#7A8FA8', label: 'Mild'        },
             ].map(({ color, label }) => (

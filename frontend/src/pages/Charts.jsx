@@ -269,7 +269,7 @@ function ChartCard({ chart, onDelete, onEdit, onSetPrimary, isExpanded, onExpand
                           <div className="flex items-center gap-1 shrink-0">
                             <div className="flex items-center gap-px">
                               {[1,2,3,4,5].map(n => (
-                                <span key={n} className="text-[8px]" style={{ color: '#D4AF37', opacity: n <= overall ? 0.75 : 0.15 }}>★</span>
+                                <span key={n} className="text-[8px]" style={{ color: '#C9A96E', opacity: n <= overall ? 0.75 : 0.15 }}>★</span>
                               ))}
                             </div>
                             <span className="text-[10px] text-text-m/60 tabular-nums">{overall}/5</span>
