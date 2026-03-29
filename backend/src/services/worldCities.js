@@ -129,7 +129,18 @@ const INTENT_WEIGHTS = {
   },
 };
 
-// Balanced fallback for arbitrary/occasion intent strings — all planets scored equally
+// Map life-chapter strings to existing intent weight keys
+const CHAPTER_INTENT_MAP = {
+  'Finishing a big project':  'career',
+  'Getting over a heartbreak':'escape',
+  'Building something that lasts': 'career',
+  'Starting completely fresh': 'change',
+  'Finding your people':      'love',
+  'Creative breakthrough':    'creative',
+  'Healing and recovery':     'escape',
+};
+
+// Balanced fallback for fully custom text
 const GENERIC_WEIGHTS = {
   sun:     { AC: 6, MC: 6, DC: 5, IC: 5 },
   moon:    { IC: 7, AC: 6, DC: 5, MC: 5 },
@@ -146,7 +157,8 @@ const GENERIC_WEIGHTS = {
 const STRENGTH_MULTIPLIER = { exact: 2.0, strong: 1.5, moderate: 1.0, mild: 0.5 };
 
 export function scoreCity(influences, intent) {
-  const weights = INTENT_WEIGHTS[intent] || GENERIC_WEIGHTS;
+  const mappedIntent = CHAPTER_INTENT_MAP[intent] || intent;
+  const weights = INTENT_WEIGHTS[mappedIntent] || GENERIC_WEIGHTS;
   let score = 0;
   for (const inf of influences) {
     const planetWeights = weights[inf.planet];

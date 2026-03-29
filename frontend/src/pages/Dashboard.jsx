@@ -65,7 +65,7 @@ const FEATURES = [
   {
     key: 'occasion',
     glyph: '✶',
-    title: 'Occasion Planner',
+    title: 'Life Chapter',
     color: '#6B9E78',
     description: 'Tell us what you\'re navigating and we\'ll find the cities that hold the right energy for that chapter of your life.',
   },
@@ -1122,7 +1122,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
       </button>
       <div className="flex items-center gap-3 mb-2">
         <span className="text-3xl leading-none" style={{ color: featureCfg.color }}>{featureCfg.glyph}</span>
-        <h1 className="font-serif text-3xl text-text-p">Occasion Planner</h1>
+        <h1 className="font-serif text-3xl text-text-p">Life Chapter</h1>
       </div>
       <p className="text-text-m text-sm font-sans mb-7">Find the cities that match this chapter of your life.</p>
 
@@ -1234,7 +1234,7 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
           </button>
         )}
 
-        {nudge && <p className="text-gold text-xs font-sans text-center animate-fade-in">↑ Choose an occasion first</p>}
+        {nudge && <p className="text-gold text-xs font-sans text-center animate-fade-in">↑ Choose a chapter first</p>}
         {error && <p className="text-red-400 text-xs">{error}</p>}
 
         {results && (
