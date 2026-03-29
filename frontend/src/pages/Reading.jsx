@@ -988,29 +988,6 @@ export default function Reading() {
         {/* The reading — open by default */}
         <TheReadingAccordion themes={themes} readingText={reading_text} />
 
-        {/* Deepen the reading */}
-        <section className="mt-2 animate-fade-in">
-          <h2 className="font-serif text-xl text-text-p mb-1 flex items-center gap-2">
-            <span className="text-gold text-sm">✦</span> Deepen the reading
-          </h2>
-          <p className="text-text-m text-xs font-sans mb-4">
-            Go further — see how the sky looks on your travel dates, or what happens if you spend your birthday here.
-          </p>
-          <div className="space-y-3">
-            <TravelTransitsPanel
-              chartId={reading.chart_id}
-              cityName={city_name}
-              defaultOpen={panelTarget === 'transits'}
-            />
-            <SolarReturnPanel
-              chartId={reading.chart_id}
-              cityName={city_name}
-              birthDate={reading.birth_date}
-              defaultOpen={panelTarget === 'solar'}
-            />
-          </div>
-        </section>
-
         {/* Bottom share */}
         <div className="mt-12 flex justify-center">
           <ShareButton cityName={city_name} themes={themes} onOpenCard={() => setShowCard(true)} />
