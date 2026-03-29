@@ -1,34 +1,37 @@
 /**
- * Geocoding via OpenStreetMap Nominatim (free, no API key needed).
- * Rate limit: 1 request/second — adequate for this app.
+ * City autocomplete via Photon (Komoot) — free, no API key, built for prefix search.
+ * Geocoding (single result) via OpenStreetMap Nominatim.
  */
 
+const PHOTON = 'https://photon.komoot.io/api';
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const HEADERS = { 'User-Agent': 'AstrocartographyApp/1.0', 'Accept-Language': 'en' };
 
+// Types to include in city suggestions
+const CITY_TYPES = new Set(['city', 'town', 'village', 'district', 'county', 'state']);
+
 export async function searchCities(query) {
-  const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=20&addressdetails=1`;
+  const url = `${PHOTON}?q=${encodeURIComponent(query)}&limit=12&lang=en`;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`Geocoding request failed: ${res.status}`);
-  const data = await res.json();
-
-  const PLACE_TYPES = new Set(['city', 'town', 'village', 'hamlet', 'suburb', 'municipality', 'administrative']);
+  const { features } = await res.json();
 
   const seen = new Set();
   const results = [];
-  for (const place of data) {
-    // Only include actual populated places, not roads/boundaries/POIs
-    if (place.class !== 'place' && place.class !== 'boundary') continue;
-    if (place.class === 'boundary' && place.type !== 'administrative') continue;
-    if (place.class === 'place' && !PLACE_TYPES.has(place.type)) continue;
+  for (const f of features) {
+    const props = f.properties || {};
+    // Skip non-city types (houses, streets, POIs etc.)
+    if (!CITY_TYPES.has(props.type)) continue;
 
-    const addr = place.address || {};
-    const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || place.display_name.split(',')[0];
-    const country = addr.country || '';
-    const displayName = country ? `${city}, ${country}` : city;
+    const name = props.name || props.city || props.locality;
+    if (!name) continue;
+    const country = props.country || '';
+    const displayName = country ? `${name}, ${country}` : name;
     if (seen.has(displayName)) continue;
     seen.add(displayName);
-    results.push({ lat: parseFloat(place.lat), lng: parseFloat(place.lon), displayName });
+
+    const [lng, lat] = f.geometry.coordinates;
+    results.push({ lat, lng, displayName });
     if (results.length === 6) break;
   }
   return results;
