@@ -103,16 +103,16 @@ const INTENT_PROMPTS = {
 };
 
 const WRITING_STYLE = `WRITING STYLE — follow every one of these:
-- Lead with the consequence, not the planet. Not "Venus on the Descendant" — "You will fall in love here. Or at least think you have."
-- Name the city like it has a personality. Give it agency. "Paris doesn't care what you came for. It will give you something else."
-- Use contrast. "This city will make you rich. It will also make you lonely." Tension is memorable.
-- Short sentences for impact. One sentence that lands hard, then explain. Never explain first.
-- End every theme section with a question or a dare. "The question is whether you're ready to be that visible."
-- Dry wit is welcome — a light touch, never goofy. Think sharp magazine astrology column.
-- Name the actual planets and angles every time. Never write "celestial energy" or "the cosmos" — say "Venus DC" or "Saturn MC."
-- Concrete over vague. Not "you may find opportunities" — "Jupiter is on your Midheaven. Someone in this city will hand you something."
-- Never hedge. Not "may", "might", "could", "perhaps", "often", "sometimes". Say what IS. "This city makes you visible" — not "this city may increase your visibility." Declarative sentences only.
-- Name the uncomfortable truth. The thing they already know but haven't said out loud. That's what makes a reading feel seen, not just described. Write as if you already know this person.`;
+- Every single claim must be traceable to a specific planet and angle in the data provided above. The planetary data is the only source of truth. Never invent or imply something the data doesn't support.
+- Do NOT reference the city's cultural reputation, geography, vibe, or what people generally associate with it. You are not writing about the city — you are writing about what this person's chart activates in this city. "Bali is known for healing" is forbidden. "Neptune on your IC here" is the reason.
+- If a theme has minimal or no planetary activation, say so plainly. A low-activation theme is honest information — do not pad it with generalities.
+- Name the actual planets and angles every time. Never write "celestial energy" or "the cosmos" — say "Venus DC" or "Saturn MC." The planet and angle are the sentence.
+- Lead with the consequence derived from the data. "Venus is on your Descendant. You will fall in love here — or at least think you have." The planet comes first, then what it means.
+- Use contrast where the data shows it. When two influences pull in different directions, name both. "Jupiter MC: the career opens. Saturn AC: you'll pay for it in presence."
+- Short sentences for impact. One sentence that names the activation, then one that says what it means for this person.
+- End every theme section with a question or a dare grounded in the data.
+- Never hedge. Not "may", "might", "could", "perhaps". If the planet is there, state the consequence as fact.
+- Name the uncomfortable truth when the data shows difficulty. A hard Saturn or Pluto line is information, not a curse — but it must be named honestly.`;
 
 export async function generateReading(chart, city, influences, parans, intent, relocatedChart) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -143,11 +143,11 @@ ${intent && INTENT_PROMPTS[intent] ? `READER'S INTENT — important context:\n${
 
 Return ONLY a valid JSON object — no markdown, no code fences, no text outside the JSON — with exactly these keys:
 
-- "overview": 2–3 punchy sentences. Don't explain the city — tell them what it will do to them. Write as if you already know this person. Lead with consequence. No generic openers.
-- "overallRating": integer 1–5 reflecting how activated and favorable this location is (5 = highly charged and positive, 1 = minimal activation)
-- "dreamOrComfort": "dream" if this city pushes, challenges, or costs something significant; "comfort" if it nourishes, heals, or feels like home; "both" if genuinely both; "neither" if mostly neutral
-- "cost": 1–2 sentences. What does this city ask of the person? What's the price of its activation? Honest, not scary.
-- "love", "career", "inner", "vitality", "growth": each 3–4 sentences on that domain. Lead with the sharpest observation. Name specific planets and angles. End with a question or dare.
+- "overview": 2–3 punchy sentences derived entirely from the planetary data above. Name the dominant activations and what they mean for this person. No generic openers. No city stereotypes.
+- "overallRating": integer 1–5 reflecting how activated and favorable this location is (5 = highly charged and positive, 1 = minimal activation). Base this on the strength and number of influences above — not on the city's reputation.
+- "dreamOrComfort": "dream" if this city pushes, challenges, or costs something significant; "comfort" if it nourishes, heals, or feels like home; "both" if genuinely both; "neither" if mostly neutral. Derive this from the planetary data — hard lines (Saturn, Pluto, Mars) = dream; soft lines (Moon IC, Venus AC) = comfort.
+- "cost": 1–2 sentences. What does the planetary activation here demand? Grounded in specific planets/angles.
+- "love", "career", "inner", "vitality", "growth": each 3–4 sentences on that domain. If there is no relevant planetary activation for a domain, say so honestly in 1 sentence rather than inventing content. When there IS activation, name the planet and angle first, then state the consequence.
 - "loveRating", "careerRating", "innerRating", "vitalityRating", "growthRating": integer 1–5 for each domain
 
 {"overview":"...","overallRating":3,"dreamOrComfort":"dream","cost":"...","love":"...","loveRating":4,"career":"...","careerRating":3,"inner":"...","innerRating":2,"vitality":"...","vitalityRating":5,"growth":"...","growthRating":3}
@@ -355,12 +355,12 @@ These are their top 3 cities by planetary activation for that intent:
 ${cityDescriptions}
 
 Write a short reading for each city. Follow every rule exactly:
-- Lead with the consequence, not the planet. "You will fall in love here" not "Venus on the Descendant."
-- Name the city like it has a personality. Give it agency. "Lisbon doesn't wait for you to be ready."
-- Use contrast. What the city gives AND what it costs.
-- Short sentences for impact. One sentence that lands hard, then explain.
-- End the verdict with a question or a dare.
-- Be honest. Some of these cities will be difficult. Say so.
+- Every claim must come from the planetary lines listed above. Do NOT use the city's cultural reputation or what people generally associate with it. The data is the only source of truth.
+- Name the planet and angle, then state what it means for this person. "Venus DC: you will fall in love here" not just "you will fall in love here."
+- Use contrast where the data shows it. What the activation gives AND what it costs.
+- Short sentences for impact. Planet → consequence → cost.
+- End the verdict with a question or a dare grounded in the actual lines.
+- Be honest. If the activation is mixed or demanding, say so.
 
 Return ONLY valid JSON — no markdown, no fences — with this exact structure:
 {
