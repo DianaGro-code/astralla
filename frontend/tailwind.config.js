@@ -13,8 +13,8 @@ export default {
         'text-p':'#EDE9DF',   // primary text (warm cream)
         'text-s':'#8A827A',   // secondary text
         'text-m':'#605850',   // muted / metadata text
-        gold:    '#D4AF37',   // gold accent
-        'gold-l':'#E0C050',   // gold hover
+        gold:    '#C9A96E',   // champagne gold accent
+        'gold-l':'#D4B87A',   // gold hover
         violet:  '#C0507A',   // venus / love
         teal:    '#5A8FC8',   // moon / inner
       },

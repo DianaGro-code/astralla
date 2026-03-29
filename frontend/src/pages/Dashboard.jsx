@@ -1483,7 +1483,7 @@ export default function Dashboard() {
             {loading && <div className="flex justify-center py-12"><Spinner /></div>}
 
             {!loading && charts.length === 0 && (
-              <div className="card text-center py-14 border-dashed">
+              <div className="card text-center py-14 border-gold/15">
                 <div className="text-gold text-3xl mb-5">✦</div>
                 <h2 className="font-serif text-2xl text-text-p mb-3">
                   Your chart is a map.<br />You haven't unfolded it yet.

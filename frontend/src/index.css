@@ -27,6 +27,7 @@
     @apply font-serif;
     font-weight: 500;
     font-optical-sizing: auto;
+    letter-spacing: -0.02em;
   }
 
   * {
@@ -42,9 +43,9 @@
 
 @layer components {
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
-           bg-gold text-[#0C1118] font-sans font-medium tracking-wide
-           hover:bg-gold-l active:scale-95 transition-all duration-200
+    @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl
+           border border-gold/50 bg-gold/10 text-gold font-sans font-medium tracking-wide
+           hover:bg-gold/20 hover:border-gold/70 active:scale-[0.97] transition-all duration-200
            disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
