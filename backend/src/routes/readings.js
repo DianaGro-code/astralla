@@ -141,7 +141,7 @@ router.get('/chart/:chartId', (req, res) => {
 router.get('/:id', (req, res) => {
   const db = getDb();
   const reading = db.prepare(`
-    SELECT r.* FROM readings r
+    SELECT r.*, c.birth_time FROM readings r
     JOIN birth_charts c ON c.id = r.chart_id
     WHERE r.id = ? AND c.user_id = ?
   `).get(req.params.id, req.user.id);

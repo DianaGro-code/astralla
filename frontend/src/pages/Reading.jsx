@@ -916,7 +916,7 @@ export default function Reading() {
     );
   }
 
-  const { influences = [], parans = [], themes, reading_text, city_name, city_lat, city_lng, created_at } = reading;
+  const { influences = [], parans = [], themes, reading_text, city_name, city_lat, city_lng, created_at, birth_time } = reading;
 
   const verdict = themes?.overallRating != null ? VERDICT[Math.round(themes.overallRating)] : null;
 
@@ -957,6 +957,15 @@ export default function Reading() {
             <DreamComfortBadge type={themes.dreamOrComfort} />
           )}
         </div>
+
+        {/* No birth time warning */}
+        {!birth_time && (
+          <div className="mb-6 rounded-xl border border-amber-400/25 bg-amber-400/5 px-4 py-3 animate-fade-in">
+            <p className="text-amber-300/80 text-xs font-sans leading-relaxed">
+              <span className="font-medium">No birth time on record.</span> Planet line positions are accurate. Your Ascendant (AC), Descendant (DC), Midheaven (MC), and IC lines — the four most personal lines in locational astrology — require an exact birth time to be meaningful. Add yours in Charts to unlock them.
+            </p>
+          </div>
+        )}
 
         {/* Overview — editorial pull quote */}
         {themes?.overview && (
