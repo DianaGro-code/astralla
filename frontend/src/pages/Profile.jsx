@@ -1,11 +1,37 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { api } from '../lib/api.js';
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [homeCity, setHomeCity] = useState(null);
 
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     : '?';
+
+  useEffect(() => {
+    Promise.all([
+      api.charts.list(),
+      api.readings.all(),
+      api.profile.get(),
+    ]).then(([charts, readings, profile]) => {
+      setStats({ charts: charts.length, readings: readings.length });
+      if (profile.home_city) setHomeCity(profile.home_city.split(',')[0]);
+    }).catch(() => {});
+  }, []);
+
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : null;
+
+  const rows = [
+    memberSince && { label: 'Member since', value: memberSince },
+    homeCity    && { label: 'Home city',    value: homeCity },
+    stats       && { label: 'Charts saved', value: stats.charts },
+    stats       && { label: 'Cities read',  value: stats.readings },
+  ].filter(Boolean);
 
   return (
     <div className="min-h-screen px-6 pt-16 pb-32 flex flex-col items-center">
@@ -27,14 +53,16 @@ export default function Profile() {
       <p className="text-text-m text-sm mb-10">{user?.email}</p>
 
       <div className="w-full max-w-sm space-y-3">
-        <div className="card px-5 py-4 flex justify-between items-center">
-          <span className="text-text-s text-sm">Member since</span>
-          <span className="text-text-p text-sm">
-            {user?.created_at
-              ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-              : 'Recently'}
-          </span>
-        </div>
+        {rows.length > 0 && (
+          <div className="card px-5 py-1 divide-y divide-white/5">
+            {rows.map(row => (
+              <div key={row.label} className="flex justify-between items-center py-3">
+                <span className="text-text-s text-sm">{row.label}</span>
+                <span className="text-text-p text-sm">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={logout}

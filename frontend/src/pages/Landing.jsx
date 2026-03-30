@@ -48,8 +48,11 @@ export default function Landing() {
         {/* How it works */}
         <div className="mt-16 max-w-xl w-full animate-fade-in">
           <p className="text-text-m text-xs font-sans uppercase tracking-widest mb-2">What is astrocartography?</p>
-          <p className="font-serif text-base text-text-s leading-relaxed font-light mb-8">
+          <p className="font-serif text-base text-text-s leading-relaxed font-light mb-4">
             The moment you were born, every planet held a precise position in the sky. As Earth rotates, those positions trace invisible lines across every continent. Where those lines cross a city is where that planet's energy is strongest for you — and where it quietly shapes the person you become there.
+          </p>
+          <p className="font-serif text-base text-text-s leading-relaxed font-light mb-8">
+            We go deeper than just the lines. Each reading also draws on your <em>relocated chart</em> — your birth chart recast for that city's horizon — and <em>parans</em>, the subtle crossings that form when two planets rise or set together over a place. It's the full picture.
           </p>
           <div className="space-y-3 text-left">
             {[

@@ -16,7 +16,7 @@ const FEATURES = [
   {
     key: 'city',
     glyph: '✦',
-    title: 'City Reading',
+    title: 'City\nReading',
     color: '#C9A96E',
     description: 'Your birth chart has specific things to say about every city on Earth. Enter any place — somewhere you\'re moving, a dream destination, or a city that\'s been calling you — and we\'ll read it across love, career, inner life, vitality, and growth.',
   },
@@ -94,14 +94,30 @@ const REGIONS = [
 ];
 
 const OCCASIONS = [
-  'Finishing a big project',
-  'Getting over a heartbreak',
-  'Building something that lasts',
-  'Starting completely fresh',
-  'Finding your people',
-  'Creative breakthrough',
-  'Healing and recovery',
+  'Ready to fall in love',
+  'Starting over after a heartbreak',
+  'Launching something of my own',
+  'Settling down and putting down roots',
+  'Craving adventure and real freedom',
+  'A chapter of deep healing',
+  'Finding my people and community',
+  'Stepping into my power',
+  'A creative renaissance',
+  'Navigating grief or major loss',
+  'Ready for a complete reinvention',
 ];
+
+function currentWeekStart() {
+  const now = new Date();
+  const day = now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - ((day + 6) % 7));
+  return mon.toISOString().split('T')[0];
+}
+function weeklyIsNew() {
+  const stored = localStorage.getItem('lastWeeklyReadingWeek');
+  return !stored || stored < currentWeekStart();
+}
 
 function Spinner({ size = 'md' }) {
   const s = size === 'sm' ? 'w-3 h-3 border' : 'w-6 h-6 border-2';
@@ -1510,8 +1526,15 @@ export default function Dashboard() {
                       style={{ background: `radial-gradient(circle at 20% 20%, ${f.color}18 0%, transparent 65%)` }}
                     />
                     <div className="relative flex-1 flex flex-col justify-between">
-                      <span className="text-lg leading-none mb-3" style={{ color: f.color }}>{f.glyph}</span>
-                      <p className="font-serif text-[1.2rem] text-text-p leading-snug">{f.title}</p>
+                      <div className="flex items-start justify-between mb-3">
+                        <span className="text-lg leading-none" style={{ color: f.color }}>{f.glyph}</span>
+                        {f.key === 'weekly' && weeklyIsNew() && (
+                          <span className="w-2 h-2 rounded-full bg-gold shrink-0 mt-0.5" />
+                        )}
+                      </div>
+                      <p className="font-serif text-[1.2rem] text-text-p leading-snug">
+                        {f.title.split('\n').map((line, i) => i === 0 ? line : <span key={i}><br />{line}</span>)}
+                      </p>
                     </div>
                   </button>
                 ))}

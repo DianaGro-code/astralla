@@ -193,6 +193,7 @@ export default function WeeklyReading({ charts, onLimitReached }) {
     setL(true); setError('');
     try {
       const data = await api.weekly.generate({ chartId: chart.id, cityName: city.displayName, cityLat: city.lat, cityLng: city.lng });
+      if (data.weekStart) localStorage.setItem('lastWeeklyReadingWeek', data.weekStart);
       setR(data);
     } catch (err) {
       if (err.limitReached) { onLimitReached?.(err); }

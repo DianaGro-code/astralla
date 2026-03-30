@@ -2,10 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    VitePWA({
+    mode !== 'capacitor' && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
@@ -57,7 +57,7 @@ export default defineConfig({
         ],
       },
     }),
-  ],
+  ].filter(Boolean),
   server: {
     host: true,
     port: 5173,
@@ -68,4 +68,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
