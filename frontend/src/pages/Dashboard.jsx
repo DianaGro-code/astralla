@@ -95,21 +95,21 @@ const REGIONS = [
 
 const OCCASIONS = [
   // Quick / trip-planning uses
-  'Planning a trip somewhere new',
+  'Planning a fun trip',
   'A romantic getaway',
   'Finishing a big project',
   'Meeting new people and networking',
   'Getting inspired creatively',
   // Life chapters
   'Ready to fall in love',
-  'Starting over after a heartbreak',
+  'Letting something go',
   'Launching something of my own',
   'Settling down and putting down roots',
   'Finding my people and community',
-  'Stepping into my power',
+  'Ready to be seen',
   'A chapter of deep healing',
   'Navigating grief or major loss',
-  'Ready for a complete reinvention',
+  'Starting completely fresh',
 ];
 
 function currentWeekStart() {

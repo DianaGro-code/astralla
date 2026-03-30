@@ -213,21 +213,21 @@ const INTENT_WEIGHTS = {
 // Map each occasion string to its unique weight profile
 const CHAPTER_INTENT_MAP = {
   // Quick / trip-planning uses
-  'Planning a trip somewhere new':        'adventure',
+  'Planning a fun trip':                  'adventure',
   'A romantic getaway':                   'romantic_escape',
   'Finishing a big project':              'project',
   'Meeting new people and networking':    'networking',
   'Getting inspired creatively':          'inspired',
   // Life chapters
   'Ready to fall in love':                'falling_in_love',
-  'Starting over after a heartbreak':     'heartbreak',
+  'Letting something go':                 'heartbreak',
   'Launching something of my own':        'launch',
   'Settling down and putting down roots': 'roots',
   'Finding my people and community':      'community',
-  'Stepping into my power':               'power',
+  'Ready to be seen':                     'power',
   'A chapter of deep healing':            'healing',
   'Navigating grief or major loss':       'grief',
-  'Ready for a complete reinvention':     'change',
+  'Starting completely fresh':            'change',
   // Legacy strings (kept for backwards compat)
   'Getting over a heartbreak':            'heartbreak',
   'Building something that lasts':        'launch',
