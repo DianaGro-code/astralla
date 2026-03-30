@@ -98,7 +98,7 @@ const OCCASIONS = [
   'Planning a trip somewhere new',
   'A romantic getaway',
   'Finishing a big project',
-  'A work trip or conference',
+  'Meeting new people and networking',
   'Getting inspired creatively',
   // Life chapters
   'Ready to fall in love',

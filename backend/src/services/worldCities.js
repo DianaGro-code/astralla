@@ -135,7 +135,7 @@ const CHAPTER_INTENT_MAP = {
   'Planning a trip somewhere new':  'escape',
   'A romantic getaway':             'love',
   'Finishing a big project':        'career',
-  'A work trip or conference':      'career',
+  'Meeting new people and networking':'love',
   'Getting inspired creatively':    'creative',
   // Life chapters
   'Ready to fall in love':          'love',
