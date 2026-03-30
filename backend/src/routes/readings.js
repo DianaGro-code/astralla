@@ -126,7 +126,7 @@ router.get('/chart/:chartId', (req, res) => {
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   const readings = db.prepare(
-    'SELECT * FROM readings WHERE chart_id = ? ORDER BY created_at DESC'
+    'SELECT * FROM readings WHERE chart_id = ? AND (partner_chart_id IS NULL) ORDER BY created_at DESC'
   ).all(req.params.chartId);
 
   res.json(readings.map(r => ({
