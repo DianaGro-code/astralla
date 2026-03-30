@@ -96,6 +96,7 @@ export const WORLD_CITIES = [
 
 // Per-intent planet/angle weights (higher = more relevant for that intent)
 const INTENT_WEIGHTS = {
+  // ── Base 5 keys (used by Best Cities feature) ──────────────────────────────
   love: {
     venus:   { DC: 10, AC: 8, IC: 6, MC: 4 },
     moon:    { DC: 8,  IC: 8, AC: 5, MC: 4 },
@@ -127,35 +128,115 @@ const INTENT_WEIGHTS = {
     saturn:  { AC: 8,  MC: 8,  DC: 6, IC: 7 },
     mars:    { AC: 7,  MC: 7,  DC: 5, IC: 5 },
   },
+
+  // ── Chapter Planner occasion-specific profiles ─────────────────────────────
+  adventure: {         // Planning a trip somewhere new — exploration, wonder, freedom
+    jupiter: { IC: 9,  AC: 9, DC: 7, MC: 6 },
+    neptune: { IC: 8,  AC: 8, DC: 7, MC: 5 },
+    uranus:  { AC: 8,  IC: 7, DC: 6, MC: 5 },
+    moon:    { IC: 6,  AC: 6, DC: 5, MC: 4 },
+  },
+  romantic_escape: {   // A romantic getaway — encounter, heat, chemistry
+    venus:   { DC: 10, AC: 8, IC: 6, MC: 5 },
+    mars:    { DC: 9,  AC: 7, IC: 4, MC: 4 },
+    moon:    { DC: 8,  IC: 7, AC: 6, MC: 4 },
+    neptune: { DC: 6,  IC: 6, AC: 5, MC: 4 },
+  },
+  project: {           // Finishing a big project — execution, focus, output
+    mars:    { MC: 10, AC: 8, DC: 4, IC: 3 },
+    saturn:  { MC: 10, AC: 6, IC: 5, DC: 4 },
+    sun:     { MC: 8,  AC: 7, DC: 4, IC: 3 },
+    mercury: { MC: 8,  AC: 7, DC: 5, IC: 4 },
+  },
+  networking: {        // Meeting new people — visibility, communication, connections
+    mercury: { AC: 10, MC: 8, DC: 6, IC: 4 },
+    jupiter: { AC: 9,  MC: 8, DC: 6, IC: 4 },
+    sun:     { AC: 8,  MC: 7, DC: 4, IC: 3 },
+    venus:   { AC: 6,  DC: 7, IC: 4, MC: 4 },
+  },
+  inspired: {          // Getting inspired creatively — spark, newness, wonder
+    neptune: { AC: 10, IC: 9, DC: 7, MC: 6 },
+    uranus:  { AC: 9,  IC: 7, DC: 6, MC: 5 },
+    venus:   { AC: 8,  IC: 8, DC: 6, MC: 5 },
+    mercury: { AC: 8,  MC: 6, IC: 5, DC: 5 },
+  },
+  falling_in_love: {   // Ready to fall in love — vulnerability, magnetism, openness
+    venus:   { DC: 10, AC: 9, IC: 7, MC: 4 },
+    moon:    { DC: 9,  AC: 7, IC: 8, MC: 4 },
+    jupiter: { DC: 6,  AC: 6, IC: 5, MC: 5 },
+    neptune: { DC: 7,  AC: 5, IC: 6, MC: 3 },
+  },
+  heartbreak: {        // Starting over after heartbreak — withdrawal, rebuilding, distance
+    moon:    { IC: 10, AC: 7, DC: 4, MC: 4 },
+    neptune: { IC: 9,  AC: 7, DC: 5, MC: 4 },
+    saturn:  { IC: 7,  AC: 6, MC: 6, DC: 4 },
+    venus:   { IC: 7,  AC: 5, DC: 4, MC: 3 },
+  },
+  launch: {            // Launching something of my own — expansion, opportunity, momentum
+    sun:     { MC: 10, AC: 8, DC: 4, IC: 3 },
+    jupiter: { MC: 10, AC: 8, DC: 5, IC: 4 },
+    mars:    { AC: 8,  MC: 7, DC: 4, IC: 3 },
+    uranus:  { AC: 7,  MC: 6, DC: 5, IC: 5 },
+  },
+  roots: {             // Settling down — stability, belonging, home energy
+    moon:    { IC: 10, AC: 6, DC: 5, MC: 4 },
+    venus:   { IC: 9,  AC: 5, DC: 6, MC: 4 },
+    saturn:  { IC: 8,  MC: 6, AC: 5, DC: 4 },
+    jupiter: { IC: 6,  AC: 5, DC: 5, MC: 5 },
+  },
+  community: {         // Finding my people — belonging, warmth, social bonds
+    moon:    { DC: 9,  AC: 8, IC: 7, MC: 4 },
+    jupiter: { AC: 9,  DC: 8, IC: 5, MC: 6 },
+    venus:   { DC: 7,  AC: 7, IC: 5, MC: 4 },
+    mercury: { AC: 7,  DC: 6, MC: 5, IC: 4 },
+  },
+  power: {             // Stepping into my power — presence, authority, impact
+    sun:     { AC: 10, MC: 9, DC: 4, IC: 3 },
+    pluto:   { AC: 9,  MC: 8, DC: 6, IC: 6 },
+    mars:    { AC: 9,  MC: 8, DC: 4, IC: 3 },
+    jupiter: { AC: 7,  MC: 8, DC: 5, IC: 4 },
+  },
+  healing: {           // A chapter of deep healing — rest, restoration, solitude
+    moon:    { IC: 10, AC: 6, DC: 4, MC: 3 },
+    neptune: { IC: 10, AC: 6, DC: 5, MC: 4 },
+    saturn:  { IC: 8,  AC: 5, DC: 4, MC: 5 },
+    venus:   { IC: 7,  AC: 5, DC: 4, MC: 3 },
+  },
+  grief: {             // Navigating grief or major loss — depth, stillness, truth
+    moon:    { IC: 10, AC: 5, DC: 4, MC: 3 },
+    saturn:  { IC: 9,  MC: 7, AC: 5, DC: 4 },
+    pluto:   { IC: 8,  AC: 6, MC: 6, DC: 5 },
+    neptune: { IC: 7,  AC: 5, DC: 5, MC: 4 },
+  },
 };
 
-// Map life-chapter strings to existing intent weight keys
+// Map each occasion string to its unique weight profile
 const CHAPTER_INTENT_MAP = {
   // Quick / trip-planning uses
-  'Planning a trip somewhere new':  'escape',
-  'A romantic getaway':             'love',
-  'Finishing a big project':        'career',
-  'Meeting new people and networking':'love',
-  'Getting inspired creatively':    'creative',
+  'Planning a trip somewhere new':        'adventure',
+  'A romantic getaway':                   'romantic_escape',
+  'Finishing a big project':              'project',
+  'Meeting new people and networking':    'networking',
+  'Getting inspired creatively':          'inspired',
   // Life chapters
-  'Ready to fall in love':          'love',
-  'Starting over after a heartbreak': 'escape',
-  'Launching something of my own':  'career',
-  'Settling down and putting down roots': 'love',
-  'Finding my people and community':'love',
-  'Stepping into my power':         'career',
-  'A chapter of deep healing':      'escape',
-  'Navigating grief or major loss': 'escape',
-  'Ready for a complete reinvention':'change',
+  'Ready to fall in love':                'falling_in_love',
+  'Starting over after a heartbreak':     'heartbreak',
+  'Launching something of my own':        'launch',
+  'Settling down and putting down roots': 'roots',
+  'Finding my people and community':      'community',
+  'Stepping into my power':               'power',
+  'A chapter of deep healing':            'healing',
+  'Navigating grief or major loss':       'grief',
+  'Ready for a complete reinvention':     'change',
   // Legacy strings (kept for backwards compat)
-  'Getting over a heartbreak':      'escape',
-  'Building something that lasts':  'career',
-  'Starting completely fresh':      'change',
-  'Finding your people':            'love',
-  'Creative breakthrough':          'creative',
-  'Healing and recovery':           'escape',
-  'Craving adventure and real freedom': 'escape',
-  'A creative renaissance':         'creative',
+  'Getting over a heartbreak':            'heartbreak',
+  'Building something that lasts':        'launch',
+  'Starting completely fresh':            'change',
+  'Finding your people':                  'community',
+  'Creative breakthrough':                'inspired',
+  'Healing and recovery':                 'healing',
+  'Craving adventure and real freedom':   'adventure',
+  'A creative renaissance':               'creative',
 };
 
 // Balanced fallback for fully custom text
