@@ -1542,7 +1542,9 @@ export default function Dashboard() {
                       <div className="flex items-start justify-between mb-3">
                         <span className="text-lg leading-none" style={{ color: f.color }}>{f.glyph}</span>
                         {f.key === 'weekly' && weeklyIsNew() && (
-                          <span className="w-2 h-2 rounded-full bg-gold shrink-0 mt-0.5" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 border border-gold/40 text-gold text-[10px] font-sans tracking-wide shrink-0">
+                            ✦ new
+                          </span>
                         )}
                       </div>
                       <p className="font-serif text-[1.2rem] text-text-p leading-snug">
