@@ -146,7 +146,7 @@ function splitLead(text) {
   return [text, ''];
 }
 
-function ThemeSection({ theme, text, rating }) {
+function ThemeSection({ theme, text, rating, onShare }) {
   const [lead, body] = splitLead(text);
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -157,9 +157,16 @@ function ThemeSection({ theme, text, rating }) {
             <span className="text-base" style={{ color: theme.color }}>{theme.icon}</span>
             <h3 className="font-sans text-xs uppercase tracking-widest font-medium" style={{ color: theme.color }}>{theme.title}</h3>
           </div>
-          {rating != null && (
-            <StarRating value={rating} size="sm" color={theme.color} />
-          )}
+          <div className="flex items-center gap-2">
+            {rating != null && <StarRating value={rating} size="sm" color={theme.color} />}
+            <button
+              onClick={onShare}
+              className="text-text-m hover:text-gold transition-colors text-xs font-sans"
+              title="Share this section"
+            >
+              ↑
+            </button>
+          </div>
         </div>
         <div className="h-px mb-3" style={{ background: theme.color, opacity: 0.4 }} />
         <p className="font-serif text-base text-text-p leading-relaxed font-semibold">{inlineBold(lead)}</p>
@@ -204,46 +211,43 @@ const DREAM_COMFORT_CARD = {
   both:    { label: '✦ Dream & Comfort', color: '#9B6FBA' },
 };
 
-function ShareCardModal({ reading, onClose }) {
-  const { city_name, themes, influences = [] } = reading;
+// section = null (full reading) | { title, icon, color, text, rating }
+function ShareCardModal({ reading, section, onClose }) {
+  const { city_name, themes, chart_label } = reading;
   const city    = city_name?.split(',')[0] || '';
   const country = city_name?.includes(',') ? city_name.split(',').slice(1).join(',').trim() : '';
   const overall = themes?.overallRating;
-  const dc      = themes?.dreamOrComfort;
 
+  // For full reading: extract first sentence of overview
   const overview = themes?.overview || '';
-  // Extract first complete sentence; fall back to word-boundary cut at 160 chars
   const sentenceMatch = overview.match(/^(.*?[.!?])(?:\s+[A-Z]|$)/);
-  const quote = sentenceMatch && sentenceMatch[1].length <= 200
+  const overviewQuote = sentenceMatch && sentenceMatch[1].length <= 200
     ? sentenceMatch[1].trim()
-    : overview.length > 160
-      ? overview.slice(0, 158).replace(/\s+\S*$/, '') + '…'
-      : overview;
+    : overview.length > 160 ? overview.slice(0, 158).replace(/\s+\S*$/, '') + '…' : overview;
+
+  // For section: truncate text
+  const sectionQuote = section?.text
+    ? (section.text.length > 200 ? section.text.slice(0, 198).replace(/\s+\S*$/, '') + '…' : section.text)
+    : '';
 
   const verdictMap = {
-    5: { text: 'Go. Now.',                   color: '#D4AF37' },
-    4: { text: 'This place wants you here.',  color: '#D4AF37' },
-    3: { text: 'Worth a long visit.',         color: '#8A8A9A' },
-    2: { text: 'More neutral than charged.',  color: '#6A6A78' },
-    1: { text: 'The stars are quiet here.',   color: '#6A6A78' },
+    5: 'Go. Now.',
+    4: 'This place wants you here.',
+    3: 'Worth a long visit.',
+    2: 'More neutral than charged.',
+    1: 'The stars are quiet here.',
   };
-  const verdictEntry = overall != null ? verdictMap[Math.round(overall)] : null;
-
-  const topLines = influences.slice(0, 3);
+  const verdictText = overall != null ? verdictMap[Math.round(overall)] : null;
+  const accentColor = section?.color || '#C9A96E';
 
   async function handleShareLink() {
     const url = window.location.href;
+    const text = section
+      ? `${city} for ${chart_label || 'me'} — ${section.title}`
+      : `${city} for ${chart_label || 'me'} — my astrocartography reading`;
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${city} — Astralla`,
-          text: themes?.overview || `My astrocartography reading for ${city}`,
-          url,
-        });
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-      }
+      try { await navigator.share({ title: `${city} — Astralla`, text, url }); return; }
+      catch (err) { if (err.name === 'AbortError') return; }
     }
     navigator.clipboard.writeText(url);
   }
@@ -260,7 +264,6 @@ function ShareCardModal({ reading, onClose }) {
       }}
       onClick={onClose}
     >
-      {/* Close */}
       <button
         onClick={onClose}
         style={{
@@ -272,98 +275,127 @@ function ShareCardModal({ reading, onClose }) {
         }}
       >×</button>
 
-      {/* Card — fixed size so it screenshots consistently */}
+      {/* Card */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
           width: 320,
           background: 'linear-gradient(155deg, #0d0f1e 0%, #070810 55%, #0a0d1c 100%)',
-          border: '1px solid rgba(212,175,55,0.20)',
+          border: `1px solid ${accentColor}33`,
           borderRadius: 20,
           padding: '28px 26px 24px',
           position: 'relative',
           overflow: 'hidden',
           userSelect: 'none',
-          boxShadow: '0 0 80px rgba(212,175,55,0.07), 0 24px 48px rgba(0,0,0,0.5)',
+          boxShadow: `0 0 80px ${accentColor}12, 0 24px 48px rgba(0,0,0,0.5)`,
         }}
       >
-        {/* Ambient glow top-right — larger for more drama */}
+        {/* Ambient glow */}
         <div style={{
-          position: 'absolute', top: -60, right: -40,
-          width: 240, height: 240,
-          background: 'radial-gradient(circle, rgba(212,175,55,0.10) 0%, transparent 65%)',
+          position: 'absolute', top: -60, right: -40, width: 240, height: 240,
+          background: `radial-gradient(circle, ${accentColor}18 0%, transparent 65%)`,
           pointerEvents: 'none',
         }} />
-        {/* Ambient glow bottom-left */}
         <div style={{
-          position: 'absolute', bottom: -50, left: -30,
-          width: 180, height: 180,
+          position: 'absolute', bottom: -50, left: -30, width: 180, height: 180,
           background: 'radial-gradient(circle, rgba(80,90,200,0.08) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
-        {/* Brand label */}
+        {/* Brand */}
         <p style={{
-          color: '#D4AF37', fontSize: 9, letterSpacing: '0.28em',
+          color: '#C9A96E', fontSize: 9, letterSpacing: '0.28em',
           fontFamily: 'sans-serif', textTransform: 'uppercase',
-          marginBottom: 24, opacity: 0.55,
+          marginBottom: 20, opacity: 0.55,
         }}>
           ✦ &nbsp;Astralla
         </p>
 
-        {/* City */}
+        {/* City for Name */}
         <h2 style={{
-          fontFamily: 'Georgia, serif', fontSize: 46, fontWeight: 300,
-          color: '#F4EFE8', lineHeight: 1.0, margin: 0, letterSpacing: '-0.5px',
+          fontFamily: 'Georgia, serif', fontSize: 38, fontWeight: 300,
+          color: '#F4EFE8', lineHeight: 1.05, margin: 0, letterSpacing: '-0.5px',
         }}>
           {city}
+          {chart_label && (
+            <span style={{ color: accentColor, fontStyle: 'italic' }}> for {chart_label}</span>
+          )}
         </h2>
         {country && (
           <p style={{
-            fontFamily: 'sans-serif', fontSize: 11, color: '#48505E',
-            marginTop: 5, marginBottom: 0, letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            fontFamily: 'sans-serif', fontSize: 10, color: '#48505E',
+            marginTop: 5, marginBottom: 0, letterSpacing: '0.06em', textTransform: 'uppercase',
           }}>
             {country}
           </p>
         )}
 
-        {/* Verdict — the emotional hook, given room to breathe */}
-        {verdictEntry && (
-          <p style={{
-            fontFamily: 'Georgia, serif', fontSize: 22, fontStyle: 'italic',
-            color: verdictEntry.color, marginTop: 22, marginBottom: 0,
-            lineHeight: 1.2, letterSpacing: '-0.2px',
-          }}>
-            {verdictEntry.text}
-          </p>
-        )}
-
-        {/* Stars — score sits quietly below the verdict */}
-        {overall != null && (
-          <div style={{ display: 'flex', gap: 3, marginTop: 10 }}>
-            {[1,2,3,4,5].map(n => (
-              <span key={n} style={{ fontSize: 13, color: '#D4AF37', opacity: n <= overall ? 1 : 0.15 }}>★</span>
-            ))}
-          </div>
-        )}
-
-        {/* Overview quote — flavor, not headline */}
-        {quote && (
-          <p style={{
-            fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic',
-            color: '#8A8898', lineHeight: 1.65,
-            borderLeft: '2px solid rgba(212,175,55,0.30)',
-            paddingLeft: 13, marginTop: 22, marginBottom: 0,
-          }}>
-            "{quote}"
-          </p>
+        {/* Section badge or verdict */}
+        {section ? (
+          <>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              marginTop: 18,
+              padding: '4px 10px', borderRadius: 100,
+              border: `1px solid ${section.color}44`,
+              background: `${section.color}12`,
+            }}>
+              <span style={{ fontSize: 13, color: section.color }}>{section.icon}</span>
+              <span style={{ fontFamily: 'sans-serif', fontSize: 10, color: section.color, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                {section.title}
+              </span>
+              {section.rating != null && (
+                <span style={{ marginLeft: 2 }}>
+                  {[1,2,3,4,5].map(n => (
+                    <span key={n} style={{ fontSize: 10, color: section.color, opacity: n <= section.rating ? 1 : 0.18 }}>★</span>
+                  ))}
+                </span>
+              )}
+            </div>
+            <p style={{
+              fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic',
+              color: '#8A8898', lineHeight: 1.65,
+              borderLeft: `2px solid ${section.color}44`,
+              paddingLeft: 13, marginTop: 16, marginBottom: 0,
+            }}>
+              "{sectionQuote}"
+            </p>
+          </>
+        ) : (
+          <>
+            {verdictText && (
+              <p style={{
+                fontFamily: 'Georgia, serif', fontSize: 20, fontStyle: 'italic',
+                color: '#C9A96E', marginTop: 20, marginBottom: 0,
+                lineHeight: 1.2, letterSpacing: '-0.2px',
+              }}>
+                {verdictText}
+              </p>
+            )}
+            {overall != null && (
+              <div style={{ display: 'flex', gap: 3, marginTop: 8 }}>
+                {[1,2,3,4,5].map(n => (
+                  <span key={n} style={{ fontSize: 13, color: '#C9A96E', opacity: n <= overall ? 1 : 0.15 }}>★</span>
+                ))}
+              </div>
+            )}
+            {overviewQuote && (
+              <p style={{
+                fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic',
+                color: '#8A8898', lineHeight: 1.65,
+                borderLeft: '2px solid rgba(201,169,110,0.30)',
+                paddingLeft: 13, marginTop: 20, marginBottom: 0,
+              }}>
+                "{overviewQuote}"
+              </p>
+            )}
+          </>
         )}
 
         {/* Footer */}
         <p style={{
           fontFamily: 'sans-serif', fontSize: 9,
-          color: 'rgba(212,175,55,0.28)',
+          color: 'rgba(201,169,110,0.28)',
           letterSpacing: '0.18em', textTransform: 'uppercase',
           marginTop: 26, marginBottom: 0,
         }}>
@@ -371,7 +403,6 @@ function ShareCardModal({ reading, onClose }) {
         </p>
       </div>
 
-      {/* Instructions + share link button */}
       <p style={{
         color: 'rgba(255,255,255,0.3)', fontSize: 11,
         fontFamily: 'sans-serif', marginTop: 14, textAlign: 'center', lineHeight: 1.5,
@@ -382,8 +413,8 @@ function ShareCardModal({ reading, onClose }) {
         onClick={handleShareLink}
         style={{
           marginTop: 10, padding: '8px 22px',
-          background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)',
-          borderRadius: 100, color: 'rgba(212,175,55,0.8)', fontSize: 12,
+          background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)',
+          borderRadius: 100, color: 'rgba(201,169,110,0.8)', fontSize: 12,
           fontFamily: 'sans-serif', cursor: 'pointer', letterSpacing: '0.04em',
         }}
       >
@@ -832,7 +863,7 @@ function ActiveLinesAccordion({ influences, parans }) {
 }
 
 // ── The Reading Accordion ─────────────────────────────────────────────────────
-function TheReadingAccordion({ themes, readingText }) {
+function TheReadingAccordion({ themes, readingText, onShareSection }) {
   const [open, setOpen] = useState(true);
   if (!themes && !readingText) return null;
 
@@ -864,7 +895,13 @@ function TheReadingAccordion({ themes, readingText }) {
           {themes ? (
             <div className="space-y-3">
               {THEMES.map(t => themes[t.key] && (
-                <ThemeSection key={t.key} theme={t} text={themes[t.key]} rating={themes[t.ratingKey]} />
+                <ThemeSection
+                  key={t.key}
+                  theme={t}
+                  text={themes[t.key]}
+                  rating={themes[t.ratingKey]}
+                  onShare={() => onShareSection({ ...t, text: themes[t.key], rating: themes[t.ratingKey] })}
+                />
               ))}
             </div>
           ) : readingText ? (
@@ -885,7 +922,8 @@ export default function Reading() {
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showCard, setShowCard] = useState(false);
+  const [showCard, setShowCard]       = useState(false);
+  const [shareSection, setShareSection] = useState(null); // null = full reading
 
   useEffect(() => {
     api.readings.get(id)
@@ -922,7 +960,7 @@ export default function Reading() {
 
   return (
     <div className="min-h-screen pt-20 pb-20 px-4">
-      {showCard && <ShareCardModal reading={reading} onClose={() => setShowCard(false)} />}
+      {showCard && <ShareCardModal reading={reading} section={shareSection} onClose={() => { setShowCard(false); setShareSection(null); }} />}
       <div className="max-w-2xl mx-auto">
 
         {/* Back */}
@@ -988,18 +1026,22 @@ export default function Reading() {
 
         {/* Share */}
         <div className="flex gap-3 mb-6 animate-fade-in">
-          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => setShowCard(true)} />
+          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => { setShareSection(null); setShowCard(true); }} />
         </div>
 
         {/* Active lines + Parans — collapsed by default */}
         <ActiveLinesAccordion influences={influences} parans={parans} />
 
         {/* The reading — open by default */}
-        <TheReadingAccordion themes={themes} readingText={reading_text} />
+        <TheReadingAccordion
+          themes={themes}
+          readingText={reading_text}
+          onShareSection={section => { setShareSection(section); setShowCard(true); }}
+        />
 
         {/* Bottom share */}
         <div className="mt-12 flex justify-center">
-          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => setShowCard(true)} />
+          <ShareButton cityName={city_name} themes={themes} onOpenCard={() => { setShareSection(null); setShowCard(true); }} />
         </div>
 
       </div>
