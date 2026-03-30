@@ -131,13 +131,31 @@ const INTENT_WEIGHTS = {
 
 // Map life-chapter strings to existing intent weight keys
 const CHAPTER_INTENT_MAP = {
-  'Finishing a big project':  'career',
-  'Getting over a heartbreak':'escape',
-  'Building something that lasts': 'career',
-  'Starting completely fresh': 'change',
-  'Finding your people':      'love',
-  'Creative breakthrough':    'creative',
-  'Healing and recovery':     'escape',
+  // Quick / trip-planning uses
+  'Planning a trip somewhere new':  'escape',
+  'A romantic getaway':             'love',
+  'Finishing a big project':        'career',
+  'A work trip or conference':      'career',
+  'Getting inspired creatively':    'creative',
+  // Life chapters
+  'Ready to fall in love':          'love',
+  'Starting over after a heartbreak': 'escape',
+  'Launching something of my own':  'career',
+  'Settling down and putting down roots': 'love',
+  'Finding my people and community':'love',
+  'Stepping into my power':         'career',
+  'A chapter of deep healing':      'escape',
+  'Navigating grief or major loss': 'escape',
+  'Ready for a complete reinvention':'change',
+  // Legacy strings (kept for backwards compat)
+  'Getting over a heartbreak':      'escape',
+  'Building something that lasts':  'career',
+  'Starting completely fresh':      'change',
+  'Finding your people':            'love',
+  'Creative breakthrough':          'creative',
+  'Healing and recovery':           'escape',
+  'Craving adventure and real freedom': 'escape',
+  'A creative renaissance':         'creative',
 };
 
 // Balanced fallback for fully custom text

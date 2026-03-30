@@ -94,15 +94,20 @@ const REGIONS = [
 ];
 
 const OCCASIONS = [
+  // Quick / trip-planning uses
+  'Planning a trip somewhere new',
+  'A romantic getaway',
+  'Finishing a big project',
+  'A work trip or conference',
+  'Getting inspired creatively',
+  // Life chapters
   'Ready to fall in love',
   'Starting over after a heartbreak',
   'Launching something of my own',
   'Settling down and putting down roots',
-  'Craving adventure and real freedom',
-  'A chapter of deep healing',
   'Finding my people and community',
   'Stepping into my power',
-  'A creative renaissance',
+  'A chapter of deep healing',
   'Navigating grief or major loss',
   'Ready for a complete reinvention',
 ];
@@ -1165,24 +1170,32 @@ function OccasionView({ charts, navigate, onBack, onLimitReached }) {
           </div>
         )}
 
-        <div>
-          <p className="text-text-m text-xs font-sans uppercase tracking-wider mb-2">What are you navigating?</p>
-          <div className="flex flex-wrap gap-1.5">
-            {OCCASIONS.map(o => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => { setOccasion(o); setResults(null); }}
-                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
-                  occasion === o
-                    ? 'border-gold bg-gold/15 text-gold'
-                    : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
-                }`}
-              >
-                {o}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-3">
+          <p className="text-text-m text-xs font-sans uppercase tracking-wider">What are you navigating?</p>
+          {[
+            { label: 'For a trip or project', items: OCCASIONS.slice(0, 5) },
+            { label: 'A life chapter',        items: OCCASIONS.slice(5)    },
+          ].map(group => (
+            <div key={group.label}>
+              <p className="text-[10px] font-sans text-text-m/50 uppercase tracking-widest mb-1.5">{group.label}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {group.items.map(o => (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => { setOccasion(o); setResults(null); }}
+                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-sans border transition-all duration-150 ${
+                      occasion === o
+                        ? 'border-gold bg-gold/15 text-gold'
+                        : 'border-border text-text-s hover:border-gold/40 hover:text-text-p'
+                    }`}
+                  >
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div>
