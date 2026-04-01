@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ ...row, reading, weekStart, weekEnd, cached: false });
   } catch (err) {
     console.error('Weekly reading error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate weekly reading' });
+    res.status(500).json({ error: 'Failed to generate weekly reading' });
   }
 });
 

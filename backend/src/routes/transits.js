@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Transit reading error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate transit reading' });
+    res.status(500).json({ error: 'Failed to generate transit reading' });
   }
 });
 

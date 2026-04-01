@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Solar return error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate solar return reading' });
+    res.status(500).json({ error: 'Failed to generate solar return reading' });
   }
 });
 

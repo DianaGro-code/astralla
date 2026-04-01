@@ -1,5 +1,14 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getDb } from '../db/database.js';
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many admin requests.' },
+});
 
 const router = Router();
 
@@ -15,7 +24,7 @@ function checkAdminPassword(req, res, next) {
   next();
 }
 
-router.get('/stats', checkAdminPassword, (_req, res) => {
+router.get('/stats', adminLimiter, checkAdminPassword, (_req, res) => {
   const db = getDb();
 
   const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;

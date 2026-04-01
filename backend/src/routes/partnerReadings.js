@@ -82,7 +82,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Partner reading error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate partner reading' });
+    res.status(500).json({ error: 'Failed to generate partner reading' });
   }
 });
 

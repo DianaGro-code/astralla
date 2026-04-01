@@ -4,14 +4,14 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/search', async (req, res) => {
+router.get('/search', requireAuth, async (req, res) => {
   const { q } = req.query;
   if (!q || q.length < 2) return res.json([]);
   try {
     const results = await searchCities(q);
     res.json(results);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch {
+    res.status(500).json({ error: 'City search failed' });
   }
 });
 
@@ -33,7 +33,10 @@ router.get('/ip', requireAuth, async (req, res) => {
 
     if (isLocal) return res.json(null);
 
-    const response = await fetch(`https://ipwho.is/${rawIp}`);
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 3000);
+    const response = await fetch(`https://ipwho.is/${rawIp}`, { signal: ac.signal });
+    clearTimeout(timer);
     const data = await response.json();
 
     if (!data.success || !data.city) return res.json(null);

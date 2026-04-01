@@ -17,7 +17,7 @@ import weeklyRoutes from './src/routes/weekly.js';
 import partnerReadingsRoutes from './src/routes/partnerReadings.js';
 import adminRoutes from './src/routes/admin.js';
 
-dotenv.config({ override: true });
+dotenv.config();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();

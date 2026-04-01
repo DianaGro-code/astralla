@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
     res.json({ cities });
   } catch (err) {
     console.error('Top cities error:', err);
-    res.status(500).json({ error: err.message || 'Failed to find top cities' });
+    res.status(500).json({ error: 'Failed to find top cities' });
   }
 });
 

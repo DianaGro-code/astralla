@@ -72,6 +72,15 @@ export function initDb() {
   // Tier + usage (migration)
   try { db.exec("ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'"); } catch {}
 
+  // Indexes for common queries
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_charts_user     ON birth_charts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_readings_chart  ON readings(chart_id);
+    CREATE INDEX IF NOT EXISTS idx_usage_user_time ON usage_logs(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_weekly_lookup   ON weekly_readings(chart_id, city_name, week_start);
+    CREATE INDEX IF NOT EXISTS idx_users_email     ON users(email);
+  `);
+
   // Usage log table
   db.exec(`
     CREATE TABLE IF NOT EXISTS usage_logs (
