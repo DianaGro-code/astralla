@@ -72,13 +72,11 @@ export function initDb() {
   // Tier + usage (migration)
   try { db.exec("ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'"); } catch {}
 
-  // Indexes for common queries
+  // Indexes for tables already created above
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_charts_user     ON birth_charts(user_id);
-    CREATE INDEX IF NOT EXISTS idx_readings_chart  ON readings(chart_id);
-    CREATE INDEX IF NOT EXISTS idx_usage_user_time ON usage_logs(user_id, created_at);
-    CREATE INDEX IF NOT EXISTS idx_weekly_lookup   ON weekly_readings(chart_id, city_name, week_start);
-    CREATE INDEX IF NOT EXISTS idx_users_email     ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_charts_user    ON birth_charts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_readings_chart ON readings(chart_id);
+    CREATE INDEX IF NOT EXISTS idx_users_email    ON users(email);
   `);
 
   // Usage log table
@@ -89,6 +87,11 @@ export function initDb() {
       feature TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // Index on usage_logs — after table creation so it always succeeds on first run
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_usage_user_time ON usage_logs(user_id, created_at);
   `);
 
   // Weekly readings table
@@ -103,6 +106,11 @@ export function initDb() {
       reading TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // Index on weekly_readings — after table creation
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_weekly_lookup ON weekly_readings(chart_id, city_name, week_start);
   `);
 
   // Transit readings table
@@ -135,6 +143,19 @@ export function initDb() {
       reading TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // Password reset tokens table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at DATETIME NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_reset_tokens_user ON password_reset_tokens(user_id);
   `);
 
   console.log('Database ready');

@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { geocode } from '../services/geocoding.js';
 import { calculateInfluences } from '../services/astro/astrocarto.js';
 import { generatePartnerReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -33,8 +33,8 @@ router.post('/', async (req, res) => {
     const city = await geocode(cityQuery);
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
-    // Check weekly limit before calling Claude
-    const limit = checkLimit(req.user);
+    // Atomically reserve a usage slot before calling Claude
+    const limit = reserveUsage(req.user, 'partner_reading');
     if (!limit.allowed) {
       return res.status(402).json({
         error: `You've used all ${limit.limit} free readings this week.`,
@@ -46,7 +46,6 @@ router.post('/', async (req, res) => {
     const { influences: influences2, parans: parans2 } = calculateInfluences(chart2, city);
 
     const themes = await generatePartnerReading(chart1, chart2, city, influences1, parans1, influences2, parans2);
-    logUsage(req.user.id, 'partner_reading');
 
     // Combine both charts' influences for storage
     const allInfluences = [

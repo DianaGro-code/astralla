@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { WORLD_CITIES, scoreCity } from '../services/worldCities.js';
 import { calculateInfluences } from '../services/astro/astrocarto.js';
 import { generateTopCitiesReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -22,6 +22,15 @@ router.post('/', async (req, res) => {
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   try {
+    // Atomically reserve a usage slot before the expensive scoring work
+    const limit = reserveUsage(req.user, 'top_cities');
+    if (!limit.allowed) {
+      return res.status(402).json({
+        error: `You've used all ${limit.limit} free readings this week.`,
+        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      });
+    }
+
     // Filter by region if provided
     const cityPool = (region && region !== 'worldwide')
       ? WORLD_CITIES.filter(c => c.region === region)
@@ -47,18 +56,8 @@ router.post('/', async (req, res) => {
     }
     const top3 = deduped;
 
-    // Check weekly limit before calling Claude
-    const limit = checkLimit(req.user);
-    if (!limit.allowed) {
-      return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
-      });
-    }
-
     // Generate readings for all 3 in one Claude call
     const cities = await generateTopCitiesReading(chart, top3, intent);
-    logUsage(req.user.id, 'top_cities');
 
     res.json({ cities });
   } catch (err) {

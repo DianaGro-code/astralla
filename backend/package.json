@@ -16,7 +16,8 @@
     "express-rate-limit": "^8.3.2",
     "geo-tz": "^7.0.7",
     "jsonwebtoken": "^9.0.2",
-    "luxon": "^3.4.4"
+    "luxon": "^3.4.4",
+    "nodemailer": "^8.0.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

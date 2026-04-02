@@ -5,7 +5,7 @@ import { geocode } from '../services/geocoding.js';
 import { calculateInfluences } from '../services/astro/astrocarto.js';
 import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -59,8 +59,8 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check weekly limit before calling Claude
-    const limit = checkLimit(req.user);
+    // Atomically reserve a usage slot before calling Claude
+    const limit = reserveUsage(req.user, 'city_reading');
     if (!limit.allowed) {
       return res.status(402).json({
         error: `You've used all ${limit.limit} free readings this week.`,
@@ -70,7 +70,6 @@ router.post('/', async (req, res) => {
 
     // Generate AI reading (returns themes object)
     const themes = await generateReading(chart, city, influences, parans, intent, relocatedChart);
-    logUsage(req.user.id, 'city_reading');
 
     // Persist
     const result = db.prepare(
@@ -96,45 +95,55 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Reading generation error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate reading' });
+    res.status(500).json({ error: 'Failed to generate reading' });
   }
 });
 
 // Get all readings for the current user (for map view)
 router.get('/all', (req, res) => {
-  const db = getDb();
-  const readings = db.prepare(`
-    SELECT r.id, r.city_name, r.city_lat, r.city_lng, r.themes, r.created_at, r.chart_id
-    FROM readings r
-    JOIN birth_charts c ON c.id = r.chart_id
-    WHERE c.user_id = ?
-    ORDER BY r.created_at DESC
-  `).all(req.user.id);
+  try {
+    const db = getDb();
+    const readings = db.prepare(`
+      SELECT r.id, r.city_name, r.city_lat, r.city_lng, r.themes, r.created_at, r.chart_id
+      FROM readings r
+      JOIN birth_charts c ON c.id = r.chart_id
+      WHERE c.user_id = ?
+      ORDER BY r.created_at DESC
+    `).all(req.user.id);
 
-  res.json(readings.map(r => ({
-    ...r,
-    themes: r.themes ? JSON.parse(r.themes) : null,
-  })));
+    res.json(readings.map(r => ({
+      ...r,
+      themes: r.themes ? JSON.parse(r.themes) : null,
+    })));
+  } catch (err) {
+    console.error('Error fetching all readings:', err);
+    res.status(500).json({ error: 'Failed to load readings' });
+  }
 });
 
 // Get all readings for a chart
 router.get('/chart/:chartId', (req, res) => {
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT id FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(req.params.chartId, req.user.id);
-  if (!chart) return res.status(404).json({ error: 'Chart not found' });
+  try {
+    const db = getDb();
+    const chart = db.prepare(
+      'SELECT id FROM birth_charts WHERE id = ? AND user_id = ?'
+    ).get(req.params.chartId, req.user.id);
+    if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
-  const readings = db.prepare(
-    'SELECT * FROM readings WHERE chart_id = ? AND (partner_chart_id IS NULL) ORDER BY created_at DESC'
-  ).all(req.params.chartId);
+    const readings = db.prepare(
+      'SELECT * FROM readings WHERE chart_id = ? AND (partner_chart_id IS NULL) ORDER BY created_at DESC'
+    ).all(req.params.chartId);
 
-  res.json(readings.map(r => ({
-    ...r,
-    influences: JSON.parse(r.influences),
-    parans: JSON.parse(r.parans),
-    themes: r.themes ? JSON.parse(r.themes) : null,
-  })));
+    res.json(readings.map(r => ({
+      ...r,
+      influences: JSON.parse(r.influences),
+      parans: JSON.parse(r.parans),
+      themes: r.themes ? JSON.parse(r.themes) : null,
+    })));
+  } catch (err) {
+    console.error('Error fetching chart readings:', err);
+    res.status(500).json({ error: 'Failed to load readings' });
+  }
 });
 
 // Get single reading

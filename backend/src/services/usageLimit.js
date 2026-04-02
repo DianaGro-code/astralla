@@ -54,6 +54,35 @@ export function checkLimit(user) {
   return { allowed: usage.used < usage.limit, ...usage };
 }
 
+/**
+ * Atomically check the limit AND reserve a slot in a single SQLite transaction.
+ * This closes the race condition where two concurrent requests both pass checkLimit
+ * before either logs usage.
+ *
+ * Returns { allowed: true } for pro users.
+ * Returns { allowed, used, limit, resetsOn } for free users.
+ * If allowed, usage is already recorded — do NOT call logUsage separately.
+ */
+export function reserveUsage(user, feature) {
+  if (user.tier === 'pro') return { allowed: true };
+  const db = getDb();
+  let result;
+  const weekStart = thisWeekStart();
+  const reserve = db.transaction(() => {
+    const { count } = db.prepare(
+      'SELECT COUNT(*) as count FROM usage_logs WHERE user_id = ? AND created_at >= ?'
+    ).get(user.id, weekStart);
+    if (count >= FREE_LIMIT) {
+      result = { allowed: false, used: count, limit: FREE_LIMIT, resetsOn: nextSundayDate() };
+      return;
+    }
+    db.prepare('INSERT INTO usage_logs (user_id, feature) VALUES (?, ?)').run(user.id, feature);
+    result = { allowed: true, used: count + 1, limit: FREE_LIMIT, resetsOn: nextSundayDate() };
+  });
+  reserve();
+  return result;
+}
+
 /** Record one AI generation for the user */
 export function logUsage(userId, feature) {
   const db = getDb();

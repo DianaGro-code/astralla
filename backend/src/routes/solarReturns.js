@@ -5,7 +5,7 @@ import { geocode } from '../services/geocoding.js';
 import { calculateSolarReturn } from '../services/astro/solarReturn.js';
 import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateSolarReturnReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -61,8 +61,8 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Check weekly limit before calling Claude
-    const limit = checkLimit(req.user);
+    // Atomically reserve a usage slot before calling Claude
+    const limit = reserveUsage(req.user, 'solar_return');
     if (!limit.allowed) {
       return res.status(402).json({
         error: `You've used all ${limit.limit} free readings this week.`,
@@ -76,7 +76,6 @@ router.post('/', async (req, res) => {
 
     // Generate AI reading
     const reading = await generateSolarReturnReading(chart, city, srData, relocatedChart);
-    logUsage(req.user.id, 'solar_return');
 
     // Persist
     const result = db.prepare(

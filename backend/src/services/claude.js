@@ -168,7 +168,12 @@ Theme meanings:
 
   const raw = response.content[0].text.trim();
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    console.error('generateReading: failed to parse Claude response:', cleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 }
 
 // ── Travel Transits ───────────────────────────────────────────────────────────
@@ -239,7 +244,12 @@ Return ONLY valid JSON with exactly these keys:
 
   const raw     = response.content[0].text.trim();
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    console.error('generateTransitReading: failed to parse Claude response:', cleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 }
 
 // ── Solar Return ──────────────────────────────────────────────────────────────
@@ -324,7 +334,12 @@ Return JSON now.`;
 
   const raw     = response.content[0].text.trim();
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    console.error('generateSolarReturnReading: failed to parse Claude response:', cleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 }
 
 const INTENT_LABELS = {
@@ -384,7 +399,13 @@ Return ONLY valid JSON — no markdown, no fences — with this exact structure:
 
   const raw = response.content[0].text.trim();
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  const parsed = JSON.parse(cleaned);
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    console.error('generateTopCitiesReading: failed to parse Claude response:', cleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 
   return parsed.cities.map((c, i) => ({
     ...c,
@@ -438,7 +459,12 @@ Return ONLY valid JSON with exactly these keys:
 
   const raw     = response.content[0].text.trim();
   const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    console.error('generateWeeklyReading: failed to parse Claude response:', cleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 }
 
 // ── Partner Reading ────────────────────────────────────────────────────────────
@@ -502,5 +528,10 @@ Return ONLY a valid JSON object — no markdown, no code fences — with exactly
 
   const partnerRaw     = partnerResponse.content[0].text.trim();
   const partnerCleaned = partnerRaw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
-  return JSON.parse(partnerCleaned);
+  try {
+    return JSON.parse(partnerCleaned);
+  } catch {
+    console.error('generatePartnerReading: failed to parse Claude response:', partnerCleaned.slice(0, 200));
+    throw new Error('Failed to parse AI response');
+  }
 }

@@ -5,7 +5,7 @@ import { geocode } from '../services/geocoding.js';
 import { calculateTransits } from '../services/astro/transits.js';
 import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateTransitReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -47,8 +47,8 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check weekly limit before calling Claude
-    const limit = checkLimit(req.user);
+    // Atomically reserve a usage slot before calling Claude
+    const limit = reserveUsage(req.user, 'transit');
     if (!limit.allowed) {
       return res.status(402).json({
         error: `You've used all ${limit.limit} free readings this week.`,
@@ -62,7 +62,6 @@ router.post('/', async (req, res) => {
 
     // Generate AI reading
     const reading = await generateTransitReading(chart, city, startDate, endDate, transitData, relocatedChart);
-    logUsage(req.user.id, 'transit');
 
     // Persist
     const result = db.prepare(

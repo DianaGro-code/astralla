@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { calculateTransits } from '../services/astro/transits.js';
 import { calculateRelocatedChart } from '../services/astro/relocatedChart.js';
 import { generateWeeklyReading } from '../services/claude.js';
-import { checkLimit, logUsage } from '../services/usageLimit.js';
+import { reserveUsage } from '../services/usageLimit.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -55,8 +55,8 @@ router.post('/', async (req, res) => {
     return res.json({ ...cached, reading: JSON.parse(cached.reading), weekStart, weekEnd, cached: true });
   }
 
-  // Check weekly limit before calling Claude
-  const limit = checkLimit(req.user);
+  // Atomically reserve a usage slot before calling Claude
+  const limit = reserveUsage(req.user, 'weekly');
   if (!limit.allowed) {
     return res.status(402).json({
       error: `You've used all ${limit.limit} free readings this week.`,
@@ -69,7 +69,6 @@ router.post('/', async (req, res) => {
     const transitData    = calculateTransits(chart, city, weekStart, weekEnd);
     const relocatedChart = calculateRelocatedChart(chart, city);
     const reading        = await generateWeeklyReading(chart, city, weekStart, weekEnd, transitData, relocatedChart);
-    logUsage(req.user.id, 'weekly');
 
     const result = db.prepare(
       `INSERT INTO weekly_readings (chart_id, city_name, city_lat, city_lng, week_start, reading)
