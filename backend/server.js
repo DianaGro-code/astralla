@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import { initDb } from './src/db/database.js';
+import { requireAuth } from './src/middleware/auth.js';
+import { getUsage } from './src/services/usageLimit.js';
 import authRoutes from './src/routes/auth.js';
 import chartsRoutes from './src/routes/charts.js';
 import readingsRoutes from './src/routes/readings.js';
@@ -48,6 +50,7 @@ app.use('/api/solar-returns', solarReturnsRoutes);
 app.use('/api/weekly', weeklyRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/api/usage', requireAuth, (req, res) => res.json(getUsage(req.user.id)));
 app.use('/api/admin', adminRoutes);
 
 // Serve frontend in production

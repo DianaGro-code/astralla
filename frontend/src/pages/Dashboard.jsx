@@ -137,13 +137,13 @@ function LimitModal({ error, onClose }) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative card border-gold/30 max-w-sm w-full text-center space-y-4 py-8 px-6 animate-slide-up">
         <div className="text-3xl">☽</div>
-        <h3 className="font-serif text-lg text-text-p">Weekly limit reached</h3>
+        <h3 className="font-serif text-lg text-text-p">You've used all free readings</h3>
         <p className="text-text-m text-sm font-sans leading-relaxed">
-          You've used <span className="text-gold font-semibold">{error.used} of {error.limit}</span> free readings this week.
-          Your limit resets on <span className="text-text-p">{error.resetsOn}</span>.
+          You've used all <span className="text-gold font-semibold">{error.limit}</span> free readings.
+          Upgrade to Pro for unlimited access.
         </p>
         <p className="text-text-s text-xs font-sans">
-          Cached readings you've already generated are always free to re-open.
+          Readings you've already generated are always free to re-open.
         </p>
         <button onClick={onClose} className="btn-primary w-full mt-2">Got it</button>
       </div>
@@ -1297,9 +1297,11 @@ export default function Dashboard() {
   const [mapLinesLoading, setMapLinesLoading] = useState(false);
   const [limitError, setLimitError] = useState(null);
   const [pendingFeature, setPendingFeature] = useState(null);
+  const [usage, setUsage] = useState(null);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
+    api.usage.get().then(setUsage).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1349,11 +1351,18 @@ export default function Dashboard() {
 
   function goHome() {
     setView('home');
+    api.usage.get().then(setUsage).catch(() => {});
+  }
+
+  function handleLimitReached(err) {
+    setLimitError(err);
+    api.usage.get().then(setUsage).catch(() => {});
   }
 
   return (
     <div className={`min-h-screen px-4 ${native ? 'pt-6 pb-28' : 'pt-20 pb-16'}`}>
       <LimitModal error={limitError} onClose={() => setLimitError(null)} />
+
 
       {pendingFeature && (
         <FeaturePopup
@@ -1451,22 +1460,22 @@ export default function Dashboard() {
 
         {/* ── CITY READING VIEW ── */}
         {view === 'city' && (
-          <CityReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <CityReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── DISCOVER VIEW ── */}
         {view === 'discover' && (
-          <DiscoverView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <DiscoverView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── SOLAR RETURN VIEW ── */}
         {view === 'solar' && (
-          <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <SolarReturnView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── TRAVEL TRANSITS VIEW ── */}
         {view === 'transits' && (
-          <TransitsView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <TransitsView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── WEEKLY VIEW ── */}
@@ -1479,18 +1488,18 @@ export default function Dashboard() {
               <h1 className="font-serif text-3xl text-text-p">This Week</h1>
               <p className="text-text-m text-sm font-sans mt-1">A fresh reading every week, tied to where you actually are.</p>
             </div>
-            <WeeklyReading charts={charts} onLimitReached={setLimitError} />
+            <WeeklyReading charts={charts} onLimitReached={handleLimitReached} />
           </div>
         )}
 
         {/* ── PARTNER READING VIEW ── */}
         {view === 'partner' && (
-          <PartnerReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <PartnerReadingView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── OCCASION PLANNER VIEW ── */}
         {view === 'occasion' && (
-          <OccasionView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={setLimitError} />
+          <OccasionView charts={charts} navigate={navigate} onBack={goHome} onLimitReached={handleLimitReached} />
         )}
 
         {/* ── HOME VIEW ── */}
@@ -1506,7 +1515,14 @@ export default function Dashboard() {
               <h1 className="font-serif text-3xl text-text-p">
                 {user?.name ? `${user.name.split(' ')[0]}'s readings` : 'Your readings'}
               </h1>
-              <p className="text-text-m text-sm font-sans mt-1">Where do you want to explore?</p>
+              <div className="flex items-center gap-3 mt-2">
+                <p className="text-text-m text-sm font-sans">Where do you want to explore?</p>
+                {usage && user?.tier !== 'pro' && (
+                  <span className="shrink-0 text-xs font-sans px-2.5 py-0.5 rounded-full border border-gold/30 text-gold/80">
+                    {usage.limit - usage.used} of {usage.limit} free
+                  </span>
+                )}
+              </div>
             </div>
 
             {loading && <div className="flex justify-center py-12"><Spinner /></div>}

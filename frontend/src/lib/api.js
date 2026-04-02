@@ -43,6 +43,9 @@ export const api = {
     forgotPassword: (body) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify(body) }),
     resetPassword:  (body) => request('/auth/reset-password',  { method: 'POST', body: JSON.stringify(body) }),
   },
+  usage: {
+    get: () => request('/usage'),
+  },
   charts: {
     list:       ()    => request('/charts'),
     create:     (body)=> request('/charts', { method: 'POST', body: JSON.stringify(body) }),
