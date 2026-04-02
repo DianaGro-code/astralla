@@ -1,25 +1,14 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const FROM    = process.env.SMTP_FROM || 'Astralla <noreply@astralla.com>';
+const FROM    = process.env.SMTP_FROM || 'Astralla <onboarding@resend.dev>';
 const APP_URL = process.env.APP_URL   || 'https://astralla-production.up.railway.app';
 
-function createTransport() {
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: process.env.SMTP_PORT === '465',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendPasswordResetEmail(email, rawToken) {
   const resetUrl = `${APP_URL}/auth?mode=reset&token=${rawToken}`;
 
-  const transporter = createTransport();
-  await transporter.sendMail({
+  await resend.emails.send({
     from: FROM,
     to:   email,
     subject: 'Reset your Astralla password',
