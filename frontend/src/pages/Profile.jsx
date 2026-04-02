@@ -6,6 +6,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [homeCity, setHomeCity] = useState(null);
+  const [usage, setUsage] = useState(null);
 
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -16,9 +17,11 @@ export default function Profile() {
       api.charts.list(),
       api.readings.all(),
       api.profile.get(),
-    ]).then(([charts, readings, profile]) => {
+      api.usage.get(),
+    ]).then(([charts, readings, profile, usageData]) => {
       setStats({ charts: charts.length, readings: readings.length });
       if (profile.home_city) setHomeCity(profile.home_city.split(',')[0]);
+      setUsage(usageData);
     }).catch(() => {});
   }, []);
 
@@ -27,10 +30,12 @@ export default function Profile() {
     : null;
 
   const rows = [
-    memberSince && { label: 'Member since', value: memberSince },
-    homeCity    && { label: 'Home city',    value: homeCity },
-    stats       && { label: 'Charts saved', value: stats.charts },
-    stats       && { label: 'Cities read',  value: stats.readings },
+    memberSince                          && { label: 'Member since',     value: memberSince },
+    homeCity                             && { label: 'Home city',        value: homeCity },
+    stats                                && { label: 'Charts saved',     value: stats.charts },
+    stats                                && { label: 'Cities read',      value: stats.readings },
+    usage && user?.tier !== 'pro'        && { label: 'Free readings',    value: `${usage.used} of ${usage.limit} used` },
+    user?.tier === 'pro'                 && { label: 'Plan',             value: '✦ Pro' },
   ].filter(Boolean);
 
   return (

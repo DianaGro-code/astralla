@@ -1297,11 +1297,9 @@ export default function Dashboard() {
   const [mapLinesLoading, setMapLinesLoading] = useState(false);
   const [limitError, setLimitError] = useState(null);
   const [pendingFeature, setPendingFeature] = useState(null);
-  const [usage, setUsage] = useState(null);
 
   useEffect(() => {
     api.charts.list().then(setCharts).catch(console.error).finally(() => setLoading(false));
-    api.usage.get().then(setUsage).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1351,12 +1349,10 @@ export default function Dashboard() {
 
   function goHome() {
     setView('home');
-    api.usage.get().then(setUsage).catch(() => {});
   }
 
   function handleLimitReached(err) {
     setLimitError(err);
-    api.usage.get().then(setUsage).catch(() => {});
   }
 
   return (
@@ -1515,14 +1511,7 @@ export default function Dashboard() {
               <h1 className="font-serif text-3xl text-text-p">
                 {user?.name ? `${user.name.split(' ')[0]}'s readings` : 'Your readings'}
               </h1>
-              <div className="flex items-center gap-3 mt-2">
-                <p className="text-text-m text-sm font-sans">Where do you want to explore?</p>
-                {usage && user?.tier !== 'pro' && (
-                  <span className="shrink-0 text-xs font-sans px-2.5 py-0.5 rounded-full border border-gold/30 text-gold/80">
-                    {usage.limit - usage.used} of {usage.limit} free
-                  </span>
-                )}
-              </div>
+              <p className="text-text-m text-sm font-sans mt-1">Where do you want to explore?</p>
             </div>
 
             {loading && <div className="flex justify-center py-12"><Spinner /></div>}
