@@ -3,11 +3,10 @@ import { Resend } from 'resend';
 const FROM    = process.env.SMTP_FROM || 'Astralla <onboarding@resend.dev>';
 const APP_URL = process.env.APP_URL   || 'https://astralla-production.up.railway.app';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendPasswordResetEmail(email, rawToken) {
   const resetUrl = `${APP_URL}/auth?mode=reset&token=${rawToken}`;
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
     from: FROM,
     to:   email,
