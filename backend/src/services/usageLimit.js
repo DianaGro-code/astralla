@@ -11,11 +11,12 @@ import { getDb } from '../db/database.js';
 export const FREE_LIMIT = 10;
 
 /** How many AI readings the user has generated in total */
-export function getUsage(userId) {
-  const db = getDb();
-  const { count } = db.prepare(
-    `SELECT COUNT(*) as count FROM usage_logs WHERE user_id = ?`,
-  ).get(userId);
+export async function getUsage(userId) {
+  const { rows } = await getDb().query(
+    'SELECT COUNT(*) as count FROM usage_logs WHERE user_id = $1',
+    [userId]
+  );
+  const count = parseInt(rows[0].count, 10);
   return { used: count, limit: FREE_LIMIT };
 }
 
@@ -24,14 +25,14 @@ export function getUsage(userId) {
  * Returns { allowed: true } for pro users.
  * Returns { allowed, used, limit } for free users.
  */
-export function checkLimit(user) {
+export async function checkLimit(user) {
   if (user.tier === 'pro') return { allowed: true };
-  const usage = getUsage(user.id);
+  const usage = await getUsage(user.id);
   return { allowed: usage.used < usage.limit, ...usage };
 }
 
 /**
- * Atomically check the limit AND reserve a slot in a single SQLite transaction.
+ * Atomically check the limit AND reserve a slot in a single transaction.
  * This closes the race condition where two concurrent requests both pass checkLimit
  * before either logs usage.
  *
@@ -39,27 +40,39 @@ export function checkLimit(user) {
  * Returns { allowed, used, limit } for free users.
  * If allowed, usage is already recorded — do NOT call logUsage separately.
  */
-export function reserveUsage(user, feature) {
+export async function reserveUsage(user, feature) {
   if (user.tier === 'pro') return { allowed: true };
-  const db = getDb();
-  let result;
-  const reserve = db.transaction(() => {
-    const { count } = db.prepare(
-      'SELECT COUNT(*) as count FROM usage_logs WHERE user_id = ?'
-    ).get(user.id);
+  const pool = getDb();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT COUNT(*) as count FROM usage_logs WHERE user_id = $1',
+      [user.id]
+    );
+    const count = parseInt(rows[0].count, 10);
     if (count >= FREE_LIMIT) {
-      result = { allowed: false, used: count, limit: FREE_LIMIT };
-      return;
+      await client.query('ROLLBACK');
+      return { allowed: false, used: count, limit: FREE_LIMIT };
     }
-    db.prepare('INSERT INTO usage_logs (user_id, feature) VALUES (?, ?)').run(user.id, feature);
-    result = { allowed: true, used: count + 1, limit: FREE_LIMIT };
-  });
-  reserve();
-  return result;
+    await client.query(
+      'INSERT INTO usage_logs (user_id, feature) VALUES ($1, $2)',
+      [user.id, feature]
+    );
+    await client.query('COMMIT');
+    return { allowed: true, used: count + 1, limit: FREE_LIMIT };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /** Record one AI generation for the user */
-export function logUsage(userId, feature) {
-  const db = getDb();
-  db.prepare('INSERT INTO usage_logs (user_id, feature) VALUES (?, ?)').run(userId, feature);
+export async function logUsage(userId, feature) {
+  await getDb().query(
+    'INSERT INTO usage_logs (user_id, feature) VALUES ($1, $2)',
+    [userId, feature]
+  );
 }

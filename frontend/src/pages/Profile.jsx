@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { api } from '../lib/api.js';
+import { useNative } from '../hooks/useNative.js';
+import UpgradeModal from '../components/UpgradeModal.jsx';
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const native = useNative();
   const [stats, setStats] = useState(null);
   const [homeCity, setHomeCity] = useState(null);
   const [usage, setUsage] = useState(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -35,11 +39,13 @@ export default function Profile() {
     stats                                && { label: 'Charts saved',     value: stats.charts },
     stats                                && { label: 'Cities read',      value: stats.readings },
     usage && user?.tier !== 'pro'        && { label: 'Free readings',    value: `${usage.used} of ${usage.limit} used` },
-    user?.tier === 'pro'                 && { label: 'Plan',             value: '✦ Pro' },
+    user?.tier === 'pro'                 && { label: 'Plan',             value: '✦ Premium' },
   ].filter(Boolean);
 
   return (
     <div className="min-h-screen px-6 pt-16 pb-32 flex flex-col items-center">
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} limit={usage?.limit} />
+
       {/* Avatar */}
       <div className="mt-8 mb-5">
         <div
@@ -67,6 +73,16 @@ export default function Profile() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Upgrade button — free users only */}
+        {user?.tier !== 'pro' && (
+          <button
+            onClick={() => setShowUpgrade(true)}
+            className="btn-gold w-full py-4 text-base"
+          >
+            ✦ Upgrade to Premium
+          </button>
         )}
 
         <button

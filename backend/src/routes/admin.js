@@ -24,14 +24,18 @@ function checkAdminPassword(req, res, next) {
   next();
 }
 
-router.get('/stats', adminLimiter, checkAdminPassword, (_req, res) => {
-  const db = getDb();
+router.get('/stats', adminLimiter, checkAdminPassword, async (_req, res) => {
+  const pool = getDb();
 
-  const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-  const totalCharts = db.prepare('SELECT COUNT(*) as count FROM birth_charts').get().count;
-  const totalReadings = db.prepare('SELECT COUNT(*) as count FROM readings').get().count;
+  const { rows: [{ count: rawUsers }] }    = await pool.query('SELECT COUNT(*) as count FROM users');
+  const { rows: [{ count: rawCharts }] }   = await pool.query('SELECT COUNT(*) as count FROM birth_charts');
+  const { rows: [{ count: rawReadings }] } = await pool.query('SELECT COUNT(*) as count FROM readings');
 
-  const users = db.prepare(`
+  const totalUsers    = parseInt(rawUsers, 10);
+  const totalCharts   = parseInt(rawCharts, 10);
+  const totalReadings = parseInt(rawReadings, 10);
+
+  const { rows: users } = await pool.query(`
     SELECT u.id, u.email, u.name, u.created_at,
       COUNT(DISTINCT bc.id) as chart_count,
       COUNT(DISTINCT r.id) as reading_count
@@ -40,15 +44,15 @@ router.get('/stats', adminLimiter, checkAdminPassword, (_req, res) => {
     LEFT JOIN readings r ON r.chart_id = bc.id
     GROUP BY u.id
     ORDER BY u.created_at DESC
-  `).all();
+  `);
 
-  const signupsByDay = db.prepare(`
+  const { rows: signupsByDay } = await pool.query(`
     SELECT DATE(created_at) as date, COUNT(*) as count
     FROM users
     GROUP BY DATE(created_at)
     ORDER BY date DESC
     LIMIT 30
-  `).all();
+  `);
 
   res.json({ totalUsers, totalCharts, totalReadings, users, signupsByDay });
 });

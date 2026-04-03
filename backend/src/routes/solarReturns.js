@@ -27,10 +27,12 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'targetYear must be a valid year' });
   }
 
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId, req.user.id);
+  const pool = getDb();
+  const { rows: chartRows } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId, req.user.id]
+  );
+  const chart = chartRows[0];
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   try {
@@ -38,11 +40,13 @@ router.post('/', async (req, res) => {
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
     // Check cache — only use if it has monthly themes (new format)
-    const existing = db.prepare(
+    const { rows: existingRows } = await pool.query(
       `SELECT * FROM solar_returns
-       WHERE chart_id = ? AND city_name = ? AND return_year = ?
-       ORDER BY created_at DESC LIMIT 1`
-    ).get(chartId, city.displayName, year);
+       WHERE chart_id = $1 AND city_name = $2 AND return_year = $3
+       ORDER BY created_at DESC LIMIT 1`,
+      [chartId, city.displayName, year]
+    );
+    const existing = existingRows[0];
 
     if (existing) {
       const cachedReading = JSON.parse(existing.reading);
@@ -62,37 +66,29 @@ router.post('/', async (req, res) => {
     }
 
     // Atomically reserve a usage slot before calling Claude
-    const limit = reserveUsage(req.user, 'solar_return');
+    const limit = await reserveUsage(req.user, 'solar_return');
     if (!limit.allowed) {
       return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+        error: `You've used all ${limit.limit} free readings.`,
+        limitReached: true, used: limit.used, limit: limit.limit,
       });
     }
 
     // Calculate solar return + relocated chart
-    const srData        = calculateSolarReturn(chart, city, year);
+    const srData         = calculateSolarReturn(chart, city, year);
     const relocatedChart = calculateRelocatedChart(chart, city);
 
     // Generate AI reading
     const reading = await generateSolarReturnReading(chart, city, srData, relocatedChart);
 
     // Persist
-    const result = db.prepare(
+    const { rows: inserted } = await pool.query(
       `INSERT INTO solar_returns (chart_id, city_name, city_lat, city_lng, return_year, return_date, sr_data, reading)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      chartId,
-      city.displayName,
-      city.lat,
-      city.lng,
-      year,
-      srData.srDate,
-      JSON.stringify(srData),
-      JSON.stringify(reading),
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [chartId, city.displayName, city.lat, city.lng,
+       year, srData.srDate, JSON.stringify(srData), JSON.stringify(reading)]
     );
-
-    const row = db.prepare('SELECT * FROM solar_returns WHERE id = ?').get(result.lastInsertRowid);
+    const row = inserted[0];
     res.status(201).json({
       ...row,
       srData,

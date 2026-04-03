@@ -7,6 +7,7 @@ import Charts    from './pages/Charts.jsx';
 import Reading   from './pages/Reading.jsx';
 import Profile   from './pages/Profile.jsx';
 import Admin     from './pages/Admin.jsx';
+import Privacy   from './pages/Privacy.jsx';
 import Navbar    from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
 import StarField from './components/StarField.jsx';
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="/reading/:id" element={<PrivateRoute><Reading /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       {showBottomNav && <BottomNav />}

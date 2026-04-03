@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 390px; height: 844px; overflow: hidden;
+    background: #0a0d18;
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    color: #fff;
+    position: relative;
+  }
+  .bg-grad {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, #1a2540 0%, #0a0d18 60%);
+  }
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+
+  /* Header bar */
+  .header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .back-btn {
+    color: #C9A96E; font-size: 20px; cursor: pointer;
+  }
+  .header-city {
+    flex: 1;
+  }
+  .header-city h2 {
+    font-family: Georgia, serif; font-size: 20px; color: #f0e8d8;
+  }
+  .header-city p { font-size: 12px; color: #7a8499; margin-top: 2px; }
+
+  /* Scroll content */
+  .content {
+    position: relative; z-index: 10;
+    padding: 18px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* Intro card */
+  .intro-card {
+    background: rgba(201,169,110,0.06);
+    border: 1px solid rgba(201,169,110,0.18);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 2px;
+  }
+  .intro-label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #C9A96E; margin-bottom: 8px;
+  }
+  .intro-text {
+    font-family: Georgia, serif; font-size: 15px; line-height: 1.55;
+    color: #d4c9b5;
+  }
+
+  /* Section cards */
+  .section-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .section-glyph { font-size: 15px; }
+  .section-title {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #9aadbd; font-weight: 500;
+  }
+  .section-text {
+    font-size: 13px; line-height: 1.55; color: #b8c4cc;
+  }
+  .section-text strong { color: #e8dcc8; }
+</style>
+</head>
+<body>
+
+<div class="bg-grad"></div>
+<div class="stars" id="stars"></div>
+
+<!-- Header -->
+<div class="header">
+  <span class="back-btn">←</span>
+  <div class="header-city">
+    <h2>Paris, France</h2>
+    <p>City reading for Diana G. · Jun 15, 1990</p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <div class="intro-card">
+    <div class="intro-label">✦ Overview</div>
+    <p class="intro-text">Paris activates your Venus line — the city asks you to soften, to be seen, to let beauty matter. It won't push your ambitions forward, but it will remind you who you are when no one needs anything from you.</p>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-glyph" style="color:#e07090">♀</span>
+      <span class="section-title">Love &amp; Relationships</span>
+    </div>
+    <p class="section-text">Your <strong>Venus in the 7th</strong> here makes Paris magnetic for romance. Connections feel fated, effortless. You attract people who mirror your ideals back at you — which is both the gift and the danger of this place.</p>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-glyph" style="color:#e4c97e">☉</span>
+      <span class="section-title">Career &amp; Ambition</span>
+    </div>
+    <p class="section-text">Your <strong>Sun is in the 12th</strong> in Paris — not a power seat, but a contemplative one. Better for creative or private work than public-facing roles. The city rewards depth over speed here.</p>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-glyph" style="color:#70a8e0">☽</span>
+      <span class="section-title">Inner Life</span>
+    </div>
+    <p class="section-text">Your <strong>Moon trines the ASC</strong> — emotionally, you breathe easier here. Paris supports rest and integration. Old feelings surface, but gently. Good for writing, therapy, or any inner work.</p>
+  </div>
+
+</div>
+
+<script>
+const container = document.getElementById('stars');
+[[30,50,1],[90,120,0.8],[200,40,1.1],[320,90,0.7],[370,30,1],[50,250,0.9],
+ [150,200,1.2],[280,180,0.8],[360,220,1],[80,400,0.7],[220,350,1],[340,380,0.9]].forEach(([x,y,r]) => {
+  const s = document.createElement('div'); s.className = 'star';
+  s.style.cssText = `left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px;opacity:${0.25+Math.random()*0.35}`;
+  container.appendChild(s);
+});
+</script>
+</body>
+</html>

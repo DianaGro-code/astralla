@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 390px; height: 844px; overflow: hidden;
+    background: #0a0d18;
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    color: #fff;
+    position: relative;
+  }
+
+  /* Star field */
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+
+  /* Gradient overlay */
+  .bg-grad {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 20%, #1a2540 0%, #0a0d18 70%);
+  }
+
+  /* Nav */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 34px; height: 34px; }
+  .logo-text {
+    font-family: Georgia, serif; font-size: 14px; letter-spacing: 0.18em;
+    color: #e8dcc8; text-transform: uppercase;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(201,169,110,0.12);
+    border: 1px solid rgba(201,169,110,0.28);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #C9A96E; font-weight: 500;
+  }
+
+  /* Content */
+  .content { position: relative; z-index: 10; padding: 24px 16px 16px; }
+  h1 { font-family: Georgia, serif; font-size: 28px; color: #f0e8d8; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #7a8499; margin-bottom: 22px; }
+
+  /* Grid */
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 18px 14px 16px;
+    cursor: pointer;
+  }
+  .card-glyph { font-size: 22px; margin-bottom: 10px; display: block; }
+  .card-title {
+    font-family: Georgia, serif; font-size: 15px; color: #e8dcc8;
+    line-height: 1.3; white-space: pre-line;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(10,13,24,0.95);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 12px 0 26px;
+    z-index: 10;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 11px; color: #556;
+    cursor: pointer;
+  }
+  .nav-item.active { color: #C9A96E; }
+  .nav-icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bg-grad"></div>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bg2" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#1a2540"/>
+          <stop offset="100%" stop-color="#0d1220"/>
+        </radialGradient>
+      </defs>
+      <rect width="1024" height="1024" fill="url(#bg2)" rx="220"/>
+      <circle cx="512" cy="512" r="430" fill="none" stroke="#c9a84c" stroke-width="16" opacity="0.9"/>
+      <line x1="512" y1="82" x2="512" y2="942" stroke="#c9a84c" stroke-width="10" opacity="0.35"/>
+      <line x1="82" y1="512" x2="942" y2="512" stroke="#c9a84c" stroke-width="10" opacity="0.35"/>
+      <circle cx="512" cy="512" r="310" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.12"/>
+      <circle cx="690" cy="258" r="18" fill="#e4c97e"/>
+      <circle cx="793" cy="643" r="14" fill="#e07090"/>
+      <circle cx="458" cy="826" r="12" fill="#70a8e0"/>
+      <circle cx="202" cy="487" r="12" fill="#a080e0"/>
+      <circle cx="432" cy="204" r="11" fill="#e09060"/>
+      <circle cx="512" cy="512" r="115" fill="#0d1220"/>
+      <circle cx="512" cy="512" r="28" fill="#f5d878"/>
+    </svg>
+    <span class="logo-text">Astralla</span>
+  </div>
+  <div class="avatar">D</div>
+</nav>
+
+<!-- Content -->
+<div class="content">
+  <h1>Diana's readings</h1>
+  <p class="subtitle">Where do you want to explore?</p>
+
+  <div class="grid">
+    <div class="card">
+      <span class="card-glyph" style="color:#C9A96E">✦</span>
+      <span class="card-title">City{"\n"}Reading</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#4BC9C8">◉</span>
+      <span class="card-title">Best Places{"\n"}for You</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#B08AE0">♃</span>
+      <span class="card-title">Travel{"\n"}Reading</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#E8A044">☉</span>
+      <span class="card-title">Birthday{"\n"}Reading</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#5A8FC8">◎</span>
+      <span class="card-title">World{"\n"}Map</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#9BB5CC">☽</span>
+      <span class="card-title">This{"\n"}Week</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#C0507A">⊕</span>
+      <span class="card-title">Partner{"\n"}Reading</span>
+    </div>
+    <div class="card">
+      <span class="card-glyph" style="color:#6B9E78">✶</span>
+      <span class="card-title">Chapter{"\n"}Planner</span>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <div class="nav-item active">
+    <span class="nav-icon">⌂</span>
+    <span>Home</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◈</span>
+    <span>Charts</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◯</span>
+    <span>Account</span>
+  </div>
+</div>
+
+<script>
+// Add stars
+const container = document.getElementById('stars');
+const positions = [
+  [40,60,1.2],[120,35,0.8],[200,90,1.0],[310,20,0.9],[370,75,1.1],
+  [60,180,0.7],[180,155,1.2],[280,200,0.8],[350,130,1.0],
+  [20,300,1.1],[100,340,0.7],[240,280,0.9],[380,310,1.2],
+  [55,450,0.8],[160,480,1.0],[300,420,0.7],[370,460,1.1],
+  [30,600,1.2],[140,570,0.8],[260,620,1.0],[345,590,0.9],
+  [80,720,0.7],[200,700,1.1],[330,740,0.8],
+  [15,820,1.0],[175,790,0.9],[310,810,1.2],
+];
+positions.forEach(([x, y, r]) => {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.cssText = `left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px;opacity:${0.3 + Math.random()*0.4}`;
+  container.appendChild(s);
+});
+</script>
+</body>
+</html>

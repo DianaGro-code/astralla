@@ -17,10 +17,12 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'chartId and cityQuery are required' });
   }
 
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId, req.user.id);
+  const pool = getDb();
+  const { rows: chartRows } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId, req.user.id]
+  );
+  const chart = chartRows[0];
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   try {
@@ -29,9 +31,11 @@ router.post('/', async (req, res) => {
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
     // Return existing reading if one already exists for this chart + city (solo readings only)
-    const existing = db.prepare(
-      'SELECT * FROM readings WHERE chart_id = ? AND city_name = ? AND partner_chart_id IS NULL ORDER BY created_at DESC LIMIT 1'
-    ).get(chartId, city.displayName);
+    const { rows: existingRows } = await pool.query(
+      'SELECT * FROM readings WHERE chart_id = $1 AND city_name = $2 AND partner_chart_id IS NULL ORDER BY created_at DESC LIMIT 1',
+      [chartId, city.displayName]
+    );
+    const existing = existingRows[0];
     if (existing) {
       return res.status(200).json({
         ...existing,
@@ -60,11 +64,11 @@ router.post('/', async (req, res) => {
     }
 
     // Atomically reserve a usage slot before calling Claude
-    const limit = reserveUsage(req.user, 'city_reading');
+    const limit = await reserveUsage(req.user, 'city_reading');
     if (!limit.allowed) {
       return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+        error: `You've used all ${limit.limit} free readings.`,
+        limitReached: true, used: limit.used, limit: limit.limit,
       });
     }
 
@@ -72,21 +76,13 @@ router.post('/', async (req, res) => {
     const themes = await generateReading(chart, city, influences, parans, intent, relocatedChart);
 
     // Persist
-    const result = db.prepare(
+    const { rows: inserted } = await pool.query(
       `INSERT INTO readings (chart_id, city_name, city_lat, city_lng, influences, parans, reading_text, themes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      chartId,
-      city.displayName,
-      city.lat,
-      city.lng,
-      JSON.stringify(influences),
-      JSON.stringify(parans),
-      '',
-      JSON.stringify(themes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [chartId, city.displayName, city.lat, city.lng,
+       JSON.stringify(influences), JSON.stringify(parans), '', JSON.stringify(themes)]
     );
-
-    const reading = db.prepare('SELECT * FROM readings WHERE id = ?').get(result.lastInsertRowid);
+    const reading = inserted[0];
     res.status(201).json({
       ...reading,
       influences: JSON.parse(reading.influences),
@@ -100,18 +96,17 @@ router.post('/', async (req, res) => {
 });
 
 // Get all readings for the current user (for map view)
-router.get('/all', (req, res) => {
+router.get('/all', async (req, res) => {
   try {
-    const db = getDb();
-    const readings = db.prepare(`
-      SELECT r.id, r.city_name, r.city_lat, r.city_lng, r.themes, r.created_at, r.chart_id
-      FROM readings r
-      JOIN birth_charts c ON c.id = r.chart_id
-      WHERE c.user_id = ?
-      ORDER BY r.created_at DESC
-    `).all(req.user.id);
-
-    res.json(readings.map(r => ({
+    const { rows } = await getDb().query(
+      `SELECT r.id, r.city_name, r.city_lat, r.city_lng, r.themes, r.created_at, r.chart_id
+       FROM readings r
+       JOIN birth_charts c ON c.id = r.chart_id
+       WHERE c.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows.map(r => ({
       ...r,
       themes: r.themes ? JSON.parse(r.themes) : null,
     })));
@@ -122,19 +117,20 @@ router.get('/all', (req, res) => {
 });
 
 // Get all readings for a chart
-router.get('/chart/:chartId', (req, res) => {
+router.get('/chart/:chartId', async (req, res) => {
   try {
-    const db = getDb();
-    const chart = db.prepare(
-      'SELECT id FROM birth_charts WHERE id = ? AND user_id = ?'
-    ).get(req.params.chartId, req.user.id);
-    if (!chart) return res.status(404).json({ error: 'Chart not found' });
+    const pool = getDb();
+    const { rows: chartRows } = await pool.query(
+      'SELECT id FROM birth_charts WHERE id = $1 AND user_id = $2',
+      [req.params.chartId, req.user.id]
+    );
+    if (!chartRows[0]) return res.status(404).json({ error: 'Chart not found' });
 
-    const readings = db.prepare(
-      'SELECT * FROM readings WHERE chart_id = ? AND (partner_chart_id IS NULL) ORDER BY created_at DESC'
-    ).all(req.params.chartId);
-
-    res.json(readings.map(r => ({
+    const { rows } = await pool.query(
+      'SELECT * FROM readings WHERE chart_id = $1 AND (partner_chart_id IS NULL) ORDER BY created_at DESC',
+      [req.params.chartId]
+    );
+    res.json(rows.map(r => ({
       ...r,
       influences: JSON.parse(r.influences),
       parans: JSON.parse(r.parans),
@@ -147,14 +143,14 @@ router.get('/chart/:chartId', (req, res) => {
 });
 
 // Get single reading
-router.get('/:id', (req, res) => {
-  const db = getDb();
-  const reading = db.prepare(`
-    SELECT r.*, c.birth_time, c.label as chart_label FROM readings r
-    JOIN birth_charts c ON c.id = r.chart_id
-    WHERE r.id = ? AND c.user_id = ?
-  `).get(req.params.id, req.user.id);
-
+router.get('/:id', async (req, res) => {
+  const { rows } = await getDb().query(
+    `SELECT r.*, c.birth_time, c.label as chart_label FROM readings r
+     JOIN birth_charts c ON c.id = r.chart_id
+     WHERE r.id = $1 AND c.user_id = $2`,
+    [req.params.id, req.user.id]
+  );
+  const reading = rows[0];
   if (!reading) return res.status(404).json({ error: 'Reading not found' });
   res.json({
     ...reading,

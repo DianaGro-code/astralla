@@ -35,32 +35,36 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'chartId, cityName, cityLat and cityLng are required' });
   }
 
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId, req.user.id);
+  const pool = getDb();
+  const { rows: chartRows } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId, req.user.id]
+  );
+  const chart = chartRows[0];
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   const weekStart = getWeekStart();
   const weekEnd   = getWeekEnd(weekStart);
 
   // Return cached reading if it exists for this week (cache hits never count toward limit)
-  const cached = db.prepare(
+  const { rows: cachedRows } = await pool.query(
     `SELECT * FROM weekly_readings
-     WHERE chart_id = ? AND city_name = ? AND week_start = ?
-     ORDER BY created_at DESC LIMIT 1`
-  ).get(chartId, cityName, weekStart);
+     WHERE chart_id = $1 AND city_name = $2 AND week_start = $3
+     ORDER BY created_at DESC LIMIT 1`,
+    [chartId, cityName, weekStart]
+  );
+  const cached = cachedRows[0];
 
   if (cached) {
     return res.json({ ...cached, reading: JSON.parse(cached.reading), weekStart, weekEnd, cached: true });
   }
 
   // Atomically reserve a usage slot before calling Claude
-  const limit = reserveUsage(req.user, 'weekly');
+  const limit = await reserveUsage(req.user, 'weekly');
   if (!limit.allowed) {
     return res.status(402).json({
-      error: `You've used all ${limit.limit} free readings this week.`,
-      limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+      error: `You've used all ${limit.limit} free readings.`,
+      limitReached: true, used: limit.used, limit: limit.limit,
     });
   }
 
@@ -70,12 +74,12 @@ router.post('/', async (req, res) => {
     const relocatedChart = calculateRelocatedChart(chart, city);
     const reading        = await generateWeeklyReading(chart, city, weekStart, weekEnd, transitData, relocatedChart);
 
-    const result = db.prepare(
+    const { rows: inserted } = await pool.query(
       `INSERT INTO weekly_readings (chart_id, city_name, city_lat, city_lng, week_start, reading)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(chartId, cityName, cityLat, cityLng, weekStart, JSON.stringify(reading));
-
-    const row = db.prepare('SELECT * FROM weekly_readings WHERE id = ?').get(result.lastInsertRowid);
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [chartId, cityName, cityLat, cityLng, weekStart, JSON.stringify(reading)]
+    );
+    const row = inserted[0];
     res.status(201).json({ ...row, reading, weekStart, weekEnd, cached: false });
   } catch (err) {
     console.error('Weekly reading error:', err);

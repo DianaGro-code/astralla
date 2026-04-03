@@ -18,15 +18,19 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Partner reading requires two different charts' });
   }
 
-  const db = getDb();
-  const chart1 = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId1, req.user.id);
+  const pool = getDb();
+  const { rows: rows1 } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId1, req.user.id]
+  );
+  const chart1 = rows1[0];
   if (!chart1) return res.status(404).json({ error: 'Chart 1 not found' });
 
-  const chart2 = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId2, req.user.id);
+  const { rows: rows2 } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId2, req.user.id]
+  );
+  const chart2 = rows2[0];
   if (!chart2) return res.status(404).json({ error: 'Chart 2 not found' });
 
   try {
@@ -34,11 +38,11 @@ router.post('/', async (req, res) => {
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
     // Atomically reserve a usage slot before calling Claude
-    const limit = reserveUsage(req.user, 'partner_reading');
+    const limit = await reserveUsage(req.user, 'partner_reading');
     if (!limit.allowed) {
       return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+        error: `You've used all ${limit.limit} free readings.`,
+        limitReached: true, used: limit.used, limit: limit.limit,
       });
     }
 
@@ -57,22 +61,13 @@ router.post('/', async (req, res) => {
       ...parans2.map(p => ({ ...p, chartId: chartId2 })),
     ];
 
-    const result = db.prepare(
+    const { rows: inserted } = await pool.query(
       `INSERT INTO readings (chart_id, city_name, city_lat, city_lng, influences, parans, reading_text, themes, partner_chart_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      chartId1,
-      city.displayName,
-      city.lat,
-      city.lng,
-      JSON.stringify(allInfluences),
-      JSON.stringify(allParans),
-      '',
-      JSON.stringify(themes),
-      chartId2,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [chartId1, city.displayName, city.lat, city.lng,
+       JSON.stringify(allInfluences), JSON.stringify(allParans), '', JSON.stringify(themes), chartId2]
     );
-
-    const reading = db.prepare('SELECT * FROM readings WHERE id = ?').get(result.lastInsertRowid);
+    const reading = inserted[0];
     res.status(201).json({
       ...reading,
       influences: JSON.parse(reading.influences),

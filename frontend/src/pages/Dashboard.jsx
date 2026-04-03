@@ -7,6 +7,7 @@ import WorldMap from '../components/WorldMap.jsx';
 import WeeklyReading from '../components/WeeklyReading.jsx';
 import { useNative } from '../hooks/useNative.js';
 import Logo from '../components/Logo.jsx';
+import UpgradeModal from '../components/UpgradeModal.jsx';
 
 const PLANET_GLYPHS = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
   jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
@@ -127,28 +128,6 @@ function weeklyIsNew() {
 function Spinner({ size = 'md' }) {
   const s = size === 'sm' ? 'w-3 h-3 border' : 'w-6 h-6 border-2';
   return <span className={`${s} border-current border-t-transparent rounded-full animate-spin inline-block`} />;
-}
-
-// ── Usage Limit Modal ──────────────────────────────────────────────────────────
-function LimitModal({ error, onClose }) {
-  if (!error) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative card border-gold/30 max-w-sm w-full text-center space-y-4 py-8 px-6 animate-slide-up">
-        <div className="text-3xl">☽</div>
-        <h3 className="font-serif text-lg text-text-p">You've used all free readings</h3>
-        <p className="text-text-m text-sm font-sans leading-relaxed">
-          You've used all <span className="text-gold font-semibold">{error.limit}</span> free readings.
-          Upgrade to Pro for unlimited access.
-        </p>
-        <p className="text-text-s text-xs font-sans">
-          Readings you've already generated are always free to re-open.
-        </p>
-        <button onClick={onClose} className="btn-primary w-full mt-2">Got it</button>
-      </div>
-    </div>
-  );
 }
 
 // ── Feature Popup ──────────────────────────────────────────────────────────────
@@ -1357,7 +1336,7 @@ export default function Dashboard() {
 
   return (
     <div className={`min-h-screen px-4 ${native ? 'pt-6 pb-28' : 'pt-20 pb-16'}`}>
-      <LimitModal error={limitError} onClose={() => setLimitError(null)} />
+      <UpgradeModal open={!!limitError} onClose={() => setLimitError(null)} limit={limitError?.limit} />
 
 
       {pendingFeature && (

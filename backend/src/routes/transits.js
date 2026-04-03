@@ -22,10 +22,12 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'chartId, cityQuery, startDate and endDate are required' });
   }
 
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId, req.user.id);
+  const pool = getDb();
+  const { rows: chartRows } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId, req.user.id]
+  );
+  const chart = chartRows[0];
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   try {
@@ -33,11 +35,13 @@ router.post('/', async (req, res) => {
     if (!city) return res.status(400).json({ error: `Could not find city: "${cityQuery}"` });
 
     // Check for cached transit reading
-    const existing = db.prepare(
+    const { rows: existingRows } = await pool.query(
       `SELECT * FROM transit_readings
-       WHERE chart_id = ? AND city_name = ? AND start_date = ? AND end_date = ?
-       ORDER BY created_at DESC LIMIT 1`
-    ).get(chartId, city.displayName, startDate, endDate);
+       WHERE chart_id = $1 AND city_name = $2 AND start_date = $3 AND end_date = $4
+       ORDER BY created_at DESC LIMIT 1`,
+      [chartId, city.displayName, startDate, endDate]
+    );
+    const existing = existingRows[0];
 
     if (existing) {
       return res.json({
@@ -48,11 +52,11 @@ router.post('/', async (req, res) => {
     }
 
     // Atomically reserve a usage slot before calling Claude
-    const limit = reserveUsage(req.user, 'transit');
+    const limit = await reserveUsage(req.user, 'transit');
     if (!limit.allowed) {
       return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+        error: `You've used all ${limit.limit} free readings.`,
+        limitReached: true, used: limit.used, limit: limit.limit,
       });
     }
 
@@ -64,21 +68,13 @@ router.post('/', async (req, res) => {
     const reading = await generateTransitReading(chart, city, startDate, endDate, transitData, relocatedChart);
 
     // Persist
-    const result = db.prepare(
+    const { rows: inserted } = await pool.query(
       `INSERT INTO transit_readings (chart_id, city_name, city_lat, city_lng, start_date, end_date, transit_data, reading)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      chartId,
-      city.displayName,
-      city.lat,
-      city.lng,
-      startDate,
-      endDate,
-      JSON.stringify(transitData),
-      JSON.stringify(reading),
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [chartId, city.displayName, city.lat, city.lng,
+       startDate, endDate, JSON.stringify(transitData), JSON.stringify(reading)]
     );
-
-    const row = db.prepare('SELECT * FROM transit_readings WHERE id = ?').get(result.lastInsertRowid);
+    const row = inserted[0];
     res.status(201).json({
       ...row,
       transitData,

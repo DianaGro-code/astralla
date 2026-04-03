@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 390px; height: 844px; overflow: hidden;
+    background: #0a0d18;
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    color: #fff;
+    position: relative;
+  }
+  .bg-grad {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 10%, #0d1c35 0%, #0a0d18 55%);
+  }
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+
+  .header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .back-btn { color: #C9A96E; font-size: 20px; }
+  .header-title {
+    font-family: Georgia, serif; font-size: 18px; color: #f0e8d8;
+  }
+
+  .content { position: relative; z-index: 10; padding: 20px 16px; }
+
+  .intent-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(201,169,110,0.12);
+    border: 1px solid rgba(201,169,110,0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px; color: #C9A96E;
+    margin-bottom: 20px;
+  }
+
+  .results-label {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #556070; margin-bottom: 12px;
+  }
+
+  .city-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .city-card.top {
+    background: rgba(201,169,110,0.07);
+    border-color: rgba(201,169,110,0.22);
+  }
+  .city-rank {
+    font-family: Georgia, serif; font-size: 24px;
+    color: rgba(201,169,110,0.35);
+    min-width: 28px; text-align: center; line-height: 1;
+    padding-top: 2px;
+  }
+  .city-card.top .city-rank { color: #C9A96E; }
+  .city-info { flex: 1; }
+  .city-name {
+    font-family: Georgia, serif; font-size: 17px; color: #f0e8d8;
+    margin-bottom: 4px;
+  }
+  .city-tagline { font-size: 12px; color: #8a9aac; line-height: 1.4; margin-bottom: 8px; }
+  .planet-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill {
+    font-size: 10px; padding: 3px 8px; border-radius: 10px;
+    border: 1px solid; letter-spacing: 0.05em;
+  }
+
+  .cta-row {
+    margin-top: 18px; text-align: center;
+    font-size: 13px; color: #556070;
+  }
+  .cta-link { color: #C9A96E; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="bg-grad"></div>
+<div class="stars" id="stars"></div>
+
+<div class="header">
+  <span class="back-btn">←</span>
+  <span class="header-title">Best Places for You</span>
+</div>
+
+<div class="content">
+  <div class="intent-chip">
+    <span>♀</span> Love &amp; relationships
+  </div>
+
+  <div class="results-label">Top cities from 400+ scanned</div>
+
+  <!-- City 1 -->
+  <div class="city-card top">
+    <div class="city-rank">1</div>
+    <div class="city-info">
+      <div class="city-name">Lisbon, Portugal</div>
+      <div class="city-tagline">Your Venus rises here. A city that opens the heart without pressure — sensual, slow, and deeply yours.</div>
+      <div class="planet-pills">
+        <span class="pill" style="color:#e07090;border-color:rgba(224,112,144,0.3);background:rgba(224,112,144,0.08)">♀ Venus rising</span>
+        <span class="pill" style="color:#9BB5CC;border-color:rgba(155,181,204,0.3);background:rgba(155,181,204,0.08)">☽ Moon trine</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- City 2 -->
+  <div class="city-card">
+    <div class="city-rank">2</div>
+    <div class="city-info">
+      <div class="city-name">Buenos Aires, Argentina</div>
+      <div class="city-tagline">Intensity and passion — your 5th house activates here. Electric connections, creative fire.</div>
+      <div class="planet-pills">
+        <span class="pill" style="color:#e07090;border-color:rgba(224,112,144,0.25);background:rgba(224,112,144,0.06)">♀ Venus 5th</span>
+        <span class="pill" style="color:#e09060;border-color:rgba(224,144,96,0.25);background:rgba(224,144,96,0.06)">♂ Mars conjunct</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- City 3 -->
+  <div class="city-card">
+    <div class="city-rank">3</div>
+    <div class="city-info">
+      <div class="city-name">Kyoto, Japan</div>
+      <div class="city-tagline">Your Neptune line softens everything. Romantic, dreamy, contemplative — love as a spiritual practice.</div>
+      <div class="planet-pills">
+        <span class="pill" style="color:#70a8e0;border-color:rgba(112,168,224,0.25);background:rgba(112,168,224,0.06)">♆ Neptune line</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const container = document.getElementById('stars');
+[[30,50,1],[90,120,0.8],[200,40,1.1],[320,90,0.7],[370,30,1],[50,250,0.9],
+ [150,200,1.2],[280,180,0.8],[360,220,1],[80,700,0.7],[220,750,1],[340,680,0.9],
+ [160,580,0.8],[300,620,1],[50,800,0.7],[370,770,1.1]].forEach(([x,y,r]) => {
+  const s = document.createElement('div'); s.className = 'star';
+  s.style.cssText = `left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px;opacity:${0.25+Math.random()*0.35}`;
+  container.appendChild(s);
+});
+</script>
+</body>
+</html>

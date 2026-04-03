@@ -15,19 +15,21 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'chartId and intent are required' });
   }
 
-  const db = getDb();
-  const chart = db.prepare(
-    'SELECT * FROM birth_charts WHERE id = ? AND user_id = ?'
-  ).get(chartId, req.user.id);
+  const pool = getDb();
+  const { rows: chartRows } = await pool.query(
+    'SELECT * FROM birth_charts WHERE id = $1 AND user_id = $2',
+    [chartId, req.user.id]
+  );
+  const chart = chartRows[0];
   if (!chart) return res.status(404).json({ error: 'Chart not found' });
 
   try {
     // Atomically reserve a usage slot before the expensive scoring work
-    const limit = reserveUsage(req.user, 'top_cities');
+    const limit = await reserveUsage(req.user, 'top_cities');
     if (!limit.allowed) {
       return res.status(402).json({
-        error: `You've used all ${limit.limit} free readings this week.`,
-        limitReached: true, used: limit.used, limit: limit.limit, resetsOn: limit.resetsOn,
+        error: `You've used all ${limit.limit} free readings.`,
+        limitReached: true, used: limit.used, limit: limit.limit,
       });
     }
 

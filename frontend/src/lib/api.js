@@ -85,4 +85,8 @@ export const api = {
   partner: {
     generate: (body) => request('/readings/partner', { method: 'POST', body: JSON.stringify(body) }),
   },
+  subscription: {
+    upgrade:  (body) => request('/auth/upgrade', { method: 'POST', body: JSON.stringify(body) }),
+    restore:  (body) => request('/auth/restore',  { method: 'POST', body: JSON.stringify(body) }),
+  },
 };

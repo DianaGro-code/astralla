@@ -36,8 +36,19 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  /** Re-fetch user from server and sync to local state (e.g. after subscription upgrade). */
+  async function refreshUser() {
+    try {
+      const data = await api.profile.get();
+      const updated = { ...user, ...data };
+      localStorage.setItem('astro_user', JSON.stringify(updated));
+      setUser(updated);
+      return updated;
+    } catch {}
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
